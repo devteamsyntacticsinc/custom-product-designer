@@ -1,18 +1,31 @@
-import { ProductGrid } from "@/components/ProductGrid";
+"use client";
+
+import { useState } from "react";
+import ProductCustomizer from "@/components/ProductCustomizer";
+import ProductPreview from "@/components/ProductPreview";
 
 export default function Home() {
+  const [productType, setProductType] = useState("");
+  const [brand, setBrand] = useState("");
+  const [color, setColor] = useState("");
+  const [quantity, setQuantity] = useState("1");
+
   return (
-    <div className="min-h-screen bg-gray-50">
-      <header className="bg-white shadow-sm border-b">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
-          <h1 className="text-3xl font-bold text-gray-900">Custom Product Designer</h1>
-          <p className="mt-2 text-gray-600">Browse our collection of customizable products</p>
-        </div>
-      </header>
-      
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <ProductGrid />
-      </main>
+    <div className="min-h-screen bg-gray-50 flex">
+      {/* Left Sidebar - Controls */}
+      <ProductCustomizer
+        productType={productType}
+        setProductType={setProductType}
+        brand={brand}
+        setBrand={setBrand}
+        color={color}
+        setColor={setColor}
+        quantity={quantity}
+        setQuantity={setQuantity}
+      />
+
+      {/* Right Content - Product Preview */}
+      <ProductPreview />
     </div>
   );
 }
