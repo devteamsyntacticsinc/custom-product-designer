@@ -1,5 +1,5 @@
 import { supabase } from "@/lib/supabase"
-import { Product } from "@/types/product"
+import { Product, Brand, Color, ProductType } from "@/types/product"
 
 export class ProductService {
   static async getProducts(): Promise<Product[]> {
@@ -10,8 +10,18 @@ export class ProductService {
           id,
           product_name,
           image,
-          category_id,
-          product_category (
+          brand_id,
+          color_id,
+          product_type_id,
+          brand (
+            id,
+            name
+          ),
+          color (
+            id,
+            value
+          ),
+          product_type (
             id,
             name
           )
@@ -36,8 +46,18 @@ export class ProductService {
           id,
           product_name,
           image,
-          category_id,
-          product_category (
+          brand_id,
+          color_id,
+          product_type_id,
+          brand (
+            id,
+            name
+          ),
+          color (
+            id,
+            value
+          ),
+          product_type (
             id,
             name
           )
@@ -52,6 +72,60 @@ export class ProductService {
       return data as unknown as Product || null
     } catch (error) {
       console.error('Error fetching product:', error)
+      throw error
+    }
+  }
+
+  static async getBrands(): Promise<Brand[]> {
+    try {
+      const { data, error } = await supabase
+        .from('brands')
+        .select('id, name')
+        .order('name')
+
+      if (error) {
+        throw error
+      }
+
+      return data || []
+    } catch (error) {
+      console.error('Error fetching brands:', error)
+      throw error
+    }
+  }
+
+  static async getColors(): Promise<Color[]> {
+    try {
+      const { data, error } = await supabase
+        .from('colors')
+        .select('id, value')
+        .order('value')
+
+      if (error) {
+        throw error
+      }
+
+      return data || []
+    } catch (error) {
+      console.error('Error fetching colors:', error)
+      throw error
+    }
+  }
+
+  static async getProductTypes(): Promise<ProductType[]> {
+    try {
+      const { data, error } = await supabase
+        .from('product_type')
+        .select('id, name')
+        .order('name')
+
+      if (error) {
+        throw error
+      }
+
+      return data || []
+    } catch (error) {
+      console.error('Error fetching product types:', error)
       throw error
     }
   }

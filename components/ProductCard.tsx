@@ -27,11 +27,6 @@ export function ProductCard({ product }: ProductCardProps) {
         <h3 className="font-semibold text-lg mb-2 line-clamp-2">
           {product.product_name}
         </h3>
-        {product.product_category && (
-          <Badge variant="secondary" className="text-xs">
-            {product.product_category.name}
-          </Badge>
-        )}
       </CardContent>
     </Card>
   )
