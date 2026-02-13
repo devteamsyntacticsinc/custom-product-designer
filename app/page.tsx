@@ -3,22 +3,23 @@
 import { useState } from "react";
 import ProductCustomizer from "@/components/ProductCustomizer";
 import ProductPreview from "@/components/ProductPreview";
+import { ProductType } from "@/types/product";
 
 export default function Home() {
-  const [productType, setProductType] = useState("");
-  const [brand, setBrand] = useState("");
-  const [color, setColor] = useState("");
- const [sizeSelection, setSizeSelection] = useState<
-   {
-     size: string;
-     quantity: number;
-   }[]
- >([
-   {
-     size: "",
-     quantity: 1,
-   },
- ]);
+  const [productType, setProductType] = useState<ProductType[]>([]);
+  const [brand, setBrand] = useState<string>("");
+  const [color, setColor] = useState<string>("");
+  const [sizeSelection, setSizeSelection] = useState<
+    {
+      size: string;
+      quantity: number;
+    }[]
+  >([
+    {
+      size: "",
+      quantity: 1,
+    },
+  ]);
   return (
     <div className="min-h-screen bg-gray-50 flex">
       {/* Left Sidebar - Controls */}
