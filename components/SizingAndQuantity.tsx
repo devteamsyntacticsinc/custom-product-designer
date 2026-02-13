@@ -3,7 +3,6 @@
 import { Input } from "@/components/ui/input";
 import { Label } from "./ui/label";
 import { useEffect, useState } from "react";
-import { ProductService } from "@/lib/api/product";
 import { ProductType, Size } from "@/types/product";
 
 const SIZE_ORDER = {
@@ -27,11 +26,13 @@ interface SizingAndQuantityProps {
       quantity: number;
     }[],
   ) => void;
-  productType?: ProductType[];
+  productTypeId: string;
+  brandId: string;
 }
 
 export default function SizingAndQuantity({
-  productType,
+  productTypeId,
+  brandId,
   sizeSelection,
   setSizeSelection,
 }: SizingAndQuantityProps) {
@@ -41,10 +42,11 @@ export default function SizingAndQuantity({
   useEffect(() => {
     const loadSizes = async () => {
       setIsLoading(true);
-      const sizes = await ProductService.getSizes();
+      const response = await fetch("/api/sizes");
+      const sizes = await response.json();
       if (sizes) {
         sizes.sort(
-          (a, b) =>
+          (a: Size, b: Size) =>
             (SIZE_ORDER[a.value as keyof typeof SIZE_ORDER] || 999) -
             (SIZE_ORDER[b.value as keyof typeof SIZE_ORDER] || 999),
         );
@@ -52,7 +54,7 @@ export default function SizingAndQuantity({
 
         // Initialize sizeSelection with all sizes and quantity 0
         setSizeSelection(
-          sizes.map((size) => ({
+          sizes.map((size: Size) => ({
             size: size.value,
             quantity: 0,
           })),
@@ -62,7 +64,7 @@ export default function SizingAndQuantity({
       }
     };
     loadSizes();
-  }, [setSizeSelection]);
+  }, [setSizeSelection, productTypeId, brandId]);
 
   // Handle quantity change for a specific size
   const handleQuantityChange = (sizeValue: string, quantity: number) => {
