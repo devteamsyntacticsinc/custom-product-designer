@@ -154,9 +154,9 @@ export class ProductService {
     }
   }
 
-  static async getSizesByProductType(typeId: string): Promise<Size[]> {
+  static async getSizesByProductType(typeId: string, brandId?: string): Promise<Size[]> {
     try {
-      const { data, error } = await supabase
+      let query = supabase
         .from('size_product')
         .select(`
           size_id,
@@ -166,6 +166,12 @@ export class ProductService {
           )
         `)
         .eq('type_id', typeId)
+
+      if (brandId) {
+        query = query.eq('brand_id', brandId)
+      }
+
+      const { data, error } = await query
 
       if (error) {
         throw error
