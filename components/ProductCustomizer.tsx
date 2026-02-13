@@ -9,13 +9,8 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Label } from "@/components/ui/label";
-import AssetUpload from "@/components/AssetUpload";
 import SizingAndQuantity from "@/components/SizingAndQuantity";
-import { useState } from "react";
-import { useEffect } from "react";
-import { ProductService } from "@/lib/api/product";
-import { ProductType, Brand, Color } from "@/types/product";
-import { Dispatch, SetStateAction } from "react";
+import AssetUpload from "./AssetUpload";
 
 interface ProductCustomizerProps {
   productType: ProductType[];
@@ -34,6 +29,8 @@ interface ProductCustomizerProps {
       quantity: number;
     }[],
   ) => void;
+  assets: Record<string, File | null>;
+  setAssets: React.Dispatch<React.SetStateAction<Record<string, File | null>>>;
 }
 
 export default function ProductCustomizer({
@@ -45,6 +42,8 @@ export default function ProductCustomizer({
   setColor,
   sizeSelection,
   setSizeSelection,
+  assets,
+  setAssets,
 }: ProductCustomizerProps) {
 
   const [selectedProductTypeId, setSelectedProductTypeId] = useState("");
@@ -166,22 +165,24 @@ export default function ProductCustomizer({
           Select color
         </Label>
         <div className="flex gap-2 flex-wrap">
-          {loadingColors ? (
-            <span className="text-gray-500">Loading colors...</span>
-          ) : colors.length === 0 ? (
-            <span className="text-gray-500">No colors available</span>
-          ) : (
-            colors.map((colorOption) => (
-              <button
-                key={colorOption.id}
-                onClick={() => setColor(colorOption.value)}
-                className={`w-8 h-8 rounded-full border-2 ${color === colorOption.value ? "border-blue-500" : "border-gray-300"
-                  }`}
-                style={{ backgroundColor: colorOption.value }}
-                title={colorOption.value}
-              />
-            ))
-          )}
+          {[
+            "white",
+            "black",
+            "red",
+            "blue",
+            "green",
+            "yellow",
+            "purple",
+            "orange",
+          ].map((colorOption) => (
+            <button
+              key={colorOption}
+              onClick={() => setColor(colorOption)}
+              className={`w-8 h-8 rounded-full border-2 ${color === colorOption ? "border-blue-500" : "border-gray-300"
+                }`}
+              style={{ backgroundColor: colorOption }}
+            />
+          ))}
         </div>
       </div>
 
@@ -190,7 +191,7 @@ export default function ProductCustomizer({
         <h3 className="text-lg font-semibold text-gray-900 mb-4">
           Place your assets
         </h3>
-        <AssetUpload />
+        <AssetUpload assets={assets} setAssets={setAssets} />
       </div>
 
       {/* Sizing and Quantity */}
