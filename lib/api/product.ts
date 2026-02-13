@@ -78,22 +78,37 @@ export class ProductService {
 
   static async getBrands(typeId?: string): Promise<Brand[]> {
     try {
-      let query = supabase
-        .from('brands')
-        .select('id, name, type_id')
-        .order('name')
-
       if (typeId) {
-        query = query.eq('type_id', typeId)
+        // Get brands that have the specified type_id in brand_type table
+        const { data, error } = await supabase
+          .from('brand_type')
+          .select(`
+            brand_id,
+            brands (
+              id,
+              name
+            )
+          `)
+          .eq('type_id', typeId)
+
+        if (error) {
+          throw error
+        }
+
+        return (data?.map(item => item.brands).filter(Boolean).flat() as unknown) as Brand[] || []
+      } else {
+        // Get all brands
+        const { data, error } = await supabase
+          .from('brands')
+          .select('id, name')
+          .order('name')
+
+        if (error) {
+          throw error
+        }
+
+        return data || []
       }
-
-      const { data, error } = await query
-
-      if (error) {
-        throw error
-      }
-
-      return data || []
     } catch (error) {
       console.error('Error fetching brands:', error)
       throw error
@@ -154,30 +169,90 @@ export class ProductService {
     }
   }
 
-  static async getSizesByProductType(typeId: string, brandId?: string): Promise<Size[]> {
+  static async getSizesByProductType(typeId?: string, brandId?: string): Promise<Size[]> {
     try {
-      let query = supabase
-        .from('size_product')
-        .select(`
-          size_id,
-          sizes (
-            id,
-            value
-          )
-        `)
-        .eq('type_id', typeId)
+      if (typeId && brandId) {
+        // Filter by both type and brand through brand_type relationship
+        const { data: brandTypeData, error: brandTypeError } = await supabase
+          .from('brand_type')
+          .select('id')
+          .eq('type_id', typeId)
+          .eq('brand_id', brandId)
+          .single()
 
-      if (brandId) {
-        query = query.eq('brand_id', brandId)
+        if (brandTypeError || !brandTypeData) {
+          return [] // No matching brand-type combination
+        }
+
+        // Get sizes for this specific brand-type combination using brandT_id
+        const { data, error } = await supabase
+          .from('size_product')
+          .select(`
+            size_id,
+            sizes (
+              id,
+              value
+            )
+          `)
+          .eq('brandT_id', brandTypeData.id)
+
+        if (error) {
+          throw error
+        }
+
+        return data?.flatMap(item => item.sizes).filter(Boolean) || []
+      } else if (typeId) {
+        // Filter by type only - get all brand_type records that have this type
+        const { data: brandTypeData, error: brandTypeError } = await supabase
+          .from('brand_type')
+          .select('id')
+          .eq('type_id', typeId)
+
+        if (brandTypeError) {
+          throw brandTypeError
+        }
+
+        // If no brands have this type, return empty
+        if (!brandTypeData || brandTypeData.length === 0) {
+          return []
+        }
+
+        // Get sizes for all brand_type records that have this type
+        const brandTypeIds = brandTypeData.map(item => item.id)
+        const { data, error } = await supabase
+          .from('size_product')
+          .select(`
+            size_id,
+            sizes (
+              id,
+              value
+            )
+          `)
+          .in('brandT_id', brandTypeIds)
+
+        if (error) {
+          throw error
+        }
+
+        return data?.flatMap(item => item.sizes).filter(Boolean) || []
+      } else {
+        // No filtering - return all sizes
+        const { data, error } = await supabase
+          .from('size_product')
+          .select(`
+            size_id,
+            sizes (
+              id,
+              value
+            )
+          `)
+
+        if (error) {
+          throw error
+        }
+
+        return data?.flatMap(item => item.sizes).filter(Boolean) || []
       }
-
-      const { data, error } = await query
-
-      if (error) {
-        throw error
-      }
-
-      return data?.flatMap(item => item.sizes).filter(Boolean) || []
     } catch (error) {
       console.error('Error fetching sizes by product type:', error)
       throw error

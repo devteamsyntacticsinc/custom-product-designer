@@ -7,14 +7,7 @@ export async function GET(request: Request) {
     const typeId = searchParams.get('typeId')
     const brandId = searchParams.get('brandId')
 
-    if (!typeId) {
-      return NextResponse.json(
-        { error: 'Missing required parameter: typeId' },
-        { status: 400 }
-      )
-    }
-
-    const sizes = await ProductService.getSizesByProductType(typeId, brandId || undefined)
+    const sizes = await ProductService.getSizesByProductType(typeId || undefined, brandId || undefined)
     return NextResponse.json(sizes)
   } catch (error) {
     console.error('API Error:', error)
