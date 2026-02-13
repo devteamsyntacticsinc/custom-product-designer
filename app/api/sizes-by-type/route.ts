@@ -5,6 +5,7 @@ export async function GET(request: Request) {
   try {
     const { searchParams } = new URL(request.url)
     const typeId = searchParams.get('typeId')
+    const brandId = searchParams.get('brandId')
 
     if (!typeId) {
       return NextResponse.json(
@@ -13,7 +14,7 @@ export async function GET(request: Request) {
       )
     }
 
-    const sizes = await ProductService.getSizesByProductType(typeId)
+    const sizes = await ProductService.getSizesByProductType(typeId, brandId || undefined)
     return NextResponse.json(sizes)
   } catch (error) {
     console.error('API Error:', error)
