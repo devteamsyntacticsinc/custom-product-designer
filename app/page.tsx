@@ -6,7 +6,7 @@ import ProductPreview from "@/components/ProductPreview";
 import { ProductType } from "@/types/product";
 
 export default function Home() {
-  const [productType, setProductType] = useState("");
+  const [productType, setProductType] = useState<ProductType[]>([]);
   const [brand, setBrand] = useState("");
   const [color, setColor] = useState("");
   const [sizeSelection, setSizeSelection] = useState<

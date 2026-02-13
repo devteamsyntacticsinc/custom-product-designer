@@ -1,5 +1,6 @@
 "use client";
 
+import React, { useState, useEffect, Dispatch, SetStateAction } from "react";
 import { Button } from "@/components/ui/button";
 import {
   Select,
@@ -9,6 +10,8 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Label } from "@/components/ui/label";
+import { ProductService } from "@/lib/api/product";
+import { ProductType, Brand } from "@/types/product";
 import SizingAndQuantity from "@/components/SizingAndQuantity";
 import AssetUpload from "./AssetUpload";
 
@@ -49,9 +52,7 @@ export default function ProductCustomizer({
   const [selectedProductTypeId, setSelectedProductTypeId] = useState("");
   const [loadingProductTypes, setLoadingProductTypes] = useState(true);
   const [loadingBrands, setLoadingBrands] = useState(false);
-  const [loadingColors, setLoadingColors] = useState(false);
   const [brands, setBrands] = useState<Brand[]>([]);
-  const [colors, setColors] = useState<Color[]>([]);
 
   useEffect(() => {
     const fetchProductTypes = async () => {
@@ -71,7 +72,6 @@ export default function ProductCustomizer({
   useEffect(() => {
     if (!selectedProductTypeId) {
       setBrands([]);
-      setColors([]);
       return;
     }
 
@@ -91,27 +91,6 @@ export default function ProductCustomizer({
     fetchBrandsData();
   }, [selectedProductTypeId, setBrand]);
 
-  useEffect(() => {
-    if (!brand || brand === "none") {
-      setColors([]);
-      setColor("");
-      return;
-    }
-
-    const fetchColorsData = async () => {
-      try {
-        setLoadingColors(true);
-        const colorRes = await ProductService.getColors();
-        setColors(colorRes);
-      } catch (error) {
-        console.error("Failed to fetch colors:", error);
-      } finally {
-        setLoadingColors(false);
-      }
-    };
-
-    fetchColorsData();
-  }, [brand, setColor]);
 
   return (
     <div className="w-80 bg-white shadow-lg p-6 overflow-y-auto flex flex-col min-h-full">
@@ -127,7 +106,7 @@ export default function ProductCustomizer({
             <SelectValue placeholder={loadingProductTypes ? "Loading product types..." : "Select product type"} />
           </SelectTrigger>
           <SelectContent>
-            {productType.map((type) => (
+            {Array.isArray(productType) && productType.map((type) => (
               <SelectItem key={type.id} value={type.id}>
                 {type.name}
               </SelectItem>
