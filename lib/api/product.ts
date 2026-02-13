@@ -1,10 +1,10 @@
-import { getSupabaseClient } from "@/lib/supabase"
+import { supabase } from "@/lib/supabase"
 import { Product, Brand, Color, ProductType, Size } from "@/types/product"
 
 export class ProductService {
   static async getProducts(): Promise<Product[]> {
     try {
-      const { data, error } = await getSupabaseClient()
+      const { data, error } = await supabase
         .from('products')
         .select(`
           id,
@@ -40,7 +40,7 @@ export class ProductService {
 
   static async getProductById(id: string): Promise<Product | null> {
     try {
-      const { data, error } = await getSupabaseClient()
+      const { data, error } = await supabase
         .from('products')
         .select(`
           id,
@@ -78,7 +78,7 @@ export class ProductService {
 
   static async getBrands(typeId?: string): Promise<Brand[]> {
     try {
-      let query = getSupabaseClient()
+      let query = supabase
         .from('brands')
         .select('id, name, type_id')
         .order('name')
@@ -102,7 +102,7 @@ export class ProductService {
 
   static async getColors(): Promise<Color[]> {
     try {
-      const { data, error } = await getSupabaseClient()
+      const { data, error } = await supabase
         .from('colors')
         .select('id, value')
         .order('value')
@@ -120,7 +120,7 @@ export class ProductService {
 
   static async getProductTypes(): Promise<ProductType[]> {
     try {
-      const { data, error } = await getSupabaseClient()
+      const { data, error } = await supabase
         .from('product_type')
         .select('id, name')
         .order('name')
@@ -138,7 +138,7 @@ export class ProductService {
 
   static async getSizes(): Promise<Size[]> {
     try {
-      const { data, error } = await getSupabaseClient()
+      const { data, error } = await supabase
         .from('sizes')
         .select('id, value')
         .order('value')
@@ -150,6 +150,30 @@ export class ProductService {
       return data || []
     } catch (error) {
       console.error('Error fetching sizes:', error)
+      throw error
+    }
+  }
+
+  static async getSizesByProductType(typeId: string): Promise<Size[]> {
+    try {
+      const { data, error } = await supabase
+        .from('size_product')
+        .select(`
+          size_id,
+          sizes (
+            id,
+            value
+          )
+        `)
+        .eq('type_id', typeId)
+
+      if (error) {
+        throw error
+      }
+
+      return data?.flatMap(item => item.sizes).filter(Boolean) || []
+    } catch (error) {
+      console.error('Error fetching sizes by product type:', error)
       throw error
     }
   }
