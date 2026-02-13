@@ -11,13 +11,13 @@ import {
 } from "@/components/ui/select";
 import { Label } from "@/components/ui/label";
 import { ProductService } from "@/lib/api/product";
-import { ProductType, Brand } from "@/types/product";
+import { ProductType, Brand, Color } from "@/types/product";
 import SizingAndQuantity from "@/components/SizingAndQuantity";
 import AssetUpload from "./AssetUpload";
 
 interface ProductCustomizerProps {
-  productType: ProductType[];
-  setProductType: Dispatch<SetStateAction<ProductType[]>>;
+  productType: string;
+  setProductType: (value: string) => void;
   brand: string;
   setBrand: (value: string) => void;
   color: string;
@@ -48,17 +48,20 @@ export default function ProductCustomizer({
   assets,
   setAssets,
 }: ProductCustomizerProps) {
-  const [selectedProductTypeId, setSelectedProductTypeId] = useState("");
+  const [productTypes, setProductTypes] = useState<ProductType[]>([]);
   const [loadingProductTypes, setLoadingProductTypes] = useState(true);
   const [loadingBrands, setLoadingBrands] = useState(false);
   const [brands, setBrands] = useState<Brand[]>([]);
+  const [loadingColors, setLoadingColors] = useState(false);
+  const [colors, setColors] = useState<Color[]>([]);
 
   useEffect(() => {
     const fetchProductTypes = async () => {
       try {
         setLoadingProductTypes(true);
-        const res = await ProductService.getProductTypes();
-        setProductType(res);
+        const res = await fetch("/api/product-types");
+        const data = await res.json();
+        setProductTypes(Array.isArray(data) ? data : []);
       } catch (error) {
         console.error("Failed to fetch product types:", error);
       } finally {
@@ -69,17 +72,14 @@ export default function ProductCustomizer({
   }, []);
 
   useEffect(() => {
-    if (!selectedProductTypeId) {
-      setBrands([]);
-      return;
-    }
+    if (!productType) return;
 
     const fetchBrandsData = async () => {
       try {
         setLoadingBrands(true);
-        const brandRes = await fetch(`/api/brands?product_type_id=${selectedProductTypeId}`);
+        const brandRes = await fetch(`/api/brands?typeId=${productType}`);
         const data = await brandRes.json();
-        setBrands(data.data);
+        setBrands(Array.isArray(data) ? data : []);
       } catch (error) {
         console.error("Failed to fetch brands:", error);
       } finally {
@@ -88,7 +88,23 @@ export default function ProductCustomizer({
     };
 
     fetchBrandsData();
-  }, [selectedProductTypeId, setBrand]);
+  }, [productType]);
+
+  useEffect(() => {
+    const fetchColors = async () => {
+      try {
+        setLoadingColors(true);
+        const res = await fetch("/api/colors");
+        const data = await res.json();
+        setColors(Array.isArray(data) ? data : []);
+      } catch (error) {
+        console.error("Failed to fetch colors:", error);
+      } finally {
+        setLoadingColors(false);
+      }
+    };
+    fetchColors();
+  }, []);
 
   return (
     <div className="w-80 bg-white shadow-lg p-6 overflow-y-auto flex flex-col min-h-full">
@@ -105,8 +121,8 @@ export default function ProductCustomizer({
           Product Type
         </Label>
         <Select
-          value={selectedProductTypeId}
-          onValueChange={setSelectedProductTypeId}
+          value={productType}
+          onValueChange={setProductType}
           disabled={loadingProductTypes}
         >
           <SelectTrigger id="product-type">
@@ -119,8 +135,8 @@ export default function ProductCustomizer({
             />
           </SelectTrigger>
           <SelectContent>
-            {Array.isArray(productType) &&
-              productType.map((type) => (
+            {Array.isArray(productTypes) &&
+              productTypes.map((type) => (
                 <SelectItem key={type.id} value={type.id}>
                   {type.name}
                 </SelectItem>
@@ -171,26 +187,30 @@ export default function ProductCustomizer({
         >
           Select color
         </Label>
-        <div className="flex gap-2 flex-wrap">
-          {[
-            "white",
-            "black",
-            "red",
-            "blue",
-            "green",
-            "yellow",
-            "purple",
-            "orange",
-          ].map((colorOption) => (
-            <button
-              key={colorOption}
-              onClick={() => setColor(colorOption)}
-              className={`w-8 h-8 rounded-full border-2 ${color === colorOption ? "border-blue-500" : "border-gray-300"
-                }`}
-              style={{ backgroundColor: colorOption }}
+        <Select
+          value={color}
+          onValueChange={setColor}
+          disabled={loadingColors || colors.length === 0}
+        >
+          <SelectTrigger id="color">
+            <SelectValue
+              placeholder={loadingColors ? "Loading colors..." : "Select color"}
             />
-          ))}
-        </div>
+          </SelectTrigger>
+          <SelectContent>
+            {colors.length === 0 && !loadingColors ? (
+              <SelectItem value="none" disabled>
+                No colors available
+              </SelectItem>
+            ) : (
+              colors.map((c) => (
+                <SelectItem key={c.id} value={String(c.id)}>
+                  {c.value}
+                </SelectItem>
+              ))
+            )}
+          </SelectContent>
+        </Select>
       </div>
 
       {/* Place Your Assets */}
@@ -208,7 +228,7 @@ export default function ProductCustomizer({
         </h3>
         <SizingAndQuantity
           brandId={brand}
-          productTypeId={selectedProductTypeId}
+          productTypeId={productType}
           sizeSelection={sizeSelection}
           setSizeSelection={setSizeSelection}
         />
