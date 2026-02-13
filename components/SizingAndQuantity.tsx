@@ -36,6 +36,17 @@ export default function SizingAndQuantity({
 }: SizingAndQuantityProps) {
   const [sizes, setSizes] = useState<Size[]>([]);
   const [isLoading, setIsLoading] = useState(false);
+  const [sizeSelection, setSizeSelection] = useState<
+    {
+      size: string;
+      quantity: number;
+    }[]
+  >([
+    {
+      size: "",
+      quantity: 1,
+    },
+  ]);
   useEffect(() => {
     // Feat: Fetch sizes from API
     const loadSizes = async () => {
@@ -49,57 +60,80 @@ export default function SizingAndQuantity({
             (SIZE_ORDER[b.value as keyof typeof SIZE_ORDER] || 999),
         );
         setSizes(sizes);
+        setIsLoading(false);
       }
     };
-
-    try {
-      loadSizes();
-    } catch (error) {
-      console.error("Failed to load sizes:", error);
-    } finally {
-      setIsLoading(false);
-    }
+    loadSizes();
   }, []);
+
+  const updateSelection = (
+    index: number,
+    field: "size" | "quantity",
+    value: string | number,
+  ) => {
+    const updated = [...sizeSelection];
+
+    updated[index] = {
+      ...updated[index],
+      [field]: field === "quantity" ? Number(value) : value,
+    };
+
+    setSizeSelection(updated);
+  };
+
   return (
     <div className="space-y-2">
-      <div className="flex items-center justify-center gap-4">
-        <div className="flex-2">
-          <Label className="text-sm text-muted-foreground mb-2">Size:</Label>
-          <Select>
-            {isLoading ? (
+      {sizeSelection.map((selection, index) => (
+        <div className="flex items-center justify-center gap-4" key={index}>
+          <div className="flex-2">
+            <Label className="text-sm text-muted-foreground mb-2">Size:</Label>
+
+            <Select
+              value={selection.size}
+              onValueChange={(value) => updateSelection(index, "size", value)}
+            >
               <SelectTrigger className="w-full">
-                <SelectValue placeholder="Loading sizes..." />
+                <SelectValue
+                  placeholder={isLoading ? "Loading sizes..." : "Select a size"}
+                />
               </SelectTrigger>
-            ) : (
-              <SelectTrigger className="w-full">
-                <SelectValue placeholder="Select a size" />
-              </SelectTrigger>
-            )}
-            <SelectContent>
-              {sizes.map((size) => (
-                <SelectItem key={size.id} value={size.id.toString()}>
-                  {size.value}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+
+              <SelectContent>
+                {sizes.map((size) => (
+                  <SelectItem key={size.id} value={size.value}>
+                    {size.value}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+
+          <div className="flex-1 space-y-2">
+            <Label className="text-sm text-muted-foreground mb-2 block">
+              Quantity:
+            </Label>
+
+            <Input
+              type="number"
+              min="1"
+              value={selection.quantity}
+              onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+                updateSelection(index, "quantity", e.target.value)
+              }
+              className="w-full"
+            />
+          </div>
         </div>
-        <div className="flex-1 space-y-2">
-          <Label className="text-sm text-muted-foreground mb-2 block">
-            Quantity:
-          </Label>
-          <Input
-            type="number"
-            min="1"
-            value={quantity}
-            onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
-              setQuantity(e.target.value)
-            }
-            className="w-full"
-          />
-        </div>
-      </div>
-      <Button className="" size="icon" variant="outline">
+      ))}
+
+      <Button
+        className=""
+        size="icon"
+        variant="outline"
+        onClick={() =>
+          setSizeSelection([...sizeSelection, { size: "", quantity: 1 }])
+        }
+      >
         <Plus />
       </Button>
     </div>
