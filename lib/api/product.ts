@@ -1,10 +1,10 @@
-import { supabase } from "@/lib/supabase"
+import { getSupabaseClient } from "@/lib/supabase"
 import { Product, Brand, Color, ProductType, Size } from "@/types/product"
 
 export class ProductService {
   static async getProducts(): Promise<Product[]> {
     try {
-      const { data, error } = await supabase
+      const { data, error } = await getSupabaseClient()
         .from('products')
         .select(`
           id,
@@ -40,7 +40,7 @@ export class ProductService {
 
   static async getProductById(id: string): Promise<Product | null> {
     try {
-      const { data, error } = await supabase
+      const { data, error } = await getSupabaseClient()
         .from('products')
         .select(`
           id,
@@ -78,7 +78,7 @@ export class ProductService {
 
   static async getBrands(typeId?: string): Promise<Brand[]> {
     try {
-      let query = supabase
+      let query = getSupabaseClient()
         .from('brands')
         .select('id, name, type_id')
         .order('name')
@@ -102,7 +102,7 @@ export class ProductService {
 
   static async getColors(): Promise<Color[]> {
     try {
-      const { data, error } = await supabase
+      const { data, error } = await getSupabaseClient()
         .from('colors')
         .select('id, value')
         .order('value')
@@ -120,7 +120,7 @@ export class ProductService {
 
   static async getProductTypes(): Promise<ProductType[]> {
     try {
-      const { data, error } = await supabase
+      const { data, error } = await getSupabaseClient()
         .from('product_type')
         .select('id, name')
         .order('name')
@@ -138,7 +138,7 @@ export class ProductService {
 
   static async getSizes(): Promise<Size[]> {
     try {
-      const { data, error } = await supabase
+      const { data, error } = await getSupabaseClient()
         .from('sizes')
         .select('id, value')
         .order('value')
