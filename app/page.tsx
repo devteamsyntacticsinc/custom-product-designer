@@ -8,17 +8,18 @@ export default function Home() {
   const [productType, setProductType] = useState("");
   const [brand, setBrand] = useState("");
   const [color, setColor] = useState("");
- const [sizeSelection, setSizeSelection] = useState<
-   {
-     size: string;
-     quantity: number;
-   }[]
- >([
-   {
-     size: "",
-     quantity: 1,
-   },
- ]);
+  const [sizeSelection, setSizeSelection] = useState<
+    {
+      size: string;
+      quantity: number;
+    }[]
+  >([
+    {
+      size: "",
+      quantity: 1,
+    },
+  ]);
+
   return (
     <div className="min-h-screen bg-gray-50 flex">
       {/* Left Sidebar - Controls */}

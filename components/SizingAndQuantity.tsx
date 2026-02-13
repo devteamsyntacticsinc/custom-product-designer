@@ -81,59 +81,46 @@ export default function SizingAndQuantity({
 
   return (
     <div className="space-y-2">
-      {sizeSelection.map((selection, index) => (
-        <div className="flex items-center justify-center gap-4" key={index}>
-          <div className="flex-2">
-            <Label className="text-sm text-muted-foreground mb-2">Size:</Label>
-
-            <Select
-              value={selection.size}
-              onValueChange={(value) => updateSelection(index, "size", value)}
-            >
-              <SelectTrigger className="w-full">
-                <SelectValue
-                  placeholder={isLoading ? "Loading sizes..." : "Select a size"}
-                />
-              </SelectTrigger>
-
-              <SelectContent>
-                {sizes.map((size) => (
-                  <SelectItem key={size.id} value={size.value}>
-                    {size.value}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-
-          <div className="flex-1 space-y-2">
-            <Label className="text-sm text-muted-foreground mb-2 block">
-              Quantity:
-            </Label>
-
-            <Input
-              type="number"
-              min="1"
-              value={selection.quantity}
-              onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
-                updateSelection(index, "quantity", e.target.value)
-              }
-              className="w-full"
-            />
-          </div>
+      <div className="flex flex-col gap-2 ">
+        <div className="grid grid-cols-2 ">
+          <Label className="text-sm">Size:</Label>
+          <Label className="text-sm">Quantity:</Label>
         </div>
-      ))}
+        <div className="space-y-2 ">
+          {isLoading ? (
+            <div className="space-y-2">
+              {Array.from({ length: 5 }).map((_, index) => (
+                <div className="grid grid-cols-2" key={index}>
+                  {/* Update to use skeleton component */}
+                  <div className="h-6 w-16 bg-muted rounded animate-pulse" />
+                  <div className="h-10 w-full bg-muted rounded animate-pulse" />
+                </div>
+              ))}
+            </div>
+          ) : (
+            sizes.map((size) => (
+              <div className="grid grid-cols-2" key={size.id}>
+                <p className="text-base font-medium text-muted-foreground">
+                  {size.value}
+                </p>
+                <Input type="number" min="1" className="flex-1" disabled />
+              </div>
+            ))
+          )}
+        </div>
 
-      <Button
-        className=""
-        size="icon"
-        variant="outline"
-        onClick={() =>
-          setSizeSelection([...sizeSelection, { size: "", quantity: 1 }])
-        }
-      >
-        <Plus />
-      </Button>
+        {/* <div className="flex-1 space-y-2">
+          <Input
+            type="number"
+            min="1"
+            // value={selection.quantity}
+            // onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+            //   updateSelection(index, "quantity", e.target.value)
+            // }
+            className="w-full"
+          />
+        </div> */}
+      </div>
     </div>
   );
 }
