@@ -1,19 +1,10 @@
 "use client";
 
 import { Input } from "@/components/ui/input";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 import { Label } from "./ui/label";
-import { Button } from "./ui/button";
-import { Plus } from "lucide-react";
 import { useEffect, useState } from "react";
 import { ProductService } from "@/lib/api/product";
-import { Size } from "@/types/product";
+import { ProductType, Size } from "@/types/product";
 
 const SIZE_ORDER = {
   "Extra Small": 1,
@@ -36,9 +27,11 @@ interface SizingAndQuantityProps {
       quantity: number;
     }[],
   ) => void;
+  productType?: ProductType[];
 }
 
 export default function SizingAndQuantity({
+  productType,
   sizeSelection,
   setSizeSelection,
 }: SizingAndQuantityProps) {
@@ -46,80 +39,82 @@ export default function SizingAndQuantity({
   const [isLoading, setIsLoading] = useState(false);
 
   useEffect(() => {
-    // Feat: Fetch sizes from API
     const loadSizes = async () => {
       setIsLoading(true);
       const sizes = await ProductService.getSizes();
       if (sizes) {
-        // Re-order sizes to make sure it is small, medium and large
         sizes.sort(
           (a, b) =>
             (SIZE_ORDER[a.value as keyof typeof SIZE_ORDER] || 999) -
             (SIZE_ORDER[b.value as keyof typeof SIZE_ORDER] || 999),
         );
         setSizes(sizes);
+
+        // Initialize sizeSelection with all sizes and quantity 0
+        setSizeSelection(
+          sizes.map((size) => ({
+            size: size.value,
+            quantity: 0,
+          })),
+        );
+
         setIsLoading(false);
       }
     };
     loadSizes();
-  }, []);
+  }, [setSizeSelection]);
 
-  const updateSelection = (
-    index: number,
-    field: "size" | "quantity",
-    value: string | number,
-  ) => {
-    const updated = [...sizeSelection];
+  // Handle quantity change for a specific size
+  const handleQuantityChange = (sizeValue: string, quantity: number) => {
+    setSizeSelection(
+      sizeSelection.map((item) =>
+        item.size === sizeValue ? { ...item, quantity: quantity } : item,
+      ),
+    );
+  };
 
-    updated[index] = {
-      ...updated[index],
-      [field]: field === "quantity" ? Number(value) : value,
-    };
-
-    setSizeSelection(updated);
+  // Get quantity for a specific size
+  const getQuantity = (sizeValue: string): number => {
+    return sizeSelection.find((item) => item.size === sizeValue)?.quantity || 0;
   };
 
   return (
-    <div className="space-y-2">
-      <div className="flex flex-col gap-2 ">
-        <div className="grid grid-cols-2 ">
-          <Label className="text-sm">Size:</Label>
-          <Label className="text-sm">Quantity:</Label>
-        </div>
-        <div className="space-y-2 ">
-          {isLoading ? (
-            <div className="space-y-2">
-              {Array.from({ length: 5 }).map((_, index) => (
-                <div className="grid grid-cols-2" key={index}>
-                  {/* Update to use skeleton component */}
-                  <div className="h-6 w-16 bg-muted rounded animate-pulse" />
-                  <div className="h-10 w-full bg-muted rounded animate-pulse" />
-                </div>
-              ))}
-            </div>
-          ) : (
-            sizes.map((size) => (
-              <div className="grid grid-cols-2" key={size.id}>
-                <p className="text-base font-medium text-muted-foreground">
-                  {size.value}
-                </p>
-                <Input type="number" min="1" className="flex-1" disabled />
+    <div className="flex flex-col gap-2">
+      <div className="grid grid-cols-2">
+        <Label className="text-sm">Size:</Label>
+        <Label className="text-sm">Quantity:</Label>
+      </div>
+      <div className="space-y-2">
+        {isLoading ? (
+          <div className="space-y-2">
+            {Array.from({ length: 5 }).map((_, index) => (
+              <div className="grid grid-cols-2 gap-2" key={index}>
+                <div className="h-6 w-16 bg-muted rounded animate-pulse" />
+                <div className="h-10 w-full bg-muted rounded animate-pulse" />
               </div>
-            ))
-          )}
-        </div>
-
-        {/* <div className="flex-1 space-y-2">
-          <Input
-            type="number"
-            min="1"
-            // value={selection.quantity}
-            // onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
-            //   updateSelection(index, "quantity", e.target.value)
-            // }
-            className="w-full"
-          />
-        </div> */}
+            ))}
+          </div>
+        ) : (
+          sizes.map((size) => (
+            <div className="grid grid-cols-2 gap-2" key={size.id}>
+              <p className="text-base font-medium text-muted-foreground">
+                {size.value}
+              </p>
+              <Input
+                type="number"
+                min="0"
+                value={getQuantity(size.value)}
+                onChange={(e) =>
+                  handleQuantityChange(
+                    size.value,
+                    parseInt(e.target.value) || 0,
+                  )
+                }
+                className="flex-1"
+              />
+            </div>
+          ))
+        )}
       </div>
     </div>
   );
