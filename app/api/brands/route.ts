@@ -1,9 +1,12 @@
 import { NextResponse } from 'next/server'
 import { ProductService } from '@/lib/api/product'
 
-export async function GET() {
+export async function GET(request: Request) {
   try {
-    const brands = await ProductService.getBrands()
+    const { searchParams } = new URL(request.url)
+    const typeId = searchParams.get('typeId')
+
+    const brands = await ProductService.getBrands(typeId || undefined)
     return NextResponse.json(brands)
   } catch (error) {
     console.error('API Error:', error)
