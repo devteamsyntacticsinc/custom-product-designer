@@ -13,12 +13,12 @@ import SizingAndQuantity from "@/components/SizingAndQuantity";
 import AssetUpload from "./AssetUpload";
 
 interface ProductCustomizerProps {
-  productType: string;
-  setProductType: (value: string) => void;
+  productType: ProductType[];
+  setProductType: Dispatch<SetStateAction<ProductType[]>>
   brand: string;
-  setBrand: (value: string) => void;
+  setBrand: Dispatch<SetStateAction<string>>;
   color: string;
-  setColor: (value: string) => void;
+  setColor: Dispatch<SetStateAction<string>>;
   sizeSelection: {
     size: string;
     quantity: number;
@@ -45,60 +45,123 @@ export default function ProductCustomizer({
   assets,
   setAssets,
 }: ProductCustomizerProps) {
+
+  const [selectedProductTypeId, setSelectedProductTypeId] = useState("");
+  const [loadingProductTypes, setLoadingProductTypes] = useState(true);
+  const [loadingBrands, setLoadingBrands] = useState(false);
+  const [loadingColors, setLoadingColors] = useState(false);
+  const [brands, setBrands] = useState<Brand[]>([]);
+  const [colors, setColors] = useState<Color[]>([]);
+
+  useEffect(() => {
+    const fetchProductTypes = async () => {
+      try {
+        setLoadingProductTypes(true);
+        const res = await ProductService.getProductTypes();
+        setProductType(res);
+      } catch (error) {
+        console.error("Failed to fetch product types:", error);
+      } finally {
+        setLoadingProductTypes(false);
+      }
+    };
+    fetchProductTypes();
+  }, []);
+
+  useEffect(() => {
+    if (!selectedProductTypeId) {
+      setBrands([]);
+      setColors([]);
+      return;
+    }
+
+    const fetchBrandsData = async () => {
+      try {
+        setLoadingBrands(true);
+        const brandRes = await ProductService.getBrands(selectedProductTypeId);
+        setBrands(brandRes);
+        setBrand("");
+      } catch (error) {
+        console.error("Failed to fetch brands:", error);
+      } finally {
+        setLoadingBrands(false);
+      }
+    };
+
+    fetchBrandsData();
+  }, [selectedProductTypeId, setBrand]);
+
+  useEffect(() => {
+    if (!brand || brand === "none") {
+      setColors([]);
+      setColor("");
+      return;
+    }
+
+    const fetchColorsData = async () => {
+      try {
+        setLoadingColors(true);
+        const colorRes = await ProductService.getColors();
+        setColors(colorRes);
+      } catch (error) {
+        console.error("Failed to fetch colors:", error);
+      } finally {
+        setLoadingColors(false);
+      }
+    };
+
+    fetchColorsData();
+  }, [brand, setColor]);
+
   return (
     <div className="w-80 bg-white shadow-lg p-6 overflow-y-auto flex flex-col min-h-full">
-      <h2 className="text-2xl font-bold text-gray-900 mb-6">
-        Customize Your Product
-      </h2>
+      <h2 className="text-2xl font-bold text-gray-900 mb-6">Customize Your Product</h2>
 
       {/* Product Type */}
       <div className="mb-6">
-        <Label
-          htmlFor="product-type"
-          className="text-sm font-medium text-gray-700 mb-2 block"
-        >
+        <Label htmlFor="product-type" className="text-sm font-medium text-gray-700 mb-2 block">
           Product Type
         </Label>
-        <Select value={productType} onValueChange={setProductType}>
+        <Select value={selectedProductTypeId} onValueChange={setSelectedProductTypeId} disabled={loadingProductTypes}>
           <SelectTrigger id="product-type">
-            <SelectValue placeholder="Select product type" />
+            <SelectValue placeholder={loadingProductTypes ? "Loading product types..." : "Select product type"} />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="tshirt">T-Shirt</SelectItem>
-            <SelectItem value="hoodie">Hoodie</SelectItem>
-            <SelectItem value="tank-top">Tank Top</SelectItem>
-            <SelectItem value="long-sleeve">Long Sleeve</SelectItem>
+            {productType.map((type) => (
+              <SelectItem key={type.id} value={type.id}>
+                {type.name}
+              </SelectItem>
+            ))}
           </SelectContent>
         </Select>
       </div>
 
       {/* Brand */}
       <div className="mb-6">
-        <Label
-          htmlFor="brand"
-          className="text-sm font-medium text-gray-700 mb-2 block"
-        >
+        <Label htmlFor="brand" className="text-sm font-medium text-gray-700 mb-2 block">
           Brand
         </Label>
-        <Select value={brand} onValueChange={setBrand}>
+        <Select value={brand} onValueChange={setBrand} disabled={loadingBrands || brands.length === 0}>
           <SelectTrigger id="brand">
-            <SelectValue placeholder="Select brand" />
+            <SelectValue placeholder={loadingBrands ? "Loading brands..." : "Select brand"} />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="nike">Nike</SelectItem>
-            <SelectItem value="adidas">Adidas</SelectItem>
-            <SelectItem value="puma">Puma</SelectItem>
-            <SelectItem value="under-armour">Under Armour</SelectItem>
+            {brands.length === 0 && !loadingBrands ? (
+              <SelectItem value="none" disabled>No brands available</SelectItem>
+            ) : (
+              brands.map((b) => (
+                <SelectItem key={b.id} value={String(b.id)}>
+                  {b.name}
+                </SelectItem>
+              ))
+            )}
           </SelectContent>
         </Select>
       </div>
 
       {/* Select Color */}
       <div className="mb-6">
-        <Label
-          htmlFor="color"
-          className="text-sm font-medium text-gray-700 mb-2 block"
-        >
+        <Label htmlFor="color" className="text-sm font-medium text-gray-700 mb-2 block">
           Select color
         </Label>
         <div className="flex gap-2 flex-wrap">

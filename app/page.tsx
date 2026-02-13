@@ -3,6 +3,7 @@
 import { useState } from "react";
 import ProductCustomizer from "@/components/ProductCustomizer";
 import ProductPreview from "@/components/ProductPreview";
+import { ProductType } from "@/types/product";
 
 export default function Home() {
   const [productType, setProductType] = useState("");
