@@ -3,8 +3,9 @@
 import { Input } from "@/components/ui/input";
 import { Label } from "./ui/label";
 import { useEffect, useState } from "react";
-import { ProductType, Size } from "@/types/product";
+import { Size } from "@/types/product";
 import { InfoIcon } from "lucide-react";
+import { cn } from "@/lib/utils";
 
 const SIZE_ORDER = {
   "Extra Small": 1,
@@ -47,13 +48,15 @@ export default function SizingAndQuantity({
     const loadSizes = async () => {
       setIsLoading(true);
 
+      // Always fetch all sizes
       const response = await fetch("/api/sizes");
       const sizes = await response.json();
 
+      // Fetch filtered sizes only if both productTypeId and brandId are provided
       let availableSizes: Size[] = [];
-      if (!productTypeId || !brandId) {
+      if (productTypeId || brandId) {
         const responseByProductId = await fetch(
-          `/api/sizes?productTypeId=${productTypeId}&brandId=${brandId}`,
+          `/api/sizes-by-type?typeId=${productTypeId || ""}&brandId=${brandId || ""}`,
         );
         availableSizes = await responseByProductId.json();
       }
@@ -83,7 +86,7 @@ export default function SizingAndQuantity({
     };
 
     loadSizes();
-  }, [productTypeId, brandId]); // Removed setSizeSelection from deps
+  }, [productTypeId, brandId]);
 
   // Handle quantity change for a specific size
   const handleQuantityChange = (sizeValue: string, quantity: number) => {
@@ -95,7 +98,7 @@ export default function SizingAndQuantity({
   };
 
   const isSizeAvailable = (sizeValue: string): boolean => {
-    // If filters aren't properly set, enable all sizes
+    // If no product type or brand is selected, disable all inputs
     if (!productTypeId && !brandId) {
       return false;
     }
@@ -115,7 +118,7 @@ export default function SizingAndQuantity({
           <Label className="text-sm">Size:</Label>
           <Label className="text-sm">Quantity:</Label>
         </div>
-        {!productTypeId && !brandId && (
+        {(!productTypeId || !brandId) && (
           <div className="text-xs text-amber-600 py-2 flex gap-1">
             <InfoIcon className="inline-block size-5" />
             <span>
@@ -139,7 +142,12 @@ export default function SizingAndQuantity({
             const available = isSizeAvailable(size.value);
             return (
               <div className="grid grid-cols-2 gap-2" key={size.id}>
-                <p className="text-base font-medium text-muted-foreground">
+                <p
+                  className={cn(
+                    "text-base font-medium",
+                    !available && "text-muted-foreground",
+                  )}
+                >
                   {size.value}
                 </p>
                 <Input
