@@ -8,17 +8,25 @@ export default function Home() {
   const [productType, setProductType] = useState("");
   const [brand, setBrand] = useState("");
   const [color, setColor] = useState("");
- const [sizeSelection, setSizeSelection] = useState<
-   {
-     size: string;
-     quantity: number;
-   }[]
- >([
-   {
-     size: "",
-     quantity: 1,
-   },
- ]);
+  const [sizeSelection, setSizeSelection] = useState<
+    {
+      size: string;
+      quantity: number;
+    }[]
+  >([
+    {
+      size: "",
+      quantity: 1,
+    },
+  ]);
+
+  const [assets, setAssets] = useState<Record<string, File | null>>({
+    "front-top-left": null,
+    "front-center": null,
+    "back-top": null,
+    "back-bottom": null,
+  });
+
   return (
     <div className="min-h-screen bg-gray-50 flex">
       {/* Left Sidebar - Controls */}
@@ -31,10 +39,12 @@ export default function Home() {
         setColor={setColor}
         sizeSelection={sizeSelection}
         setSizeSelection={setSizeSelection}
+        assets={assets}
+        setAssets={setAssets}
       />
 
       {/* Right Content - Product Preview */}
-      <ProductPreview />
+      <ProductPreview assets={assets} />
     </div>
   );
 }

@@ -9,8 +9,8 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Label } from "@/components/ui/label";
-import AssetUpload from "@/components/AssetUpload";
 import SizingAndQuantity from "@/components/SizingAndQuantity";
+import AssetUpload from "./AssetUpload";
 
 interface ProductCustomizerProps {
   productType: string;
@@ -29,6 +29,8 @@ interface ProductCustomizerProps {
       quantity: number;
     }[],
   ) => void;
+  assets: Record<string, File | null>;
+  setAssets: React.Dispatch<React.SetStateAction<Record<string, File | null>>>;
 }
 
 export default function ProductCustomizer({
@@ -40,6 +42,8 @@ export default function ProductCustomizer({
   setColor,
   sizeSelection,
   setSizeSelection,
+  assets,
+  setAssets,
 }: ProductCustomizerProps) {
   return (
     <div className="w-80 bg-white shadow-lg p-6 overflow-y-auto flex flex-col min-h-full">
@@ -111,9 +115,8 @@ export default function ProductCustomizer({
             <button
               key={colorOption}
               onClick={() => setColor(colorOption)}
-              className={`w-8 h-8 rounded-full border-2 ${
-                color === colorOption ? "border-blue-500" : "border-gray-300"
-              }`}
+              className={`w-8 h-8 rounded-full border-2 ${color === colorOption ? "border-blue-500" : "border-gray-300"
+                }`}
               style={{ backgroundColor: colorOption }}
             />
           ))}
@@ -125,7 +128,7 @@ export default function ProductCustomizer({
         <h3 className="text-lg font-semibold text-gray-900 mb-4">
           Place your assets
         </h3>
-        <AssetUpload />
+        <AssetUpload assets={assets} setAssets={setAssets} />
       </div>
 
       {/* Sizing and Quantity */}
