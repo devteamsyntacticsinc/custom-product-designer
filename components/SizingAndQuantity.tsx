@@ -118,11 +118,11 @@ export default function SizingAndQuantity({
           <Label className="text-sm">Size:</Label>
           <Label className="text-sm">Quantity:</Label>
         </div>
-        {(!productTypeId || !brandId) && (
+        {!productTypeId && !brandId && (
           <div className="text-xs text-amber-600 py-2 flex gap-1">
             <InfoIcon className="inline-block size-5" />
             <span>
-              Please select a product type and brand to see available sizes
+              Please select a product type or brand to see available sizes
             </span>
           </div>
         )}
