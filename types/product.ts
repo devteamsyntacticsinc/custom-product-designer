@@ -22,6 +22,7 @@ export interface Product {
 export interface Brand {
   id: string
   name: string
+  type_id?: string
 }
 
 export interface Color {
@@ -33,3 +34,9 @@ export interface ProductType {
   id: string
   name: string
 }
+
+export interface Size {
+  id: string
+  value: string
+}
+

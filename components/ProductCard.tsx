@@ -1,6 +1,5 @@
 import Image from "next/image"
 import { Card, CardContent } from "@/components/ui/card"
-import { Badge } from "@/components/ui/badge"
 import { Product } from "@/types/product"
 
 interface ProductCardProps {
