@@ -19,9 +19,9 @@ interface ProductCustomizerProps {
   productType: ProductType[];
   setProductType: Dispatch<SetStateAction<ProductType[]>>;
   brand: string;
-  setBrand: Dispatch<SetStateAction<string>>;
+  setBrand: (value: string) => void;
   color: string;
-  setColor: Dispatch<SetStateAction<string>>;
+  setColor: (value: string) => void;
   sizeSelection: {
     size: string;
     quantity: number;
@@ -77,9 +77,9 @@ export default function ProductCustomizer({
     const fetchBrandsData = async () => {
       try {
         setLoadingBrands(true);
-        const brandRes = await ProductService.getBrands(selectedProductTypeId);
-        setBrands(brandRes);
-        setBrand("");
+        const brandRes = await fetch(`/api/brands?product_type_id=${selectedProductTypeId}`);
+        const data = await brandRes.json();
+        setBrands(data.data);
       } catch (error) {
         console.error("Failed to fetch brands:", error);
       } finally {
@@ -185,9 +185,8 @@ export default function ProductCustomizer({
             <button
               key={colorOption}
               onClick={() => setColor(colorOption)}
-              className={`w-8 h-8 rounded-full border-2 ${
-                color === colorOption ? "border-blue-500" : "border-gray-300"
-              }`}
+              className={`w-8 h-8 rounded-full border-2 ${color === colorOption ? "border-blue-500" : "border-gray-300"
+                }`}
               style={{ backgroundColor: colorOption }}
             />
           ))}
