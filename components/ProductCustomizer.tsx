@@ -17,7 +17,7 @@ import AssetUpload from "./AssetUpload";
 
 interface ProductCustomizerProps {
   productType: ProductType[];
-  setProductType: Dispatch<SetStateAction<ProductType[]>>
+  setProductType: Dispatch<SetStateAction<ProductType[]>>;
   brand: string;
   setBrand: Dispatch<SetStateAction<string>>;
   color: string;
@@ -48,7 +48,6 @@ export default function ProductCustomizer({
   assets,
   setAssets,
 }: ProductCustomizerProps) {
-
   const [selectedProductTypeId, setSelectedProductTypeId] = useState("");
   const [loadingProductTypes, setLoadingProductTypes] = useState(true);
   const [loadingBrands, setLoadingBrands] = useState(false);
@@ -91,42 +90,68 @@ export default function ProductCustomizer({
     fetchBrandsData();
   }, [selectedProductTypeId, setBrand]);
 
-
   return (
     <div className="w-80 bg-white shadow-lg p-6 overflow-y-auto flex flex-col min-h-full">
-      <h2 className="text-2xl font-bold text-gray-900 mb-6">Customize Your Product</h2>
+      <h2 className="text-2xl font-bold text-gray-900 mb-6">
+        Customize Your Product
+      </h2>
 
       {/* Product Type */}
       <div className="mb-6">
-        <Label htmlFor="product-type" className="text-sm font-medium text-gray-700 mb-2 block">
+        <Label
+          htmlFor="product-type"
+          className="text-sm font-medium text-gray-700 mb-2 block"
+        >
           Product Type
         </Label>
-        <Select value={selectedProductTypeId} onValueChange={setSelectedProductTypeId} disabled={loadingProductTypes}>
+        <Select
+          value={selectedProductTypeId}
+          onValueChange={setSelectedProductTypeId}
+          disabled={loadingProductTypes}
+        >
           <SelectTrigger id="product-type">
-            <SelectValue placeholder={loadingProductTypes ? "Loading product types..." : "Select product type"} />
+            <SelectValue
+              placeholder={
+                loadingProductTypes
+                  ? "Loading product types..."
+                  : "Select product type"
+              }
+            />
           </SelectTrigger>
           <SelectContent>
-            {Array.isArray(productType) && productType.map((type) => (
-              <SelectItem key={type.id} value={type.id}>
-                {type.name}
-              </SelectItem>
-            ))}
+            {Array.isArray(productType) &&
+              productType.map((type) => (
+                <SelectItem key={type.id} value={type.id}>
+                  {type.name}
+                </SelectItem>
+              ))}
           </SelectContent>
         </Select>
       </div>
 
       {/* Brand */}
       <div className="mb-6">
-        <Label htmlFor="brand" className="text-sm font-medium text-gray-700 mb-2 block">
+        <Label
+          htmlFor="brand"
+          className="text-sm font-medium text-gray-700 mb-2 block"
+        >
           Brand
         </Label>
-        <Select value={brand} onValueChange={setBrand} disabled={loadingBrands || brands.length === 0}>
+        <Select
+          value={brand}
+          onValueChange={setBrand}
+          disabled={loadingBrands || brands.length === 0}
+        >
           <SelectTrigger id="brand">
-            <SelectValue placeholder={loadingBrands ? "Loading brands..." : "Select brand"} />
+            <SelectValue
+              placeholder={loadingBrands ? "Loading brands..." : "Select brand"}
+            />
           </SelectTrigger>
           <SelectContent>
             {brands.length === 0 && !loadingBrands ? (
-              <SelectItem value="none" disabled>No brands available</SelectItem>
+              <SelectItem value="none" disabled>
+                No brands available
+              </SelectItem>
             ) : (
               brands.map((b) => (
                 <SelectItem key={b.id} value={String(b.id)}>
@@ -140,7 +165,10 @@ export default function ProductCustomizer({
 
       {/* Select Color */}
       <div className="mb-6">
-        <Label htmlFor="color" className="text-sm font-medium text-gray-700 mb-2 block">
+        <Label
+          htmlFor="color"
+          className="text-sm font-medium text-gray-700 mb-2 block"
+        >
           Select color
         </Label>
         <div className="flex gap-2 flex-wrap">
@@ -157,8 +185,9 @@ export default function ProductCustomizer({
             <button
               key={colorOption}
               onClick={() => setColor(colorOption)}
-              className={`w-8 h-8 rounded-full border-2 ${color === colorOption ? "border-blue-500" : "border-gray-300"
-                }`}
+              className={`w-8 h-8 rounded-full border-2 ${
+                color === colorOption ? "border-blue-500" : "border-gray-300"
+              }`}
               style={{ backgroundColor: colorOption }}
             />
           ))}
@@ -178,7 +207,12 @@ export default function ProductCustomizer({
         <h3 className="text-lg font-semibold text-gray-900 mb-4">
           Sizing and Quantity
         </h3>
-        <SizingAndQuantity sizeSelection={sizeSelection} setSizeSelection={setSizeSelection} />
+        <SizingAndQuantity
+          brandId={brand}
+          productTypeId={selectedProductTypeId}
+          sizeSelection={sizeSelection}
+          setSizeSelection={setSizeSelection}
+        />
       </div>
 
       {/* Action Buttons */}
