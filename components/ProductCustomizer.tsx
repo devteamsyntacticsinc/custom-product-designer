@@ -1,5 +1,6 @@
 "use client";
 
+import React, { useState, useEffect, Dispatch, SetStateAction } from "react";
 import { Button } from "@/components/ui/button";
 import {
   Select,
@@ -9,16 +10,18 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Label } from "@/components/ui/label";
-import AssetUpload from "@/components/AssetUpload";
+import { ProductService } from "@/lib/api/product";
+import { ProductType, Brand } from "@/types/product";
 import SizingAndQuantity from "@/components/SizingAndQuantity";
+import AssetUpload from "./AssetUpload";
 
 interface ProductCustomizerProps {
-  productType: string;
-  setProductType: (value: string) => void;
+  productType: ProductType[];
+  setProductType: Dispatch<SetStateAction<ProductType[]>>
   brand: string;
-  setBrand: (value: string) => void;
+  setBrand: Dispatch<SetStateAction<string>>;
   color: string;
-  setColor: (value: string) => void;
+  setColor: Dispatch<SetStateAction<string>>;
   sizeSelection: {
     size: string;
     quantity: number;
@@ -29,6 +32,8 @@ interface ProductCustomizerProps {
       quantity: number;
     }[],
   ) => void;
+  assets: Record<string, File | null>;
+  setAssets: React.Dispatch<React.SetStateAction<Record<string, File | null>>>;
 }
 
 export default function ProductCustomizer({
@@ -40,61 +45,102 @@ export default function ProductCustomizer({
   setColor,
   sizeSelection,
   setSizeSelection,
+  assets,
+  setAssets,
 }: ProductCustomizerProps) {
+
+  const [selectedProductTypeId, setSelectedProductTypeId] = useState("");
+  const [loadingProductTypes, setLoadingProductTypes] = useState(true);
+  const [loadingBrands, setLoadingBrands] = useState(false);
+  const [brands, setBrands] = useState<Brand[]>([]);
+
+  useEffect(() => {
+    const fetchProductTypes = async () => {
+      try {
+        setLoadingProductTypes(true);
+        const res = await ProductService.getProductTypes();
+        setProductType(res);
+      } catch (error) {
+        console.error("Failed to fetch product types:", error);
+      } finally {
+        setLoadingProductTypes(false);
+      }
+    };
+    fetchProductTypes();
+  }, []);
+
+  useEffect(() => {
+    if (!selectedProductTypeId) {
+      setBrands([]);
+      return;
+    }
+
+    const fetchBrandsData = async () => {
+      try {
+        setLoadingBrands(true);
+        const brandRes = await ProductService.getBrands(selectedProductTypeId);
+        setBrands(brandRes);
+        setBrand("");
+      } catch (error) {
+        console.error("Failed to fetch brands:", error);
+      } finally {
+        setLoadingBrands(false);
+      }
+    };
+
+    fetchBrandsData();
+  }, [selectedProductTypeId, setBrand]);
+
+
   return (
     <div className="w-80 bg-white shadow-lg p-6 overflow-y-auto flex flex-col min-h-full">
-      <h2 className="text-2xl font-bold text-gray-900 mb-6">
-        Customize Your Product
-      </h2>
+      <h2 className="text-2xl font-bold text-gray-900 mb-6">Customize Your Product</h2>
 
       {/* Product Type */}
       <div className="mb-6">
-        <Label
-          htmlFor="product-type"
-          className="text-sm font-medium text-gray-700 mb-2 block"
-        >
+        <Label htmlFor="product-type" className="text-sm font-medium text-gray-700 mb-2 block">
           Product Type
         </Label>
-        <Select value={productType} onValueChange={setProductType}>
+        <Select value={selectedProductTypeId} onValueChange={setSelectedProductTypeId} disabled={loadingProductTypes}>
           <SelectTrigger id="product-type">
-            <SelectValue placeholder="Select product type" />
+            <SelectValue placeholder={loadingProductTypes ? "Loading product types..." : "Select product type"} />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="tshirt">T-Shirt</SelectItem>
-            <SelectItem value="hoodie">Hoodie</SelectItem>
-            <SelectItem value="tank-top">Tank Top</SelectItem>
-            <SelectItem value="long-sleeve">Long Sleeve</SelectItem>
+            {Array.isArray(productType) && productType.map((type) => (
+              <SelectItem key={type.id} value={type.id}>
+                {type.name}
+              </SelectItem>
+            ))}
           </SelectContent>
         </Select>
       </div>
 
       {/* Brand */}
       <div className="mb-6">
-        <Label
-          htmlFor="brand"
-          className="text-sm font-medium text-gray-700 mb-2 block"
-        >
+        <Label htmlFor="brand" className="text-sm font-medium text-gray-700 mb-2 block">
           Brand
         </Label>
-        <Select value={brand} onValueChange={setBrand}>
+        <Select value={brand} onValueChange={setBrand} disabled={loadingBrands || brands.length === 0}>
           <SelectTrigger id="brand">
-            <SelectValue placeholder="Select brand" />
+            <SelectValue placeholder={loadingBrands ? "Loading brands..." : "Select brand"} />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="nike">Nike</SelectItem>
-            <SelectItem value="adidas">Adidas</SelectItem>
-            <SelectItem value="puma">Puma</SelectItem>
-            <SelectItem value="under-armour">Under Armour</SelectItem>
+            {brands.length === 0 && !loadingBrands ? (
+              <SelectItem value="none" disabled>No brands available</SelectItem>
+            ) : (
+              brands.map((b) => (
+                <SelectItem key={b.id} value={String(b.id)}>
+                  {b.name}
+                </SelectItem>
+              ))
+            )}
           </SelectContent>
         </Select>
       </div>
 
       {/* Select Color */}
       <div className="mb-6">
-        <Label
-          htmlFor="color"
-          className="text-sm font-medium text-gray-700 mb-2 block"
-        >
+        <Label htmlFor="color" className="text-sm font-medium text-gray-700 mb-2 block">
           Select color
         </Label>
         <div className="flex gap-2 flex-wrap">
@@ -111,9 +157,8 @@ export default function ProductCustomizer({
             <button
               key={colorOption}
               onClick={() => setColor(colorOption)}
-              className={`w-8 h-8 rounded-full border-2 ${
-                color === colorOption ? "border-blue-500" : "border-gray-300"
-              }`}
+              className={`w-8 h-8 rounded-full border-2 ${color === colorOption ? "border-blue-500" : "border-gray-300"
+                }`}
               style={{ backgroundColor: colorOption }}
             />
           ))}
@@ -125,7 +170,7 @@ export default function ProductCustomizer({
         <h3 className="text-lg font-semibold text-gray-900 mb-4">
           Place your assets
         </h3>
-        <AssetUpload />
+        <AssetUpload assets={assets} setAssets={setAssets} />
       </div>
 
       {/* Sizing and Quantity */}
