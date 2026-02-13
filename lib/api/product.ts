@@ -1,5 +1,5 @@
 import { supabase } from "@/lib/supabase"
-import { Product, Brand, Color, ProductType } from "@/types/product"
+import { Product, Brand, Color, ProductType, Size } from "@/types/product"
 
 export class ProductService {
   static async getProducts(): Promise<Product[]> {
@@ -76,12 +76,18 @@ export class ProductService {
     }
   }
 
-  static async getBrands(): Promise<Brand[]> {
+  static async getBrands(typeId?: string): Promise<Brand[]> {
     try {
-      const { data, error } = await supabase
+      let query = supabase
         .from('brands')
-        .select('id, name')
+        .select('id, name, type_id')
         .order('name')
+
+      if (typeId) {
+        query = query.eq('type_id', typeId)
+      }
+
+      const { data, error } = await query
 
       if (error) {
         throw error
@@ -126,6 +132,24 @@ export class ProductService {
       return data || []
     } catch (error) {
       console.error('Error fetching product types:', error)
+      throw error
+    }
+  }
+
+  static async getSizes(): Promise<Size[]> {
+    try {
+      const { data, error } = await supabase
+        .from('sizes')
+        .select('id, value')
+        .order('value')
+
+      if (error) {
+        throw error
+      }
+
+      return data || []
+    } catch (error) {
+      console.error('Error fetching sizes:', error)
       throw error
     }
   }
