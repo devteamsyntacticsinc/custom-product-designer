@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect, Dispatch, SetStateAction } from "react";
+import React, { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import {
   Select,
@@ -10,50 +10,35 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Label } from "@/components/ui/label";
-import { ProductService } from "@/lib/api/product";
 import { ProductType, Brand, Color } from "@/types/product";
 import SizingAndQuantity from "@/components/SizingAndQuantity";
 import AssetUpload from "./AssetUpload";
+import { useAssets } from "@/contexts/AssetsContext";
 
-interface ProductCustomizerProps {
-  productType: string;
-  setProductType: (value: string) => void;
-  brand: string;
-  setBrand: (value: string) => void;
-  color: string;
-  setColor: (value: string) => void;
-  sizeSelection: {
-    size: string;
-    quantity: number;
-  }[];
-  setSizeSelection: (
-    value: {
+export default function ProductCustomizer() {
+  const { assets, setAssets } = useAssets();
+  const [productType, setProductType] = useState("");
+  const [brand, setBrand] = useState("");
+  const [color, setColor] = useState("");
+  const [sizeSelection, setSizeSelection] = useState<
+    {
       size: string;
       quantity: number;
-    }[],
-  ) => void;
-  assets: Record<string, File | null>;
-  setAssets: React.Dispatch<React.SetStateAction<Record<string, File | null>>>;
-}
+    }[]
+  >([
+    {
+      size: "",
+      quantity: 1,
+    },
+  ]);
 
-export default function ProductCustomizer({
-  productType,
-  setProductType,
-  brand,
-  setBrand,
-  color,
-  setColor,
-  sizeSelection,
-  setSizeSelection,
-  assets,
-  setAssets,
-}: ProductCustomizerProps) {
   const [productTypes, setProductTypes] = useState<ProductType[]>([]);
   const [loadingProductTypes, setLoadingProductTypes] = useState(true);
   const [loadingBrands, setLoadingBrands] = useState(false);
   const [brands, setBrands] = useState<Brand[]>([]);
   const [loadingColors, setLoadingColors] = useState(false);
   const [colors, setColors] = useState<Color[]>([]);
+
 
   useEffect(() => {
     const fetchProductTypes = async () => {
