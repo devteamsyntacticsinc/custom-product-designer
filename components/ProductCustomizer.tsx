@@ -14,9 +14,11 @@ import { ProductType, Brand, Color } from "@/types/product";
 import SizingAndQuantity from "@/components/SizingAndQuantity";
 import AssetUpload from "./AssetUpload";
 import { useAssets } from "@/contexts/AssetsContext";
+import ContactInformation from "./ContactInformation";
 
 export default function ProductCustomizer() {
   const { assets, setAssets } = useAssets();
+  const [currentStep, setCurrentStep] = useState<'customize' | 'contact'>('customize');
   const [productType, setProductType] = useState("");
   const [brand, setBrand] = useState("");
   const [color, setColor] = useState("");
@@ -25,12 +27,13 @@ export default function ProductCustomizer() {
       size: string;
       quantity: number;
     }[]
-  >([
-    {
-      size: "",
-      quantity: 1,
-    },
-  ]);
+  >([]);
+  const [contactData, setContactData] = useState({
+    fullName: "",
+    email: "",
+    contactNumber: "",
+    address: "",
+  });
 
   const [productTypes, setProductTypes] = useState<ProductType[]>([]);
   const [loadingProductTypes, setLoadingProductTypes] = useState(true);
@@ -38,6 +41,37 @@ export default function ProductCustomizer() {
   const [brands, setBrands] = useState<Brand[]>([]);
   const [loadingColors, setLoadingColors] = useState(false);
   const [colors, setColors] = useState<Color[]>([]);
+
+  const handleNext = () => {
+    setCurrentStep('contact');
+  };
+
+  const handleBack = () => {
+    setCurrentStep('customize');
+  };
+
+  const handleContactSubmit = (contactData: {
+    fullName: string;
+    email: string;
+    contactNumber: string;
+    address: string;
+  }) => {
+    console.log('Contact data submitted:', contactData);
+    // Here you can handle the submission (e.g., send to API)
+  };
+
+  const handleReset = () => {
+    setProductType("");
+    setBrand("");
+    setColor("");
+    setSizeSelection([{ size: "", quantity: 1 }]);
+    setAssets({
+      "front-top-left": null,
+      "front-center": null,
+      "back-top": null,
+      "back-bottom": null,
+    });
+  };
 
 
   useEffect(() => {
@@ -91,6 +125,34 @@ export default function ProductCustomizer() {
     fetchColors();
   }, []);
 
+  // Render Contact Information step
+  if (currentStep === 'contact') {
+    // Get the actual brand name from the brands array
+    const selectedBrand = brands.find(b => String(b.id) === brand);
+    const brandName = selectedBrand?.name || brand;
+    // Get the actual color name
+    const selectedColor = colors.find(c => String(c.id) === color);
+    const colorName = selectedColor?.value || color;
+    // Get the actual product type name
+    const selectedProductType = productTypes.find(pt => pt.id === productType);
+    const productTypeName = selectedProductType?.name || productType;
+    
+    return (
+      <ContactInformation
+        onBack={handleBack}
+        onSubmit={handleContactSubmit}
+        productType={productTypeName}
+        brand={brandName}
+        color={colorName}
+        sizeSelection={sizeSelection}
+        assets={assets}
+        contactData={contactData}
+        setContactData={setContactData}
+      />
+    );
+  }
+
+  // Render Product Customizer step 
   return (
     <div className="w-80 bg-white shadow-lg p-6 overflow-y-auto flex flex-col min-h-full">
       <h2 className="text-2xl font-bold text-gray-900 mb-6">
@@ -221,10 +283,12 @@ export default function ProductCustomizer() {
 
       {/* Action Buttons */}
       <div className="flex gap-3 mt-auto pt-6">
-        <Button variant="outline" className="flex-1">
+        <Button variant="outline" className="flex-1" onClick={handleReset}>
           Reset
         </Button>
-        <Button className="flex-1 bg-gray-800 hover:bg-gray-900">Next</Button>
+        <Button className="flex-1 bg-gray-800 hover:bg-gray-900" onClick={handleNext}>
+          Next
+        </Button>
       </div>
     </div>
   );
