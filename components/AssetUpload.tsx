@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useRef, useEffect } from "react";
+import { useRef } from "react";
 import { Upload, X } from "lucide-react";
 import { Input } from "@/components/ui/input";
 
@@ -24,12 +24,6 @@ export default function AssetUpload({
   assets: Record<string, File | null>;
   setAssets: React.Dispatch<React.SetStateAction<Record<string, File | null>>>;
 }) {
-  const [mounted, setMounted] = useState(false);
-
-  useEffect(() => {
-    setMounted(true);
-  }, []);
-
   const fileInputRefs = useRef<Record<string, HTMLInputElement | null>>({});
 
   const handleFileChange = (slotId: string, file: File | null) => {
@@ -85,10 +79,6 @@ export default function AssetUpload({
   };
 
   const sides: ("Front" | "Back")[] = ["Front", "Back"];
-
-  if (!mounted) {
-    return null;
-  }
 
   return (
     <div className="space-y-6">
