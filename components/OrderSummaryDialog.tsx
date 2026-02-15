@@ -4,12 +4,14 @@ import React from "react";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { X } from "lucide-react";
+import { Size } from "@/types/product";
+import { useToast } from "@/contexts/ToastContext";
 
 interface OrderSummaryDialogProps {
   isOpen: boolean;
   onClose: () => void;
   onBack: () => void;
-  onSubmit: () => void;
+  onSubmit: () => Promise<void>; // Changed to async
   productType: string;
   brand: string;
   color: string;
@@ -35,15 +37,63 @@ export default function OrderSummaryDialog({
   assets,
   contactInformation,
 }: OrderSummaryDialogProps) {
+  const [isLoading, setIsLoading] = React.useState(false);
+  const { addToast } = useToast();
+
+  const [sizes, setSizes] = React.useState<Size[]>([]);
+
+  React.useEffect(() => {
+    const fetchSizes = async () => {
+      try {
+        const response = await fetch("/api/sizes");
+        const data = await response.json();
+        setSizes(Array.isArray(data) ? data : []);
+      } catch (error) {
+        console.error("Failed to fetch sizes:", error);
+      }
+    };
+    fetchSizes();
+  }, []);
+
+  const getSizeName = (sizeId: string): string => {
+    const size = sizes.find(s => s.id === sizeId);
+    return size?.value || sizeId;
+  };
+
+  const handleSubmit = async () => {
+    setIsLoading(true);
+    try {
+      await onSubmit();
+      addToast("success", "Order submitted successfully!");
+      // Don't close dialog here - let parent handle it
+    } catch (error) {
+      addToast("error", "Failed to submit order. Please try again.");
+      console.error("Error submitting order:", error);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   if (!isOpen) return null;
 
   const getAssetList = () => {
     return Object.entries(assets)
-      .filter(([_, file]) => file !== null)
-      .map(([key, file]) => ({
-        id: key,
-        name: file?.name || "Unknown file",
-      }));
+      .filter(([, file]) => file !== null)
+      .map(([key, file]) => {
+        // Map to readable placement names
+        const placementMap: Record<string, string> = {
+          "front-top-left": "Front - Top Left",
+          "front-center": "Front - Center", 
+          "back-top": "Back - Top",
+          "back-bottom": "Back - Bottom"
+        };
+        
+        return {
+          id: key,
+          name: file?.name || "Unknown file",
+          placement: placementMap[key] || key
+        };
+      });
   };
 
   const getTotalItems = () => {
@@ -91,7 +141,7 @@ export default function OrderSummaryDialog({
                 .filter(item => item.quantity > 0)
                 .map(item => (
                   <div key={item.size} className="flex justify-between text-sm">
-                    <span className="text-gray-600">{item.size}:</span>
+                    <span className="text-gray-600">{getSizeName(item.size)}:</span>
                     <span className="font-medium">{item.quantity}pcs</span>
                   </div>
                 ))}
@@ -108,13 +158,18 @@ export default function OrderSummaryDialog({
             
             <div className="space-y-2">
               {getAssetList().map(asset => (
-                <div key={asset.id} className="flex items-center gap-2 text-sm">
-                  <div className="w-8 h-8 bg-gray-100 rounded flex items-center justify-center">
-                    <svg className="w-4 h-4 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2v6a2 2 0 012 2h10a2 2 0 012-2v-6a2 2 0 01-2-2z" />
-                    </svg>
+                <div key={asset.id} className="flex items-center justify-between text-sm">
+                  <div className="flex items-center gap-2">
+                    <div className="w-8 h-8 bg-gray-100 rounded flex items-center justify-center">
+                      <svg className="w-4 h-4 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2v6a2 2 0 012 2h10a2 2 0 012-2v-6a2 2 0 01-2-2z" />
+                      </svg>
+                    </div>
+                    <div>
+                      <span className="text-gray-700">{asset.name}</span>
+                      <div className="text-xs text-gray-500">{asset.placement}</div>
+                    </div>
                   </div>
-                  <span className="text-gray-700">{asset.name}</span>
                 </div>
               ))}
             </div>
@@ -147,11 +202,18 @@ export default function OrderSummaryDialog({
 
         {/* Actions */}
         <div className="flex gap-3 p-6 border-t bg-gray-50">
-          <Button variant="outline" onClick={onBack} className="flex-1">
+          <Button variant="outline" onClick={onBack} className="flex-1" disabled={isLoading}>
             Back to editing
           </Button>
-          <Button onClick={onSubmit} className="flex-1 bg-gray-800 hover:bg-gray-900">
-            Submit
+          <Button onClick={handleSubmit} className="flex-1 bg-gray-800 hover:bg-gray-900" disabled={isLoading}>
+            {isLoading ? (
+              <div className="flex items-center gap-2">
+                <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                Submitting...
+              </div>
+            ) : (
+              'Submit'
+            )}
           </Button>
         </div>
       </div>

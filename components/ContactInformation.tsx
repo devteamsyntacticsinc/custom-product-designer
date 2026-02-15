@@ -8,7 +8,7 @@ import OrderSummaryDialog from "./OrderSummaryDialog";
 
 interface ContactInformationProps {
   onBack: () => void;
-  onSubmit: (data: ContactData) => void;
+  onSubmit: (data: ContactData) => Promise<void>; // Changed to async
   productType: string;
   brand: string;
   color: string;
@@ -52,8 +52,8 @@ export default function ContactInformation({
     setShowOrderSummary(true);
   };
 
-  const handleOrderSummarySubmit = () => {
-    onSubmit(contactData);
+  const handleOrderSummarySubmit = async () => {
+    await onSubmit(contactData);
     setShowOrderSummary(false);
   };
 

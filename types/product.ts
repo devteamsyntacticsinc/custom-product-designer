@@ -40,3 +40,33 @@ export interface Size {
   value: string
 }
 
+export interface OrderData {
+  productType: string;
+  brand: string;
+  color: string;
+  sizeSelection: { size: string; quantity: number }[];
+  assets: Record<string, File | null>;
+  contactInformation: {
+    fullName: string;
+    email: string;
+    contactNumber: string;
+    address: string;
+  };
+}
+
+export interface OrderResult {
+  customerData: {
+    id: string;
+    name: string;
+    email: string;
+    contact_number: string;
+    address: string;
+  };
+  productOrderData: {
+    id: string;
+    customer_id: string;
+    brandT_id: string;
+    color_id: string;
+  };
+}
+

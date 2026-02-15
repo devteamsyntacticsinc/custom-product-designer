@@ -50,14 +50,56 @@ export default function ProductCustomizer() {
     setCurrentStep('customize');
   };
 
-  const handleContactSubmit = (contactData: {
+  const handleContactSubmit = async (contactData: {
     fullName: string;
     email: string;
     contactNumber: string;
     address: string;
   }) => {
     console.log('Contact data submitted:', contactData);
-    // Here you can handle the submission (e.g., send to API)
+    
+    try {
+      // Create FormData to handle file uploads
+      const formData = new FormData();
+      
+      // Add all the order data as JSON
+      const orderData = {
+        productType: productType, // Use the ID
+        brand: brand, // Use the ID
+        color: color, // Use the ID
+        sizeSelection,
+        contactInformation: contactData,
+      };
+      
+      formData.append('orderData', JSON.stringify(orderData));
+      
+      // Add files to FormData
+      Object.entries(assets).forEach(([key, file]) => {
+        if (file) {
+          formData.append(key, file);
+        }
+      });
+
+      const response = await fetch('/api/orders', {
+        method: 'POST',
+        body: formData, // Don't set Content-Type header, let browser set it with boundary
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to submit order');
+      }
+
+      const result = await response.json();
+      console.log('Order submitted successfully:', result);
+      
+      // Reset form after successful submission
+      handleReset();
+      setCurrentStep('customize');
+      
+    } catch (error) {
+      console.error('Error submitting order:', error);
+      throw error; // Re-throw to let toast handle it
+    }
   };
 
   const handleReset = () => {
