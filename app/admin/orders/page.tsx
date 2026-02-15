@@ -29,7 +29,6 @@ export default function OrdersPage() {
   const router = useRouter()
   const currentPath = typeof window !== 'undefined' ? window.location.pathname : '/admin/orders'
 
-  // Fetch orders data
   const fetchOrders = async () => {
     try {
       const response = await fetch('/api/admin/orders')

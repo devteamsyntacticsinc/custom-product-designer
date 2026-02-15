@@ -3,44 +3,16 @@
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { Button } from '@/components/ui/button'
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
-import { Badge } from '@/components/ui/badge'
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { User } from '@/types/login'
 import { 
   Plus,
-  Edit,
-  Trash2,
   RefreshCw
 } from 'lucide-react'
 import AdminSidebar from '@/app/components/AdminSidebar'
-
-// Dummy data
-const productTypes = [
-  { id: 1, name: 'T-Shirt', description: 'Classic cotton t-shirt', status: 'active', createdAt: '2024-01-15' },
-  { id: 2, name: 'Hoodie', description: 'Warm fleece hoodie', status: 'active', createdAt: '2024-01-16' },
-  { id: 3, name: 'Mug', description: 'Ceramic coffee mug', status: 'active', createdAt: '2024-01-17' },
-  { id: 4, name: 'Cap', description: 'Adjustable baseball cap', status: 'inactive', createdAt: '2024-01-18' },
-  { id: 5, name: 'Phone Case', description: 'Protective phone cover', status: 'active', createdAt: '2024-01-19' },
-]
-
-const brands = [
-  { id: 1, name: 'Nike', description: 'Sportswear brand', status: 'active', createdAt: '2024-01-15' },
-  { id: 2, name: 'Adidas', description: 'German sportswear company', status: 'active', createdAt: '2024-01-16' },
-  { id: 3, name: 'Puma', description: 'Athletic footwear and apparel', status: 'active', createdAt: '2024-01-17' },
-  { id: 4, name: 'Under Armour', description: 'Sports performance brand', status: 'inactive', createdAt: '2024-01-18' },
-  { id: 5, name: 'New Balance', description: 'Footwear and apparel brand', status: 'active', createdAt: '2024-01-19' },
-]
-
-const colors = [
-  { id: 1, name: 'Black', hexCode: '#000000', status: 'active', createdAt: '2024-01-15' },
-  { id: 2, name: 'White', hexCode: '#FFFFFF', status: 'active', createdAt: '2024-01-16' },
-  { id: 3, name: 'Red', hexCode: '#FF0000', status: 'active', createdAt: '2024-01-17' },
-  { id: 4, name: 'Blue', hexCode: '#0000FF', status: 'active', createdAt: '2024-01-18' },
-  { id: 5, name: 'Green', hexCode: '#00FF00', status: 'inactive', createdAt: '2024-01-19' },
-  { id: 6, name: 'Yellow', hexCode: '#FFFF00', status: 'active', createdAt: '2024-01-20' },
-]
+import ProductTypesTab from '@/app/components/ProductTypesTab'
+import BrandsTab from '@/app/components/BrandsTab'
+import ColorsTab from '@/app/components/ColorsTab'
 
 export default function ProductsPage() {
   const [user, setUser] = useState<User | null>(null)
@@ -51,7 +23,6 @@ export default function ProductsPage() {
   const currentPath = typeof window !== 'undefined' ? window.location.pathname : '/admin/products'
 
   useEffect(() => {
-    // Check if user is authenticated and is admin
     const checkAuth = () => {
       const userRole = document.cookie
         .split('; ')
@@ -178,143 +149,17 @@ export default function ProductsPage() {
 
             {/* Product Types Tab */}
             <TabsContent value="product-types">
-              <Card>
-                <CardHeader className= "py-6">
-                  <CardTitle>Product Types</CardTitle>
-                  <CardDescription>Manage different types of products available in your store</CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <Table>
-                    <TableHeader>
-                      <TableRow>
-                        <TableHead>ID</TableHead>
-                        <TableHead>Name</TableHead>
-                        <TableHead>Status</TableHead>
-                        <TableHead>Created At</TableHead>
-                        <TableHead>Actions</TableHead>
-                      </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                      {productTypes.map((type) => (
-                        <TableRow key={type.id}>
-                          <TableCell>{type.id}</TableCell>
-                          <TableCell className="font-medium">{type.name}</TableCell>
-                          <TableCell>
-                            <Badge variant={type.status === 'active' ? 'default' : 'secondary'}>
-                              {type.status}
-                            </Badge>
-                          </TableCell>
-                          <TableCell>{type.createdAt}</TableCell>
-                          <TableCell>
-                            <div className="flex items-center gap-2">
-                              <Button variant="ghost" size="sm">
-                                <Edit className="h-4 w-4" />
-                              </Button>
-                              <Button variant="ghost" size="sm">
-                                <Trash2 className="h-4 w-4" />
-                              </Button>
-                            </div>
-                          </TableCell>
-                        </TableRow>
-                      ))}
-                    </TableBody>
-                  </Table>
-                </CardContent>
-              </Card>
+              <ProductTypesTab />
             </TabsContent>
 
             {/* Brands Tab */}
             <TabsContent value="brands">
-              <Card>
-                <CardHeader className="py-6">
-                  <CardTitle>Brands</CardTitle>
-                  <CardDescription>Manage product brands available in your store</CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <Table>
-                    <TableHeader>
-                      <TableRow>
-                        <TableHead>ID</TableHead>
-                        <TableHead>Name</TableHead>
-                        <TableHead>Status</TableHead>
-                        <TableHead>Created At</TableHead>
-                        <TableHead>Actions</TableHead>
-                      </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                      {brands.map((brand) => (
-                        <TableRow key={brand.id}>
-                          <TableCell>{brand.id}</TableCell>
-                          <TableCell className="font-medium">{brand.name}</TableCell>
-                          <TableCell>
-                            <Badge variant={brand.status === 'active' ? 'default' : 'secondary'}>
-                              {brand.status}
-                            </Badge>
-                          </TableCell>
-                          <TableCell>{brand.createdAt}</TableCell>
-                          <TableCell>
-                            <div className="flex items-center gap-2">
-                              <Button variant="ghost" size="sm">
-                                <Edit className="h-4 w-4" />
-                              </Button>
-                              <Button variant="ghost" size="sm">
-                                <Trash2 className="h-4 w-4" />
-                              </Button>
-                            </div>
-                          </TableCell>
-                        </TableRow>
-                      ))}
-                    </TableBody>
-                  </Table>
-                </CardContent>
-              </Card>
+              <BrandsTab />
             </TabsContent>
 
             {/* Colors Tab */}
             <TabsContent value="colors">
-              <Card>
-                <CardHeader className="py-6">
-                  <CardTitle>Colors</CardTitle>
-                  <CardDescription>Manage product colors available in your store</CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <Table>
-                    <TableHeader>
-                      <TableRow>
-                        <TableHead>ID</TableHead>
-                        <TableHead>Name</TableHead>
-                        <TableHead>Status</TableHead>
-                        <TableHead>Created At</TableHead>
-                        <TableHead>Actions</TableHead>
-                      </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                      {colors.map((color) => (
-                        <TableRow key={color.id}>
-                          <TableCell>{color.id}</TableCell>
-                          <TableCell className="font-medium">{color.name}</TableCell>
-                          <TableCell>
-                            <Badge variant={color.status === 'active' ? 'default' : 'secondary'}>
-                              {color.status}
-                            </Badge>
-                          </TableCell>
-                          <TableCell>{color.createdAt}</TableCell>
-                          <TableCell>
-                            <div className="flex items-center gap-2">
-                              <Button variant="ghost" size="sm">
-                                <Edit className="h-4 w-4" />
-                              </Button>
-                              <Button variant="ghost" size="sm">
-                                <Trash2 className="h-4 w-4" />
-                              </Button>
-                            </div>
-                          </TableCell>
-                        </TableRow>
-                      ))}
-                    </TableBody>
-                  </Table>
-                </CardContent>
-              </Card>
+              <ColorsTab />
             </TabsContent>
           </Tabs>
         </div>
