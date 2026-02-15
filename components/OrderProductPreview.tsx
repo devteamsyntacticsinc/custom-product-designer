@@ -31,7 +31,7 @@ export default function OrderProductPreview({ order }: OrderProductPreviewProps)
       />
       
       {/* Front Design Area - Top Left */}
-      <div className="absolute top-[37%] left-[41%] w-8 h-8 border-2 border-dashed border-gray-400 rounded flex items-center justify-center transform -translate-x-1/2 -translate-y-1/2 overflow-hidden bg-white/50">
+      <div className="absolute top-[37%] left-[38%] sm:top-[36%] sm:left-[39%] md:top-[35%] md:left-[39%] lg:top-[37%] lg:left-[41%] w-6 h-6 sm:w-8 sm:h-8 md:w-10 md:h-10 lg:w-8 lg:h-8 border-2 border-dashed border-gray-400 rounded flex items-center justify-center transform -translate-x-1/2 -translate-y-1/2 overflow-hidden bg-white/50">
         {imagesByPlacement["Front - Top Left"] ? (
           <ExternalImage 
             src={imagesByPlacement["Front - Top Left"]} 
@@ -39,12 +39,12 @@ export default function OrderProductPreview({ order }: OrderProductPreviewProps)
             className="w-full h-full object-contain" 
           />
         ) : (
-          <span className="text-gray-400 text-xs">Front Top Left</span>
+          <span className="text-gray-400 text-[8px] sm:text-xs md:text-sm">Front Top Left</span>
         )}
       </div>
       
       {/* Front Design Area - Center Large */}
-      <div className="absolute top-[57%] left-[38.5%] w-20 h-24 border-2 border-dashed border-gray-400 rounded flex items-center justify-center transform -translate-x-1/2 -translate-y-1/2 overflow-hidden bg-white/50">
+      <div className="absolute top-[57%] left-[37.5%] w-20 h-24 border-2 border-dashed border-gray-400 rounded flex items-center justify-center transform -translate-x-1/2 -translate-y-1/2 overflow-hidden bg-white/50">
         {imagesByPlacement["Front - Center"] ? (
           <ExternalImage 
             src={imagesByPlacement["Front - Center"]} 
@@ -57,7 +57,7 @@ export default function OrderProductPreview({ order }: OrderProductPreviewProps)
       </div>
       
       {/* Back Design Area - Top Center */}
-      <div className="absolute top-[48%] left-[61.3%] w-16 h-16 border-2 border-dashed border-gray-400 rounded flex items-center justify-center transform -translate-x-1/2 -translate-y-1/2 overflow-hidden bg-white/50">
+      <div className="absolute top-[48%] left-[62%] w-16 h-16 border-2 border-dashed border-gray-400 rounded flex items-center justify-center transform -translate-x-1/2 -translate-y-1/2 overflow-hidden bg-white/50">
         {imagesByPlacement["Back - Top"] ? (
           <ExternalImage 
             src={imagesByPlacement["Back - Top"]} 
@@ -70,7 +70,7 @@ export default function OrderProductPreview({ order }: OrderProductPreviewProps)
       </div>
       
       {/* Back Design Area - Bottom Center */}
-      <div className="absolute top-[68%] left-[61.3%] w-32 h-8 border-2 border-dashed border-gray-400 rounded flex items-center justify-center transform -translate-x-1/2 -translate-y-1/2 overflow-hidden bg-white/50">
+      <div className="absolute top-[68%] left-[62%] w-32 h-8 border-2 border-dashed border-gray-400 rounded flex items-center justify-center transform -translate-x-1/2 -translate-y-1/2 overflow-hidden bg-white/50">
         {imagesByPlacement["Back - Bottom"] ? (
           <ExternalImage 
             src={imagesByPlacement["Back - Bottom"]} 
