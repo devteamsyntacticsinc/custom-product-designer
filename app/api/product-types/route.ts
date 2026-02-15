@@ -17,7 +17,7 @@ export async function GET() {
 export async function POST(request: Request) {
   try {
     const body = await request.json()
-    const { name } = body
+    const { name, is_Active } = body
 
     if (!name || typeof name !== 'string' || name.trim() === '') {
       return NextResponse.json(
@@ -26,7 +26,10 @@ export async function POST(request: Request) {
       )
     }
 
-    const productType = await ProductService.createProductType(name.trim())
+    const productType = await ProductService.createProductType(
+      name.trim(), 
+      is_Active !== undefined ? is_Active : true
+    )
     return NextResponse.json(productType, { status: 201 })
   } catch (error) {
     console.error('API Error:', error)
@@ -40,7 +43,7 @@ export async function POST(request: Request) {
 export async function PUT(request: Request) {
   try {
     const body = await request.json()
-    const { id, name } = body
+    const { id, name, is_Active } = body
 
     if (!id || typeof id !== 'string' || id.trim() === '') {
       return NextResponse.json(
@@ -49,14 +52,18 @@ export async function PUT(request: Request) {
       )
     }
 
-    if (!name || typeof name !== 'string' || name.trim() === '') {
+    if (!name && is_Active === undefined) {
       return NextResponse.json(
-        { error: 'Product type name is required and must be a non-empty string' },
+        { error: 'At least one field (name or is_Active) must be provided for update' },
         { status: 400 }
       )
     }
 
-    const productType = await ProductService.updateProductType(id.trim(), name.trim())
+    const productType = await ProductService.updateProductType(
+      id.trim(), 
+      name ? name.trim() : undefined,
+      is_Active
+    )
     return NextResponse.json(productType)
   } catch (error) {
     console.error('API Error:', error)

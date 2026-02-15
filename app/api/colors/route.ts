@@ -17,7 +17,7 @@ export async function GET() {
 export async function POST(request: Request) {
   try {
     const body = await request.json()
-    const { value } = body
+    const { value, is_Active } = body
 
     if (!value || typeof value !== 'string' || value.trim() === '') {
       return NextResponse.json(
@@ -26,7 +26,10 @@ export async function POST(request: Request) {
       )
     }
 
-    const color = await ProductService.createColor(value.trim())
+    const color = await ProductService.createColor(
+      value.trim(), 
+      is_Active !== undefined ? is_Active : true
+    )
     return NextResponse.json(color, { status: 201 })
   } catch (error) {
     console.error('API Error:', error)
@@ -40,7 +43,7 @@ export async function POST(request: Request) {
 export async function PUT(request: Request) {
   try {
     const body = await request.json()
-    const { id, value } = body
+    const { id, value, is_Active } = body
 
     if (!id || typeof id !== 'string' || id.trim() === '') {
       return NextResponse.json(
@@ -49,14 +52,18 @@ export async function PUT(request: Request) {
       )
     }
 
-    if (!value || typeof value !== 'string' || value.trim() === '') {
+    if (!value && is_Active === undefined) {
       return NextResponse.json(
-        { error: 'Color value is required and must be a non-empty string' },
+        { error: 'At least one field (value or is_Active) must be provided for update' },
         { status: 400 }
       )
     }
 
-    const color = await ProductService.updateColor(id.trim(), value.trim())
+    const color = await ProductService.updateColor(
+      id.trim(), 
+      value ? value.trim() : undefined,
+      is_Active
+    )
     return NextResponse.json(color)
   } catch (error) {
     console.error('API Error:', error)

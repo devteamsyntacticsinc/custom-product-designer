@@ -143,11 +143,11 @@ export class ProductService {
     }
   }
 
-  static async createBrand(name: string): Promise<Brand> {
+  static async createBrand(name: string, is_Active: boolean = true): Promise<Brand> {
     try {
       const { data, error } = await supabase
         .from('brands')
-        .insert([{ name }])
+        .insert([{ name, is_Active }])
         .select()
         .single()
 
@@ -166,11 +166,15 @@ export class ProductService {
     }
   }
 
-  static async updateBrand(id: string, name: string): Promise<Brand> {
+  static async updateBrand(id: string, name?: string, is_Active?: boolean): Promise<Brand> {
     try {
+      const updateData: { name?: string; is_Active?: boolean } = {}
+      if (name !== undefined) updateData.name = name
+      if (is_Active !== undefined) updateData.is_Active = is_Active
+
       const { data, error } = await supabase
         .from('brands')
-        .update({ name })
+        .update(updateData)
         .eq('id', id)
         .select()
         .single()
@@ -224,11 +228,11 @@ export class ProductService {
     }
   }
 
-  static async createColor(value: string): Promise<Color> {
+  static async createColor(value: string, is_Active: boolean = true): Promise<Color> {
     try {
       const { data, error } = await supabase
         .from('colors')
-        .insert([{ value }])
+        .insert([{ value, is_Active }])
         .select()
         .single()
 
@@ -247,11 +251,15 @@ export class ProductService {
     }
   }
 
-  static async updateColor(id: string, value: string): Promise<Color> {
+  static async updateColor(id: string, value?: string, is_Active?: boolean): Promise<Color> {
     try {
+      const updateData: { value?: string; is_Active?: boolean } = {}
+      if (value !== undefined) updateData.value = value
+      if (is_Active !== undefined) updateData.is_Active = is_Active
+
       const { data, error } = await supabase
         .from('colors')
-        .update({ value })
+        .update(updateData)
         .eq('id', id)
         .select()
         .single()
@@ -316,11 +324,11 @@ export class ProductService {
     }
   }
 
-  static async createProductType(name: string): Promise<ProductType> {
+  static async createProductType(name: string, is_Active: boolean = true): Promise<ProductType> {
     try {
       const { data, error } = await supabase
         .from('product_type')
-        .insert([{ name }])
+        .insert([{ name, is_Active }])
         .select()
         .single()
 
@@ -339,11 +347,15 @@ export class ProductService {
     }
   }
 
-  static async updateProductType(id: string, name: string): Promise<ProductType> {
+  static async updateProductType(id: string, name?: string, is_Active?: boolean): Promise<ProductType> {
     try {
+      const updateData: { name?: string; is_Active?: boolean } = {}
+      if (name !== undefined) updateData.name = name
+      if (is_Active !== undefined) updateData.is_Active = is_Active
+
       const { data, error } = await supabase
         .from('product_type')
-        .update({ name })
+        .update(updateData)
         .eq('id', id)
         .select()
         .single()
