@@ -359,7 +359,7 @@ export class OrderService {
           brand_id,
           type_id,
           brands (id, name),
-          product_types (id, name)
+          product_type (id, name)
         `)
         .in('id', brandTypeIds);
 
@@ -424,7 +424,7 @@ export class OrderService {
           brand_type: brandType ? [{
             id: brandType.id,
             brands: brandType.brands || [],
-            product_types: brandType.product_types || []
+            product_type: brandType.product_type || []
           }] : [],
           colors: color ? [color] : [],
           product_sizes: formattedSizes || [],
