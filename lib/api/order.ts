@@ -5,7 +5,43 @@ import { OrderWithCustomer, CustomerActivity, ActivityItem } from "@/types/order
 export class OrderService {
   static async createCustomer(contactInformation: OrderData['contactInformation']): Promise<OrderResult['customerData']> {
     try {
-      const { data, error } = await supabase
+      // First, check if a customer with this email already exists
+      const { data: existingCustomer } = await supabase
+        .from('customers')
+        .select('id, name, email, contact_number, address')
+        .eq('email', contactInformation.email)
+        .single();
+
+      // If customer exists, return the existing customer data
+      if (existingCustomer) {
+        
+        // Optionally update customer information if it has changed
+        const needsUpdate = 
+          existingCustomer.name !== contactInformation.fullName ||
+          existingCustomer.contact_number !== contactInformation.contactNumber ||
+          existingCustomer.address !== contactInformation.address;
+
+        if (needsUpdate) {
+          const { data: updatedCustomer } = await supabase
+            .from('customers')
+            .update({
+              name: contactInformation.fullName,
+              contact_number: contactInformation.contactNumber,
+              address: contactInformation.address,
+            })
+            .eq('id', existingCustomer.id)
+            .select()
+            .single();
+
+          console.log('Existing customer updated:', updatedCustomer.email);
+          return updatedCustomer;
+        }
+        
+        return existingCustomer;
+      }
+
+      // If no existing customer, create a new one
+      const { data } = await supabase
         .from('customers')
         .insert({
           name: contactInformation.fullName,
@@ -16,13 +52,10 @@ export class OrderService {
         .select()
         .single();
 
-      if (error) {
-        throw error
-      }
-
+      console.log('New customer created:', data.email);
       return data
     } catch (error) {
-      console.error('Error creating customer:', error)
+      console.error('Error creating/fetching customer:', error)
       throw error
     }
   }
