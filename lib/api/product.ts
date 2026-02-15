@@ -143,6 +143,69 @@ export class ProductService {
     }
   }
 
+  static async createBrand(name: string): Promise<Brand> {
+    try {
+      const { data, error } = await supabase
+        .from('brands')
+        .insert([{ name }])
+        .select()
+        .single()
+
+      if (error) {
+        throw error
+      }
+
+      if (!data) {
+        throw new Error('Failed to create brand')
+      }
+
+      return data
+    } catch (error) {
+      console.error('Error creating brand:', error)
+      throw error
+    }
+  }
+
+  static async updateBrand(id: string, name: string): Promise<Brand> {
+    try {
+      const { data, error } = await supabase
+        .from('brands')
+        .update({ name })
+        .eq('id', id)
+        .select()
+        .single()
+
+      if (error) {
+        throw error
+      }
+
+      if (!data) {
+        throw new Error('Brand not found')
+      }
+
+      return data
+    } catch (error) {
+      console.error('Error updating brand:', error)
+      throw error
+    }
+  }
+
+  static async deleteBrand(id: string): Promise<void> {
+    try {
+      const { error } = await supabase
+        .from('brands')
+        .delete()
+        .eq('id', id)
+
+      if (error) {
+        throw error
+      }
+    } catch (error) {
+      console.error('Error deleting brand:', error)
+      throw error
+    }
+  }
+
   static async getColors(): Promise<Color[]> {
     try {
       const { data, error } = await supabase
@@ -157,6 +220,69 @@ export class ProductService {
       return data || []
     } catch (error) {
       console.error('Error fetching colors:', error)
+      throw error
+    }
+  }
+
+  static async createColor(value: string): Promise<Color> {
+    try {
+      const { data, error } = await supabase
+        .from('colors')
+        .insert([{ value }])
+        .select()
+        .single()
+
+      if (error) {
+        throw error
+      }
+
+      if (!data) {
+        throw new Error('Failed to create color')
+      }
+
+      return data
+    } catch (error) {
+      console.error('Error creating color:', error)
+      throw error
+    }
+  }
+
+  static async updateColor(id: string, value: string): Promise<Color> {
+    try {
+      const { data, error } = await supabase
+        .from('colors')
+        .update({ value })
+        .eq('id', id)
+        .select()
+        .single()
+
+      if (error) {
+        throw error
+      }
+
+      if (!data) {
+        throw new Error('Color not found')
+      }
+
+      return data
+    } catch (error) {
+      console.error('Error updating color:', error)
+      throw error
+    }
+  }
+
+  static async deleteColor(id: string): Promise<void> {
+    try {
+      const { error } = await supabase
+        .from('colors')
+        .delete()
+        .eq('id', id)
+
+      if (error) {
+        throw error
+      }
+    } catch (error) {
+      console.error('Error deleting color:', error)
       throw error
     }
   }
@@ -187,6 +313,69 @@ export class ProductService {
         { id: '2', name: 'Hoodie' },
         { id: '3', name: 'Mug' }
       ]
+    }
+  }
+
+  static async createProductType(name: string): Promise<ProductType> {
+    try {
+      const { data, error } = await supabase
+        .from('product_type')
+        .insert([{ name }])
+        .select()
+        .single()
+
+      if (error) {
+        throw error
+      }
+
+      if (!data) {
+        throw new Error('Failed to create product type')
+      }
+
+      return data
+    } catch (error) {
+      console.error('Error creating product type:', error)
+      throw error
+    }
+  }
+
+  static async updateProductType(id: string, name: string): Promise<ProductType> {
+    try {
+      const { data, error } = await supabase
+        .from('product_type')
+        .update({ name })
+        .eq('id', id)
+        .select()
+        .single()
+
+      if (error) {
+        throw error
+      }
+
+      if (!data) {
+        throw new Error('Product type not found')
+      }
+
+      return data
+    } catch (error) {
+      console.error('Error updating product type:', error)
+      throw error
+    }
+  }
+
+  static async deleteProductType(id: string): Promise<void> {
+    try {
+      const { error } = await supabase
+        .from('product_type')
+        .delete()
+        .eq('id', id)
+
+      if (error) {
+        throw error
+      }
+    } catch (error) {
+      console.error('Error deleting product type:', error)
+      throw error
     }
   }
 
