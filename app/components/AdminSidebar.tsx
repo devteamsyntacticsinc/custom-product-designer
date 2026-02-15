@@ -22,13 +22,14 @@ const sidebarItems = [
 ]
 
 interface AdminSidebarProps {
-  user: User
+  user: User | null
   sidebarOpen: boolean
   setSidebarOpen: (open: boolean) => void
   onLogout: () => void
   onNavigate: (href: string) => void
   isCollapsed?: boolean
   onToggleCollapse?: () => void
+  currentPath?: string
 }
 
 export default function AdminSidebar({ 
@@ -38,10 +39,11 @@ export default function AdminSidebar({
   onLogout,
   onNavigate,
   isCollapsed = false,
-  onToggleCollapse
+  onToggleCollapse,
+  currentPath = ''
 }: AdminSidebarProps) {
   return (
-    <div className={`${sidebarOpen ? 'translate-x-0' : '-translate-x-full'} fixed inset-y-0 left-0 z-50 ${isCollapsed ? 'w-16' : 'w-64'} bg-white shadow-lg transform transition-all duration-300 ease-in-out lg:translate-x-0 lg:static lg:inset-0`}>
+    <div className={`${sidebarOpen ? 'translate-x-0' : '-translate-x-full'} fixed inset-y-0 left-0 z-50 ${isCollapsed ? 'w-16' : 'w-64'} bg-white shadow-lg transform transition-all duration-300 ease-in-out lg:translate-x-0 lg:fixed lg:inset-0 lg:top-0 lg:left-0`}>
       <div className="flex items-center justify-between h-16 px-6 border-b">
         {!isCollapsed && <h1 className="text-xl font-bold text-gray-900">Print Pro Admin</h1>}
         <div className="flex items-center gap-2">
@@ -66,23 +68,26 @@ export default function AdminSidebar({
       
       <nav className="mt-6">
         <div className={`${isCollapsed ? 'px-2' : 'px-4'} space-y-2`}>
-          {sidebarItems.map((item) => (
-            <Button
-              key={item.label}
-              variant="ghost"
-              className={`w-full ${isCollapsed ? 'justify-center' : 'justify-start'}`}
-              onClick={() => onNavigate(item.href)}
-              title={isCollapsed ? item.label : undefined}
-            >
-              <item.icon className={`${isCollapsed ? '' : 'mr-3'} h-4 w-4`} />
-              {!isCollapsed && item.label}
-            </Button>
-          ))}
+          {sidebarItems.map((item) => {
+            const isActive = currentPath === item.href || (currentPath.startsWith(item.href) && item.href !== '/admin')
+            return (
+              <Button
+                key={item.label}
+                variant={isActive ? "secondary" : "ghost"}
+                className={`w-full ${isCollapsed ? 'justify-center' : 'justify-start'} ${isActive ? 'bg-gray-100 text-gray-900' : ''}`}
+                onClick={() => onNavigate(item.href)}
+                title={isCollapsed ? item.label : undefined}
+              >
+                <item.icon className={`${isCollapsed ? '' : 'mr-3'} h-4 w-4`} />
+                {!isCollapsed && item.label}
+              </Button>
+            )
+          })}
         </div>
       </nav>
 
       <div className="absolute bottom-0 left-0 right-0 p-4 border-t">
-        {!isCollapsed && (
+        {!isCollapsed && user && (
           <div className="mb-4">
             <p className="text-sm font-medium text-gray-900">{user.name}</p>
             <p className="text-xs text-gray-500">{user.email}</p>

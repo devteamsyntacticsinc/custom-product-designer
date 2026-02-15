@@ -12,11 +12,13 @@ import {
   RefreshCw
 } from 'lucide-react'
 import AdminSidebar from '../components/AdminSidebar'
+import AdminDashboardSkeleton from '../components/AdminDashboardSkeleton'
 
 export default function AdminDashboard() {
   const [user, setUser] = useState<User | null>(null)
   const [sidebarOpen, setSidebarOpen] = useState(false)
   const [isCollapsed, setIsCollapsed] = useState(false)
+  const currentPath = typeof window !== 'undefined' ? window.location.pathname : '/admin'
   const [dashboardData, setDashboardData] = useState<{
     stats: {
       totalOrders: number
@@ -112,8 +114,44 @@ export default function AdminDashboard() {
     router.push('/login')
   }
 
-  if (!user || loading) {
-    return <div className="min-h-screen flex items-center justify-center">Loading...</div>
+  if (!user) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex">
+        <AdminSidebar
+          user={null}
+          sidebarOpen={false}
+          setSidebarOpen={() => {}}
+          onLogout={() => {}}
+          onNavigate={() => {}}
+          isCollapsed={false}
+          onToggleCollapse={() => {}}
+          currentPath="/admin"
+        />
+        <div className="flex-1 lg:ml-64">
+          <AdminDashboardSkeleton />
+        </div>
+      </div>
+    )
+  }
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex">
+        <AdminSidebar
+          user={user}
+          sidebarOpen={sidebarOpen}
+          setSidebarOpen={setSidebarOpen}
+          onLogout={handleLogout}
+          onNavigate={(href) => router.push(href)}
+          isCollapsed={isCollapsed}
+          onToggleCollapse={() => setIsCollapsed(!isCollapsed)}
+          currentPath={currentPath}
+        />
+        <div className={`flex-1 transition-all duration-300 ${isCollapsed ? 'lg:ml-16' : 'lg:ml-64'}`}>
+          <AdminDashboardSkeleton />
+        </div>
+      </div>
+    )
   }
 
   return (
@@ -126,25 +164,26 @@ export default function AdminDashboard() {
         onNavigate={(href) => router.push(href)}
         isCollapsed={isCollapsed}
         onToggleCollapse={() => setIsCollapsed(!isCollapsed)}
+        currentPath={currentPath}
       />
+      
+      {/* Mobile Header */}
+      <header className="bg-white shadow-sm border-b lg:hidden fixed top-0 left-0 right-0 z-40">
+        <div className="flex items-center justify-between h-16 px-4">
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => setSidebarOpen(true)}
+          >
+            <Menu className="h-4 w-4" />
+          </Button>
+          <h1 className="text-lg font-semibold">Dashboard</h1>
+          <div></div>
+        </div>
+      </header>
 
       {/* Main Content */}
-      <div className="flex-1 lg:ml-0">
-        {/* Header */}
-        <header className="bg-white shadow-sm border-b lg:hidden">
-          <div className="flex items-center justify-between h-16 px-4">
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => setSidebarOpen(true)}
-            >
-              <Menu className="h-4 w-4" />
-            </Button>
-            <h1 className="text-lg font-semibold">Dashboard</h1>
-            <div></div>
-          </div>
-        </header>
-
+      <div className={`flex-1 transition-all duration-300 ${isCollapsed ? 'lg:ml-16' : 'lg:ml-64'} lg:pt-0 pt-16`}>        
         {/* Dashboard Content */}
         <main className="p-6">
           <div className="mb-8 flex items-center justify-between">

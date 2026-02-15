@@ -15,6 +15,7 @@ import SizingAndQuantity from "@/components/SizingAndQuantity";
 import AssetUpload from "./AssetUpload";
 import { useAssets } from "@/contexts/AssetsContext";
 import ContactInformation from "./ContactInformation";
+import ProductCustomizerSkeleton from "./ProductCustomizerSkeleton";
 
 export default function ProductCustomizer() {
   const { assets, setAssets } = useAssets();
@@ -208,6 +209,11 @@ export default function ProductCustomizer() {
   }
 
   // Render Product Customizer step 
+  // Show skeleton while initial product types are loading
+  if (loadingProductTypes) {
+    return <ProductCustomizerSkeleton />;
+  }
+
   return (
     <div className="w-80 bg-white shadow-lg p-6 overflow-y-auto flex flex-col min-h-full">
       <h2 className="text-2xl font-bold text-gray-900 mb-6">
@@ -237,12 +243,21 @@ export default function ProductCustomizer() {
             />
           </SelectTrigger>
           <SelectContent>
-            {Array.isArray(productTypes) &&
+            {loadingProductTypes ? (
+              <div className="p-2">
+                <div className="flex items-center space-x-2">
+                  <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-gray-900"></div>
+                  <span className="text-sm">Loading...</span>
+                </div>
+              </div>
+            ) : (
+              Array.isArray(productTypes) &&
               productTypes.map((type) => (
                 <SelectItem key={type.id} value={type.id}>
                   {type.name}
                 </SelectItem>
-              ))}
+              ))
+            )}
           </SelectContent>
         </Select>
       </div>
@@ -266,7 +281,14 @@ export default function ProductCustomizer() {
             />
           </SelectTrigger>
           <SelectContent>
-            {brands.length === 0 && !loadingBrands ? (
+            {loadingBrands ? (
+              <div className="p-2">
+                <div className="flex items-center space-x-2">
+                  <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-gray-900"></div>
+                  <span className="text-sm">Loading brands...</span>
+                </div>
+              </div>
+            ) : brands.length === 0 ? (
               <SelectItem value="none" disabled>
                 No brands available
               </SelectItem>
@@ -300,7 +322,14 @@ export default function ProductCustomizer() {
             />
           </SelectTrigger>
           <SelectContent>
-            {colors.length === 0 && !loadingColors ? (
+            {loadingColors ? (
+              <div className="p-2">
+                <div className="flex items-center space-x-2">
+                  <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-gray-900"></div>
+                  <span className="text-sm">Loading colors...</span>
+                </div>
+              </div>
+            ) : colors.length === 0 ? (
               <SelectItem value="none" disabled>
                 No colors available
               </SelectItem>

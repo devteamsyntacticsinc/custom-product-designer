@@ -283,6 +283,129 @@ export class OrderService {
     }
   }
 
+  static async getAllOrders(): Promise<OrderWithCustomer[]> {
+    try {
+      // First, get basic orders with all required fields
+      const { data: orders, error: ordersError } = await supabase
+        .from('product_orders')
+        .select(`
+          id,
+          created_at,
+          customer_id,
+          brandT_id,
+          color_id
+        `)
+        .order('created_at', { ascending: false });
+
+      if (ordersError) {
+        console.error('Error fetching orders:', ordersError);
+        return [];
+      }
+
+      if (!orders || orders.length === 0) {
+        return [];
+      }
+
+      // Get customer information
+      const customerIds = orders.map(order => order.customer_id).filter(Boolean);
+      const { data: customers, error: customersError } = await supabase
+        .from('customers')
+        .select('id, name, email')
+        .in('id', customerIds);
+
+      if (customersError) {
+        console.error('Error fetching customers:', customersError);
+      }
+
+      // Get brand type information
+      const brandTypeIds = orders.map(order => order.brandT_id).filter(Boolean);
+      const { data: brandTypes, error: brandTypesError } = await supabase
+        .from('brand_type')
+        .select(`
+          id,
+          brand_id,
+          type_id,
+          brands (id, name),
+          product_types (id, name)
+        `)
+        .in('id', brandTypeIds);
+
+      if (brandTypesError) {
+        console.error('Error fetching brand types:', brandTypesError);
+      }
+
+      // Get color information
+      const colorIds = orders.map(order => order.color_id).filter(Boolean);
+      const { data: colors, error: colorsError } = await supabase
+        .from('colors')
+        .select('id, value')
+        .in('id', colorIds);
+
+      if (colorsError) {
+        console.error('Error fetching colors:', colorsError);
+      }
+
+      // Get product sizes for each order
+      const { data: productSizes, error: sizesError } = await supabase
+        .from('product_sizes')
+        .select(`
+          id,
+          productO_id,
+          size_id,
+          quantity,
+          sizes (id, value)
+        `)
+        .in('productO_id', orders.map(order => order.id));
+
+      if (sizesError) {
+        console.error('Error fetching product sizes:', sizesError);
+      }
+
+      // Get product images for each order
+      const { data: productImages, error: imagesError } = await supabase
+        .from('product_images')
+        .select('id, productO_id, url, place')
+        .in('productO_id', orders.map(order => order.id));
+
+      if (imagesError) {
+        console.error('Error fetching product images:', imagesError);
+      }
+
+      // Combine all data
+      const combinedOrders = orders.map(order => {
+        const customer = customers?.find(c => c.id === order.customer_id);
+        const brandType = brandTypes?.find(bt => bt.id === order.brandT_id);
+        const color = colors?.find(c => c.id === order.color_id);
+        const sizes = productSizes?.filter(ps => ps.productO_id === order.id);
+        const images = productImages?.filter(pi => pi.productO_id === order.id);
+
+        // Ensure sizes is properly formatted
+        const formattedSizes = sizes?.map(size => ({
+          ...size,
+          sizes: Array.isArray(size.sizes) ? size.sizes[0] : size.sizes
+        }));
+
+        return {
+          ...order,
+          customers: customer || null,
+          brand_type: brandType ? [{
+            id: brandType.id,
+            brands: brandType.brands || [],
+            product_types: brandType.product_types || []
+          }] : [],
+          colors: color ? [color] : [],
+          product_sizes: formattedSizes || [],
+          product_images: images || []
+        };
+      });
+
+      return combinedOrders;
+    } catch (error) {
+      console.error('Error fetching all orders:', error);
+      return [];
+    }
+  }
+
   private static buildActivityFromOrders(recentOrders: OrderWithCustomer[], recentCustomers: CustomerActivity[]): ActivityItem[] {
     const activities: ActivityItem[] = []
 
