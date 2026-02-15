@@ -41,6 +41,11 @@ export interface Size {
 }
 
 export interface OrderData {
+  // IDs for database operations
+  productTypeId: string;
+  brandId: string;
+  colorId: string;
+  // Display names for email
   productType: string;
   brand: string;
   color: string;

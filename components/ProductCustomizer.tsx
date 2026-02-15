@@ -59,14 +59,27 @@ export default function ProductCustomizer() {
     console.log('Contact data submitted:', contactData);
     
     try {
+      // Get the display names for the selected IDs
+      const selectedBrand = brands.find(b => String(b.id) === brand);
+      const brandName = selectedBrand?.name || brand;
+      const selectedColor = colors.find(c => String(c.id) === color);
+      const colorName = selectedColor?.value || color;
+      const selectedProductType = productTypes.find(pt => pt.id === productType);
+      const productTypeName = selectedProductType?.name || productType;
+      
       // Create FormData to handle file uploads
       const formData = new FormData();
       
-      // Add all the order data as JSON
+      // Add all the order data as JSON with both IDs and display names
       const orderData = {
-        productType: productType, // Use the ID
-        brand: brand, // Use the ID
-        color: color, // Use the ID
+        // IDs for database insertion
+        productTypeId: productType,
+        brandId: brand,
+        colorId: color,
+        // Display names for email
+        productType: productTypeName,
+        brand: brandName,
+        color: colorName,
         sizeSelection,
         contactInformation: contactData,
       };

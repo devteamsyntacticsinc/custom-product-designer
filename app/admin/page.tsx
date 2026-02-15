@@ -7,9 +7,9 @@ import { Card, CardDescription, CardTitle } from '@/components/ui/card'
 import { User } from '@/types/login'
 import { 
   Menu,
-  LayoutDashboard, 
   Users, 
-  ShoppingBag
+  ShoppingBag,
+  RefreshCw
 } from 'lucide-react'
 import AdminSidebar from '../components/AdminSidebar'
 
@@ -17,7 +17,48 @@ export default function AdminDashboard() {
   const [user, setUser] = useState<User | null>(null)
   const [sidebarOpen, setSidebarOpen] = useState(false)
   const [isCollapsed, setIsCollapsed] = useState(false)
+  const [dashboardData, setDashboardData] = useState<{
+    stats: {
+      totalOrders: number
+      totalUsers: number
+      revenue: number
+      activeProducts: number
+      totalBrands: number
+      totalColors: number
+      totalTypes: number
+    }
+    recentActivity: Array<{
+      id: string
+      type: 'order' | 'user' | 'product'
+      title: string
+      description: string
+      timestamp: string
+    }>
+  } | null>(null)
+  const [loading, setLoading] = useState(true)
+  const [refreshing, setRefreshing] = useState(false)
   const router = useRouter()
+
+  // Fetch dashboard data
+  const fetchDashboardData = async () => {
+    try {
+      const response = await fetch('/api/dashboard')
+      const data = await response.json()
+      if (data.success) {
+        setDashboardData(data.data)
+      }
+    } catch (error) {
+      console.error('Error fetching dashboard data:', error)
+    } finally {
+      setLoading(false)
+      setRefreshing(false)
+    }
+  }
+
+  const handleRefresh = () => {
+    setRefreshing(true)
+    fetchDashboardData()
+  }
 
   useEffect(() => {
     // Check if user is authenticated and is admin
@@ -58,6 +99,7 @@ export default function AdminDashboard() {
     }
 
     checkAuth()
+    fetchDashboardData()
   }, [router])
 
   const handleLogout = async () => {
@@ -70,7 +112,7 @@ export default function AdminDashboard() {
     router.push('/login')
   }
 
-  if (!user) {
+  if (!user || loading) {
     return <div className="min-h-screen flex items-center justify-center">Loading...</div>
   }
 
@@ -105,20 +147,32 @@ export default function AdminDashboard() {
 
         {/* Dashboard Content */}
         <main className="p-6">
-          <div className="mb-8">
-            <h1 className="text-3xl font-bold text-gray-900">Dashboard</h1>
-            <p className="text-gray-600">Welcome back, {user.name}!</p>
+          <div className="mb-8 flex items-center justify-between">
+            <div>
+              <h1 className="text-3xl font-bold text-gray-900">Dashboard</h1>
+              <p className="text-gray-600">Welcome back, {user.name}!</p>
+            </div>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={handleRefresh}
+              disabled={refreshing}
+              className="flex items-center gap-2"
+            >
+              <RefreshCw className={`h-4 w-4 ${refreshing ? 'animate-spin' : ''}`} />
+              Refresh
+            </Button>
           </div>
 
           {/* Stats Cards */}
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
             <Card className="p-6">
               <div className="flex flex-row items-center justify-between space-y-0 pb-2">
                 <CardTitle className="text-sm font-medium">Total Orders</CardTitle>
                 <ShoppingBag className="h-4 w-4 text-muted-foreground" />
               </div>
               <div>
-                <div className="text-2xl font-bold">1,234</div>
+                <div className="text-2xl font-bold">{dashboardData?.stats.totalOrders || 0}</div>
                 <p className="text-xs text-muted-foreground">+12% from last month</p>
               </div>
             </Card>
@@ -129,19 +183,8 @@ export default function AdminDashboard() {
                 <Users className="h-4 w-4 text-muted-foreground" />
               </div>
               <div>
-                <div className="text-2xl font-bold">892</div>
+                <div className="text-2xl font-bold">{dashboardData?.stats.totalUsers || 0}</div>
                 <p className="text-xs text-muted-foreground">+8% from last month</p>
-              </div>
-            </Card>
-
-            <Card className="p-6">
-              <div className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium">Revenue</CardTitle>
-                <LayoutDashboard className="h-4 w-4 text-muted-foreground" />
-              </div>
-              <div>
-                <div className="text-2xl font-bold">$45,231</div>
-                <p className="text-xs text-muted-foreground">+23% from last month</p>
               </div>
             </Card>
 
@@ -151,7 +194,7 @@ export default function AdminDashboard() {
                 <ShoppingBag className="h-4 w-4 text-muted-foreground" />
               </div>
               <div>
-                <div className="text-2xl font-bold">156</div>
+                <div className="text-2xl font-bold">{dashboardData?.stats.activeProducts || 0}</div>
                 <p className="text-xs text-muted-foreground">+5 new this week</p>
               </div>
             </Card>
@@ -164,30 +207,46 @@ export default function AdminDashboard() {
               <CardDescription className="mb-4">Latest actions in the system</CardDescription>
             </div>
             <div className="space-y-4">
-              <div className="flex items-center space-x-4">
-                <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
-                <div className="flex-1">
-                  <p className="text-sm font-medium">New order received</p>
-                  <p className="text-xs text-gray-500">Order #12345 - Custom T-Shirt Design</p>
+              {dashboardData?.recentActivity.map((activity) => {
+                const getActivityColor = (type: string) => {
+                  switch (type) {
+                    case 'order': return 'bg-blue-500'
+                    case 'user': return 'bg-green-500'
+                    case 'product': return 'bg-yellow-500'
+                    default: return 'bg-gray-500'
+                  }
+                }
+                
+                const getTimeAgo = (timestamp: string) => {
+                  const now = new Date()
+                  const activityTime = new Date(timestamp)
+                  const diffMs = now.getTime() - activityTime.getTime()
+                  const diffMins = Math.floor(diffMs / 60000)
+                  
+                  if (diffMins < 60) {
+                    return `${diffMins} min ago`
+                  } else if (diffMins < 1440) {
+                    return `${Math.floor(diffMins / 60)} hour${Math.floor(diffMins / 60) > 1 ? 's' : ''} ago`
+                  } else {
+                    return `${Math.floor(diffMins / 1440)} day${Math.floor(diffMins / 1440) > 1 ? 's' : ''} ago`
+                  }
+                }
+                
+                return (
+                  <div key={activity.id} className="flex items-center space-x-4">
+                    <div className={`w-2 h-2 ${getActivityColor(activity.type)} rounded-full`}></div>
+                    <div className="flex-1">
+                      <p className="text-sm font-medium">{activity.title}</p>
+                      <p className="text-xs text-gray-500">{activity.description}</p>
+                    </div>
+                    <span className="text-xs text-gray-500">{getTimeAgo(activity.timestamp)}</span>
+                  </div>
+                )
+              }) || (
+                <div className="text-center text-gray-500 py-4">
+                  No recent activity
                 </div>
-                <span className="text-xs text-gray-500">2 min ago</span>
-              </div>
-              <div className="flex items-center space-x-4">
-                <div className="w-2 h-2 bg-green-500 rounded-full"></div>
-                <div className="flex-1">
-                  <p className="text-sm font-medium">New user registered</p>
-                  <p className="text-xs text-gray-500">john.doe@example.com</p>
-                </div>
-                <span className="text-xs text-gray-500">15 min ago</span>
-              </div>
-              <div className="flex items-center space-x-4">
-                <div className="w-2 h-2 bg-yellow-500 rounded-full"></div>
-                <div className="flex-1">
-                  <p className="text-sm font-medium">Product updated</p>
-                  <p className="text-xs text-gray-500">Premium T-Shirt - Price changed</p>
-                </div>
-                <span className="text-xs text-gray-500">1 hour ago</span>
-              </div>
+              )}
             </div>
           </Card>
         </main>

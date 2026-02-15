@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { ProductService } from '@/lib/api/product';
+import { OrderService } from '@/lib/api/order';
 import { OrderData } from '@/types/product';
 import nodemailer from 'nodemailer';
 
@@ -23,8 +23,8 @@ export async function POST(request: NextRequest) {
     // Update orderData with the extracted files
     orderData.assets = assets;
 
-    // Process order using ProductService
-    const { customerData, productOrderData } = await ProductService.processOrder(orderData);
+    // Process order using OrderService
+    const { customerData, productOrderData } = await OrderService.processOrder(orderData);
 
     // Send email notification to company owner
     await sendOrderEmail(orderData, customerData.id);
