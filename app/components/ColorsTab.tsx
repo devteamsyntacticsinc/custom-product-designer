@@ -80,11 +80,23 @@ export default function ColorsTab() {
 
   const handleSubmitColor = async (payload: Color & { is_Active: boolean }) => {
     setIsLoading(true);
-
     try {
       if (payload.id) {
         // UPDATE
-        // await handleUpdateColor(payload);
+        const res = await fetch(`/api/colors`, {
+          method: "PUT",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({ ...payload, id: payload.id.toString() }),
+        });
+
+        // Check HTTP status
+        if (!res.ok) {
+          const errorData = await res.json();
+          throw new Error(errorData?.error || "Failed to update color");
+        }
+
         addToast("success", "Color updated successfully");
       } else {
         // SAVE
@@ -95,13 +107,20 @@ export default function ColorsTab() {
           },
           body: JSON.stringify(payload),
         });
-        const data = await res.json();
-        console.log(data);
+        // Check HTTP status
+        if (!res.ok) {
+          const errorData = await res.json();
+          throw new Error(errorData?.error || "Failed to save color");
+        }
         addToast("success", "Color saved successfully");
       }
-      setShouldRefetch(true);
     } catch (error) {
       console.error(error);
+      addToast(
+        "error",
+        error instanceof Error ? error.message : "Failed to save color",
+      );
+      setError(error instanceof Error ? error.message : "Failed to save color");
     } finally {
       setIsLoading(false);
     }
@@ -120,7 +139,8 @@ export default function ColorsTab() {
           mode="create"
           isLoading={isLoading}
           onSubmit={handleSubmitColor}
-         >
+          setShouldRefetch={setShouldRefetch}
+        >
           <Button>
             <Plus className="h-4 w-4 mr-2" />
             Add Color
@@ -180,6 +200,7 @@ export default function ColorsTab() {
                       isLoading={isLoading}
                       initialData={color}
                       onSubmit={handleSubmitColor}
+                      setShouldRefetch={setShouldRefetch}
                     >
                       <Button variant="ghost" size="icon">
                         <Edit className="h-4 w-4" />
@@ -210,12 +231,14 @@ function ColorSheet({
   initialData,
   onSubmit,
   isLoading,
+  setShouldRefetch,
 }: {
   children: React.ReactNode;
   mode: "create" | "edit";
   initialData?: Color & { is_Active: boolean };
-  onSubmit: (data: Color & { is_Active: boolean }) => void;
+  onSubmit: (data: Color & { is_Active: boolean }) => Promise<void>;
   isLoading: boolean;
+  setShouldRefetch: (value: boolean) => void;
 }) {
   const [name, setName] = useState("");
   const [open, onOpenChange] = useState(false);
@@ -229,9 +252,19 @@ function ColorSheet({
     }
   }, [initialData]);
 
-  const handleSubmit = () => {
-    onSubmit({ id: initialData?.id ?? "", value: name, is_Active: active });
-    onOpenChange(false);
+  const handleSubmit = async () => {
+    try {
+      await onSubmit({
+        id: initialData?.id ?? "",
+        value: name,
+        is_Active: active,
+      });
+
+      onOpenChange(false);
+      setShouldRefetch(true);
+    } catch (error) {
+      console.error(error);
+    }
   };
 
   const isEdit = mode === "edit";
