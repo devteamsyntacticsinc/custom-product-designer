@@ -3,7 +3,7 @@
 import { Input } from "@/components/ui/input";
 import { Label } from "./ui/label";
 import { useEffect, useState, useCallback } from "react";
-import { Size } from "@/types/product";
+import { Size, SizingAndQuantityProps } from "@/types/product";
 import { InfoIcon } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -16,21 +16,6 @@ const SIZE_ORDER = {
   "2XL": 6,
   "3XL": 7,
 } as const;
-
-interface SizingAndQuantityProps {
-  sizeSelection: {
-    size: string;
-    quantity: number;
-  }[];
-  setSizeSelection: (
-    value: {
-      size: string;
-      quantity: number;
-    }[],
-  ) => void;
-  productTypeId: string;
-  brandId: string;
-}
 
 export default function SizingAndQuantity({
   productTypeId,

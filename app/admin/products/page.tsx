@@ -4,13 +4,8 @@ import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { Button } from '@/components/ui/button'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
-import { Sheet, SheetContent, SheetDescription, SheetFooter, SheetHeader, SheetTitle, SheetTrigger } from '@/components/ui/sheet'
-import { Input } from '@/components/ui/input'
-import { Label } from '@/components/ui/label'
-import { Switch } from '@/components/ui/switch'
 import { User } from '@/types/login'
 import { 
-  Plus,
   RefreshCw
 } from 'lucide-react'
 import AdminSidebar from '@/app/components/AdminSidebar'
@@ -23,11 +18,6 @@ export default function ProductsPage() {
   const [sidebarOpen, setSidebarOpen] = useState(false)
   const [isCollapsed, setIsCollapsed] = useState(false)
   const [refreshing, setRefreshing] = useState(false)
-  const [activeTab, setActiveTab] = useState('product-types')
-  const [sheetOpen, setSheetOpen] = useState(false)
-  const [productTypeActive, setProductTypeActive] = useState(false)
-  const [brandActive, setBrandActive] = useState(false)
-  const [colorActive, setColorActive] = useState(false)
   const router = useRouter()
   const currentPath = typeof window !== 'undefined' ? window.location.pathname : '/admin/products'
 
@@ -86,73 +76,6 @@ export default function ProductsPage() {
     setTimeout(() => setRefreshing(false), 1000)
   }
 
-  const getSheetContent = () => {
-    switch (activeTab) {
-      case 'product-types':
-        return (
-          <div className="space-y-4">
-            <div className="space-y-2">
-              <Label htmlFor="product-type-name">Product Type Name</Label>
-              <Input id="product-type-name" placeholder="Enter product type name" />
-            </div>
-            <div className="flex items-center space-x-2">
-              <Switch
-                checked={productTypeActive}
-                onCheckedChange={setProductTypeActive}
-              />
-              <Label>{productTypeActive ? 'Active' : 'Inactive'}</Label>
-            </div>
-          </div>
-        )
-      case 'brands':
-        return (
-          <div className="space-y-4">
-            <div className="space-y-2">
-              <Label htmlFor="brand-name">Brand Name</Label>
-              <Input id="brand-name" placeholder="Enter brand name" />
-            </div>
-            <div className="flex items-center space-x-2">
-              <Switch
-                checked={brandActive}
-                onCheckedChange={setBrandActive}
-              />
-              <Label>{brandActive ? 'Active' : 'Inactive'}</Label>
-            </div>
-          </div>
-        )
-      case 'colors':
-        return (
-          <div className="space-y-4">
-            <div className="space-y-2">
-              <Label htmlFor="color-name">Color Name</Label>
-              <Input id="color-name" placeholder="Enter color name" />
-            </div>
-            <div className="flex items-center space-x-2">
-              <Switch
-                checked={colorActive}
-                onCheckedChange={setColorActive}
-              />
-              <Label>{colorActive ? 'Active' : 'Inactive'}</Label>
-            </div>
-          </div>
-        )
-      default:
-        return null
-    }
-  }
-
-  const getSheetTitle = () => {
-    switch (activeTab) {
-      case 'product-types':
-        return 'Add New Product Type'
-      case 'brands':
-        return 'Add New Brand'
-      case 'colors':
-        return 'Add New Color'
-      default:
-        return 'Add New'
-    }
-  }
 
   if (!user) {
     return (
@@ -209,35 +132,11 @@ export default function ProductsPage() {
                 <RefreshCw className={`h-4 w-4 mr-2 ${refreshing ? 'animate-spin' : ''}`} />
                 Refresh
               </Button>
-              <Sheet open={sheetOpen} onOpenChange={setSheetOpen}>
-                <SheetTrigger asChild>
-                  <Button>
-                    <Plus className="h-4 w-4 mr-2" />
-                    Add New
-                  </Button>
-                </SheetTrigger>
-                <SheetContent>
-                  <SheetHeader>
-                    <SheetTitle>{getSheetTitle()}</SheetTitle>
-                    <SheetDescription>
-                      Add a new {activeTab.replace('-', ' ')} to the system.
-                    </SheetDescription>
-                  </SheetHeader>
-                  <div className="py-6">
-                    {getSheetContent()}
-                  </div>
-                  <SheetFooter>
-                    <Button type="submit" onClick={() => setSheetOpen(false)}>
-                      Save {activeTab.replace('-', ' ')}
-                    </Button>
-                  </SheetFooter>
-                </SheetContent>
-              </Sheet>
             </div>
           </div>
 
           {/* Tabs */}
-          <Tabs defaultValue="product-types" className="space-y-6" onValueChange={setActiveTab}>
+          <Tabs defaultValue="product-types" className="space-y-6">
             <TabsList className="grid w-full grid-cols-3">
               <TabsTrigger value="product-types">Product Types</TabsTrigger>
               <TabsTrigger value="brands">Brands</TabsTrigger>
