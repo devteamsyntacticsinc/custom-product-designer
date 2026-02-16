@@ -251,13 +251,17 @@ function ColorSheet({
   const [open, onOpenChange] = useState(false);
   const [active, setActive] = useState(true);
 
-  // Sync data when opening in edit mode
-  useEffect(() => {
-    if (initialData) {
-      setName(initialData.value);
-      setActive(initialData.is_Active);
+  const handleOpenChange = (nextOpen: boolean) => {
+    onOpenChange(nextOpen);
+
+    if (nextOpen) {
+      setName(initialData?.value ?? "");
+      setActive(initialData?.is_Active ?? true);
+    } else {
+      setName("");
+      setActive(true);
     }
-  }, [initialData]);
+  };
 
   const handleSubmit = async () => {
     try {
@@ -276,7 +280,7 @@ function ColorSheet({
   const isEdit = mode === "edit";
 
   return (
-    <Sheet open={open} onOpenChange={onOpenChange}>
+    <Sheet open={open} onOpenChange={handleOpenChange}>
       <SheetTrigger asChild>{children}</SheetTrigger>
 
       <SheetContent>
@@ -372,7 +376,7 @@ function DeleteDialog({
           <DialogTitle>Are you absolutely sure?</DialogTitle>
           <DialogDescription>
             This action cannot be undone. This will permanently delete your
-            color "{color.value}".
+            color &quot;{color.value}&quot;.
           </DialogDescription>
         </DialogHeader>
         <DialogFooter>
