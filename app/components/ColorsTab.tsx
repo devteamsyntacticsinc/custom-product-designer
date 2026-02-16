@@ -43,18 +43,14 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
-
-type ColorFormData = {
-  name: string;
-  is_Active: boolean;
-};
+import { useToast } from "@/contexts/ToastContext";
 
 export default function ColorsTab() {
-  const [sheetOpen, setSheetOpen] = useState(false);
-  const [colorActive, setColorActive] = useState(false);
   const [colors, setColors] = useState<(Color & { is_Active: boolean })[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [shouldRefetch, setShouldRefetch] = useState(false);
+  const { addToast } = useToast();
 
   // fetch all colors using use effect an set state
 
@@ -80,19 +76,32 @@ export default function ColorsTab() {
       }
     };
     fetchColors();
-  }, []);
+  }, [shouldRefetch]);
 
-  const handleSaveColor = async () => {
-    try {
-    } catch (error) {
-    } finally {
-      setIsLoading(false);
-    }
-  };
+  const handleSubmitColor = async (payload: Color & { is_Active: boolean }) => {
+    setIsLoading(true);
 
-  const handleUpdateColor = async () => {
     try {
+      if (payload.id) {
+        // UPDATE
+        // await handleUpdateColor(payload);
+        addToast("success", "Color updated successfully");
+      } else {
+        // SAVE
+        const res = await fetch("/api/colors", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify(payload),
+        });
+        const data = await res.json();
+        console.log(data);
+        addToast("success", "Color saved successfully");
+      }
+      setShouldRefetch(true);
     } catch (error) {
+      console.error(error);
     } finally {
       setIsLoading(false);
     }
@@ -100,27 +109,23 @@ export default function ColorsTab() {
 
   return (
     <Card>
-      <CardHeader className="py-6">
-        <div className="flex items-center justify-between">
-          <div>
-            <CardTitle>Colors</CardTitle>
-            <CardDescription>
-              Manage product colors available in your store
-            </CardDescription>
-          </div>
-          <ColorSheet
-            open={sheetOpen}
-            onOpenChange={setSheetOpen}
-            mode="create"
-            isLoading={isLoading}
-            onSubmit={handleSaveColor}
-          >
-            <Button>
-              <Plus className="h-4 w-4 mr-2" />
-              Add Color
-            </Button>
-          </ColorSheet>
+      <CardHeader className="flex items-center justify-between py-6">
+        <div>
+          <CardTitle>Colors</CardTitle>
+          <CardDescription>
+            Manage product colors available in your store
+          </CardDescription>
         </div>
+        <ColorSheet
+          mode="create"
+          isLoading={isLoading}
+          onSubmit={handleSubmitColor}
+         >
+          <Button>
+            <Plus className="h-4 w-4 mr-2" />
+            Add Color
+          </Button>
+        </ColorSheet>
       </CardHeader>
       <CardContent>
         <Table>
@@ -140,7 +145,7 @@ export default function ColorsTab() {
                     <Skeleton className="h-4 w-10" />
                   </TableCell>
                   <TableCell>
-                    <Skeleton className="h-4 w-40" />
+                    <Skeleton className="h-4 w-20" />
                   </TableCell>
                   <TableCell>
                     <Skeleton className="h-6 w-20" />
@@ -171,11 +176,10 @@ export default function ColorsTab() {
                   </TableCell>
                   <TableCell>
                     <ColorSheet
-                      open={sheetOpen}
-                      onOpenChange={setSheetOpen}
                       mode="edit"
                       isLoading={isLoading}
-                      onSubmit={() => handleUpdateColor()}
+                      initialData={color}
+                      onSubmit={handleSubmitColor}
                     >
                       <Button variant="ghost" size="icon">
                         <Edit className="h-4 w-4" />
@@ -201,35 +205,33 @@ export default function ColorsTab() {
 }
 
 function ColorSheet({
-  open,
-  onOpenChange,
   children,
   mode,
   initialData,
   onSubmit,
   isLoading,
 }: {
-  open: boolean;
-  onOpenChange: (open: boolean) => void;
   children: React.ReactNode;
   mode: "create" | "edit";
-  initialData?: ColorFormData;
-  onSubmit: (data: ColorFormData) => void;
+  initialData?: Color & { is_Active: boolean };
+  onSubmit: (data: Color & { is_Active: boolean }) => void;
   isLoading: boolean;
 }) {
   const [name, setName] = useState("");
+  const [open, onOpenChange] = useState(false);
   const [active, setActive] = useState(true);
 
   // Sync data when opening in edit mode
   useEffect(() => {
-    if (open) {
-      setName(initialData?.name ?? "");
-      setActive(initialData?.is_Active ?? true);
+    if (initialData) {
+      setName(initialData.value);
+      setActive(initialData.is_Active);
     }
-  }, [open, initialData]);
+  }, [initialData]);
 
   const handleSubmit = () => {
-    onSubmit({ name, is_Active: active });
+    onSubmit({ id: initialData?.id ?? "", value: name, is_Active: active });
+    onOpenChange(false);
   };
 
   const isEdit = mode === "edit";
