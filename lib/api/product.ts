@@ -4,7 +4,6 @@ import { Product, Brand, Color, ProductType, Size } from "@/types/product"
 export class ProductService {
   static async getProducts(): Promise<Product[]> {
     try {
-      // Since there's no 'products' table, we'll return product combinations from size_product
       const { data, error } = await supabase
         .from('size_product')
         .select(`

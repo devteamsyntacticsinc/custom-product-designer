@@ -75,3 +75,18 @@ export interface OrderResult {
   };
 }
 
+export interface SizingAndQuantityProps {
+  sizeSelection: {
+    size: string;
+    quantity: number;
+  }[];
+  setSizeSelection: (
+    value: {
+      size: string;
+      quantity: number;
+    }[],
+  ) => void;
+  productTypeId: string;
+  brandId: string;
+}
+
