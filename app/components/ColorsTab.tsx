@@ -49,7 +49,7 @@ export default function ColorsTab() {
   const [colors, setColors] = useState<(Color & { is_Active: boolean })[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [shouldRefetch, setShouldRefetch] = useState(false);
+  const [refreshKey, setRefreshKey] = useState(0);
   const { addToast } = useToast();
 
   // fetch all colors using use effect an set state
@@ -59,7 +59,17 @@ export default function ColorsTab() {
       try {
         setError(null);
         setIsLoading(true);
-        const response = await fetch("/api/colors");
+
+        // Add cache-busting timestamp to prevent stale data
+        const timestamp = Date.now();
+        const response = await fetch(`/api/colors?t=${timestamp}`, {
+          cache: "no-store", // Prevent browser caching
+          headers: {
+            "Cache-Control": "no-cache",
+            Pragma: "no-cache",
+          },
+        });
+
         if (!response.ok) {
           throw new Error("Failed to fetch colors");
         }
@@ -76,7 +86,7 @@ export default function ColorsTab() {
       }
     };
     fetchColors();
-  }, [shouldRefetch]);
+  }, [refreshKey]);
 
   const handleSubmitColor = async (payload: Color & { is_Active: boolean }) => {
     setIsLoading(true);
@@ -96,7 +106,6 @@ export default function ColorsTab() {
           const errorData = await res.json();
           throw new Error(errorData?.error || "Failed to update color");
         }
-
         addToast("success", "Color updated successfully");
       } else {
         // SAVE
@@ -114,6 +123,9 @@ export default function ColorsTab() {
         }
         addToast("success", "Color saved successfully");
       }
+
+      // Force immediate refetch with new timestamp
+      setRefreshKey((prev: number) => prev + 1);
     } catch (error) {
       console.error(error);
       addToast(
@@ -139,7 +151,7 @@ export default function ColorsTab() {
           mode="create"
           isLoading={isLoading}
           onSubmit={handleSubmitColor}
-          setShouldRefetch={setShouldRefetch}
+          setRefreshKey={setRefreshKey}
         >
           <Button>
             <Plus className="h-4 w-4 mr-2" />
@@ -200,7 +212,7 @@ export default function ColorsTab() {
                       isLoading={isLoading}
                       initialData={color}
                       onSubmit={handleSubmitColor}
-                      setShouldRefetch={setShouldRefetch}
+                      setRefreshKey={setRefreshKey}
                     >
                       <Button variant="ghost" size="icon">
                         <Edit className="h-4 w-4" />
@@ -209,6 +221,8 @@ export default function ColorsTab() {
                     <DeleteDialog
                       isLoading={isLoading}
                       setIsLoading={setIsLoading}
+                      color={color}
+                      setRefreshKey={setRefreshKey}
                     >
                       <Button variant="ghost" size="icon">
                         <Trash2 className="h-4 w-4" />
@@ -231,14 +245,14 @@ function ColorSheet({
   initialData,
   onSubmit,
   isLoading,
-  setShouldRefetch,
+  setRefreshKey,
 }: {
   children: React.ReactNode;
   mode: "create" | "edit";
   initialData?: Color & { is_Active: boolean };
   onSubmit: (data: Color & { is_Active: boolean }) => Promise<void>;
   isLoading: boolean;
-  setShouldRefetch: (value: boolean) => void;
+  setRefreshKey: React.Dispatch<React.SetStateAction<number>>;
 }) {
   const [name, setName] = useState("");
   const [open, onOpenChange] = useState(false);
@@ -261,7 +275,6 @@ function ColorSheet({
       });
 
       onOpenChange(false);
-      setShouldRefetch(true);
     } catch (error) {
       console.error(error);
     }
@@ -320,27 +333,30 @@ function DeleteDialog({
   children,
   isLoading,
   setIsLoading,
+  color,
+  setRefreshKey,
 }: {
   children: React.ReactNode;
   isLoading: boolean;
   setIsLoading: (value: boolean) => void;
+  color: Color & { is_Active: boolean };
+  setRefreshKey: React.Dispatch<React.SetStateAction<number>>;
 }) {
+  const { addToast } = useToast();
+  const [open, setOpen] = useState(false);
+
   const handleDeleteColor = async () => {
-    try {
-    } catch (error) {
-    } finally {
-      setIsLoading(false);
-    }
+    // Delete color here
   };
   return (
-    <Dialog>
+    <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>{children}</DialogTrigger>
       <DialogContent>
         <DialogHeader>
           <DialogTitle>Are you absolutely sure?</DialogTitle>
           <DialogDescription>
             This action cannot be undone. This will permanently delete your
-            color.
+            color "{color.value}".
           </DialogDescription>
         </DialogHeader>
         <DialogFooter>
