@@ -1,11 +1,15 @@
 import Image from "next/image";
 import { useState, useEffect } from "react";
+import { useAssets } from "@/contexts/AssetsContext";
 
-export default function ProductPreview({
-  assets,
-}: {
-  assets: Record<string, File | null>;
-}) {
+// Custom component for blob URLs that bypasses Next.js Image requirements
+const BlobImage = ({ src, alt, className }: { src: string; alt: string; className: string }) => (
+  // eslint-disable-next-line @next/next/no-img-element
+  <img src={src} alt={alt} className={className} />
+);
+
+export default function ProductPreview() {
+  const { assets } = useAssets();
   const [previews, setPreviews] = useState<Record<string, string>>({});
 
   useEffect(() => {
@@ -20,9 +24,13 @@ export default function ProductPreview({
       }
     });
 
-    setPreviews(newPreviews);
+    // Use a timeout to avoid synchronous setState
+    const timeoutId = setTimeout(() => {
+      setPreviews(newPreviews);
+    }, 0);
 
     return () => {
+      clearTimeout(timeoutId);
       objectUrls.forEach((url) => URL.revokeObjectURL(url));
     };
   }, [assets]);
@@ -44,7 +52,7 @@ export default function ProductPreview({
           {/* Front Design Area - Top Left */}
           <div className="absolute top-[40%] left-[34%] w-15 h-15 border-2 border-dashed border-gray-400 rounded flex items-center justify-center transform -translate-x-1/2 -translate-y-1/2 overflow-hidden bg-white/50">
             {previews["front-top-left"] ? (
-              <img src={previews["front-top-left"]} alt="Preview" className="w-full h-full object-contain" />
+              <BlobImage src={previews["front-top-left"]} alt="Preview" className="w-full h-full object-contain" />
             ) : (
               <span className="text-gray-400 text-xs">Front Top Left</span>
             )}
@@ -52,7 +60,7 @@ export default function ProductPreview({
           {/* Front Design Area - Center Large */}
           <div className="absolute top-[55%] left-[28%] w-48 h-56 border-2 border-dashed border-gray-400 rounded flex items-center justify-center transform -translate-x-1/2 -translate-y-1/2 overflow-hidden bg-white/50">
             {previews["front-center"] ? (
-              <img src={previews["front-center"]} alt="Preview" className="w-full h-full object-contain" />
+              <BlobImage src={previews["front-center"]} alt="Preview" className="w-full h-full object-contain" />
             ) : (
               <span className="text-gray-400 text-xs">Front Center</span>
             )}
@@ -60,7 +68,7 @@ export default function ProductPreview({
           {/* Back Design Area - Top Center */}
           <div className="absolute top-[50%] left-[71%] w-24 h-24 border-2 border-dashed border-gray-400 rounded flex items-center justify-center transform -translate-x-1/2 -translate-y-1/2 overflow-hidden bg-white/50">
             {previews["back-top"] ? (
-              <img src={previews["back-top"]} alt="Preview" className="w-full h-full object-contain" />
+              <BlobImage src={previews["back-top"]} alt="Preview" className="w-full h-full object-contain" />
             ) : (
               <span className="text-gray-400 text-xs">Back Top</span>
             )}
@@ -68,7 +76,7 @@ export default function ProductPreview({
           {/* Back Design Area - Bottom Center */}
           <div className="absolute top-[66%] left-[71%] w-48 h-10 border-2 border-dashed border-gray-400 rounded flex items-center justify-center transform -translate-x-1/2 -translate-y-1/2 overflow-hidden bg-white/50">
             {previews["back-bottom"] ? (
-              <img src={previews["back-bottom"]} alt="Preview" className="w-full h-full object-contain" />
+              <BlobImage src={previews["back-bottom"]} alt="Preview" className="w-full h-full object-contain" />
             ) : (
               <span className="text-gray-400 text-xs">Back Bottom</span>
             )}
