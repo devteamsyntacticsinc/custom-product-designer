@@ -47,49 +47,47 @@ import { useToast } from "@/contexts/ToastContext";
 
 export default function ColorsTab() {
   const [colors, setColors] = useState<(Color & { is_Active: boolean })[]>([]);
-  const [isLoading, setIsLoading] = useState(false);
+  const [isFetchingColors, setIsFetchingColors] = useState(false);
+  const [isMutating, setIsMutating] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [refreshKey, setRefreshKey] = useState(0);
   const { addToast } = useToast();
 
   // fetch all colors using use effect an set state
 
-  useEffect(() => {
-    const fetchColors = async () => {
-      try {
-        setError(null);
-        setIsLoading(true);
+  const fetchColors = async () => {
+    try {
+      setError(null);
+      setIsFetchingColors(true);
 
-        // Add cache-busting timestamp to prevent stale data
-        const timestamp = Date.now();
-        const response = await fetch(`/api/colors?t=${timestamp}`, {
-          cache: "no-store", // Prevent browser caching
-          headers: {
-            "Cache-Control": "no-cache",
-            Pragma: "no-cache",
-          },
-        });
+      // Add cache-busting timestamp to prevent stale data
+      const timestamp = Date.now();
+      const response = await fetch(`/api/colors?t=${timestamp}`, {
+        cache: "no-store", // Prevent browser caching
+        headers: {
+          "Cache-Control": "no-cache",
+          Pragma: "no-cache",
+        },
+      });
 
-        if (!response.ok) {
-          throw new Error("Failed to fetch colors");
-        }
-
-        const colors = await response.json();
-        setColors(colors);
-      } catch (error) {
-        console.log(error);
-        setError(
-          error instanceof Error ? error.message : "Something went wrong",
-        );
-      } finally {
-        setIsLoading(false);
+      if (!response.ok) {
+        throw new Error("Failed to fetch colors");
       }
-    };
+
+      const colors = await response.json();
+      setColors(colors);
+    } catch (error) {
+      console.log(error);
+      setError(error instanceof Error ? error.message : "Something went wrong");
+    } finally {
+      setIsFetchingColors(false);
+    }
+  };
+  useEffect(() => {
     fetchColors();
-  }, [refreshKey]);
+  }, []);
 
   const handleSubmitColor = async (payload: Color & { is_Active: boolean }) => {
-    setIsLoading(true);
+    setIsMutating(true);
     try {
       if (payload.id) {
         // UPDATE
@@ -124,8 +122,7 @@ export default function ColorsTab() {
         addToast("success", "Color saved successfully");
       }
 
-      // Force immediate refetch with new timestamp
-      setRefreshKey((prev: number) => prev + 1);
+      await fetchColors();
     } catch (error) {
       console.error(error);
       addToast(
@@ -134,7 +131,7 @@ export default function ColorsTab() {
       );
       setError(error instanceof Error ? error.message : "Failed to save color");
     } finally {
-      setIsLoading(false);
+      setIsMutating(false);
     }
   };
 
@@ -149,9 +146,8 @@ export default function ColorsTab() {
         </div>
         <ColorSheet
           mode="create"
-          isLoading={isLoading}
+          isLoading={isMutating}
           onSubmit={handleSubmitColor}
-          setRefreshKey={setRefreshKey}
         >
           <Button>
             <Plus className="h-4 w-4 mr-2" />
@@ -170,7 +166,7 @@ export default function ColorsTab() {
             </TableRow>
           </TableHeader>
           <TableBody>
-            {isLoading ? (
+            {isFetchingColors ? (
               Array.from({ length: 5 }).map((_, index) => (
                 <TableRow key={`colors-loading-${index}`}>
                   <TableCell>
@@ -209,22 +205,21 @@ export default function ColorsTab() {
                   <TableCell>
                     <ColorSheet
                       mode="edit"
-                      isLoading={isLoading}
+                      isLoading={isMutating}
                       initialData={color}
                       onSubmit={handleSubmitColor}
-                      setRefreshKey={setRefreshKey}
                     >
-                      <Button variant="ghost" size="icon">
+                      <Button variant="ghost" size="icon" disabled={isMutating}>
                         <Edit className="h-4 w-4" />
                       </Button>
                     </ColorSheet>
                     <DeleteDialog
-                      isLoading={isLoading}
-                      setIsLoading={setIsLoading}
+                      isLoading={isMutating}
+                      setIsLoading={setIsMutating}
                       color={color}
-                      setRefreshKey={setRefreshKey}
+                      fetchColors={fetchColors}
                     >
-                      <Button variant="ghost" size="icon">
+                      <Button variant="ghost" size="icon" disabled={isMutating}>
                         <Trash2 className="h-4 w-4" />
                       </Button>
                     </DeleteDialog>
@@ -245,14 +240,12 @@ function ColorSheet({
   initialData,
   onSubmit,
   isLoading,
-  setRefreshKey,
 }: {
   children: React.ReactNode;
   mode: "create" | "edit";
   initialData?: Color & { is_Active: boolean };
   onSubmit: (data: Color & { is_Active: boolean }) => Promise<void>;
   isLoading: boolean;
-  setRefreshKey: React.Dispatch<React.SetStateAction<number>>;
 }) {
   const [name, setName] = useState("");
   const [open, onOpenChange] = useState(false);
@@ -273,7 +266,7 @@ function ColorSheet({
         value: name,
         is_Active: active,
       });
-
+      setName("");
       onOpenChange(false);
     } catch (error) {
       console.error(error);
@@ -334,19 +327,42 @@ function DeleteDialog({
   isLoading,
   setIsLoading,
   color,
-  setRefreshKey,
+  fetchColors,
 }: {
   children: React.ReactNode;
   isLoading: boolean;
   setIsLoading: (value: boolean) => void;
   color: Color & { is_Active: boolean };
-  setRefreshKey: React.Dispatch<React.SetStateAction<number>>;
+  fetchColors: () => Promise<void>;
 }) {
   const { addToast } = useToast();
   const [open, setOpen] = useState(false);
 
   const handleDeleteColor = async () => {
-    // Delete color here
+    if (!color.id) return;
+
+    setIsLoading(true);
+    try {
+      const res = await fetch(`/api/colors?id=${color.id}`, {
+        method: "DELETE",
+      });
+
+      if (!res.ok) {
+        const errorData = await res.json();
+        throw new Error(errorData?.error || "Failed to delete color");
+      }
+      await fetchColors();
+      addToast("success", "Color deleted successfully");
+      setOpen(false);
+    } catch (error) {
+      console.error(error);
+      addToast(
+        "error",
+        error instanceof Error ? error.message : "Failed to delete color",
+      );
+    } finally {
+      setIsLoading(false);
+    }
   };
   return (
     <Dialog open={open} onOpenChange={setOpen}>
@@ -360,7 +376,7 @@ function DeleteDialog({
           </DialogDescription>
         </DialogHeader>
         <DialogFooter>
-          <DialogClose asChild>
+          <DialogClose asChild disabled={isLoading}>
             <Button variant="outline">Cancel</Button>
           </DialogClose>
           <Button
