@@ -113,7 +113,8 @@ export class ProductService {
             brand_id,
             brands (
               id,
-              name
+              name,
+              is_Active
             )
           `)
           .eq('type_id', typeId)
@@ -127,7 +128,7 @@ export class ProductService {
         // Get all brands
         const { data, error } = await supabase
           .from('brands')
-          .select('id, name')
+          .select('id, name, is_Active')
           .order('name')
 
         if (error) {
@@ -213,7 +214,7 @@ export class ProductService {
     try {
       const { data, error } = await supabase
         .from('colors')
-        .select('id, value')
+        .select('id, value, is_Active')
         .order('value')
 
       if (error) {
@@ -298,7 +299,7 @@ export class ProductService {
     try {
       const { data, error } = await supabase
         .from('product_type')
-        .select('id, name')
+        .select('id, name, is_Active')
         .order('name')
 
       if (error) {
