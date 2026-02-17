@@ -129,7 +129,6 @@ export default function ColorsTab() {
         "error",
         error instanceof Error ? error.message : "Failed to save color",
       );
-      setError(error instanceof Error ? error.message : "Failed to save color");
     } finally {
       setIsMutating(false);
     }
@@ -364,6 +363,8 @@ function DeleteDialog({
         "error",
         error instanceof Error ? error.message : "Failed to delete color",
       );
+      // Close dialog on error as well
+      setOpen(false);
     } finally {
       setIsLoading(false);
     }
