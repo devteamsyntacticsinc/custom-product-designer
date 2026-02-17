@@ -14,9 +14,9 @@ export class OrderService {
 
       // If customer exists, return the existing customer data
       if (existingCustomer) {
-        
+
         // Optionally update customer information if it has changed
-        const needsUpdate = 
+        const needsUpdate =
           existingCustomer.name !== contactInformation.fullName ||
           existingCustomer.contact_number !== contactInformation.contactNumber ||
           existingCustomer.address !== contactInformation.address;
@@ -36,7 +36,7 @@ export class OrderService {
           console.log('Existing customer updated:', updatedCustomer.email);
           return updatedCustomer;
         }
-        
+
         return existingCustomer;
       }
 
@@ -125,7 +125,7 @@ export class OrderService {
 
         return true
       }
-      
+
       return true
     } catch (error) {
       console.error('Error creating product sizes:', error)
@@ -137,7 +137,7 @@ export class OrderService {
     try {
       const placementMap: Record<string, string> = {
         "front-top-left": "Front - Top Left",
-        "front-center": "Front - Center", 
+        "front-center": "Front - Center",
         "back-top": "Back - Top",
         "back-bottom": "Back - Bottom"
       };
@@ -147,7 +147,7 @@ export class OrderService {
         if (file && file instanceof File) {
           // Upload to Supabase Storage
           const fileName = `${Date.now()}-${file.name}`;
-          
+
           const { error: uploadError } = await supabase.storage
             .from('product-images')
             .upload(fileName, file);
@@ -224,7 +224,7 @@ export class OrderService {
       const { count, error } = await supabase
         .from('product_orders')
         .select('*', { count: 'exact', head: true })
-      
+
       if (error) throw error
       return count || 0
     } catch (error) {
@@ -238,7 +238,7 @@ export class OrderService {
       const { count, error } = await supabase
         .from('customers')
         .select('*', { count: 'exact', head: true })
-      
+
       if (error) throw error
       return count || 0
     } catch (error) {
@@ -270,30 +270,30 @@ export class OrderService {
           .select('id, created_at, customer_id')
           .order('created_at', { ascending: false })
           .limit(3)
-        
+
         if (altError) {
           console.error('Alternative orders query error:', altError)
           throw altError
         }
-        
+
         // Fetch customer data separately
         const customerIds = ordersData?.map(order => order.customer_id).filter(Boolean) || []
         const { data: customersData, error: customersFetchError } = await supabase
           .from('customers')
           .select('id, name, email')
           .in('id', customerIds)
-        
+
         if (customersFetchError) {
           console.error('Customers fetch error:', customersFetchError)
           throw customersFetchError
         }
-        
+
         // Combine order and customer data
         const combinedOrders = ordersData?.map(order => ({
           ...order,
           customers: customersData?.filter(customer => customer.id === order.customer_id) || []
         })) || []
-        
+
         return this.buildActivityFromOrders(combinedOrders, [])
       }
 
@@ -308,7 +308,7 @@ export class OrderService {
         console.error('Customers query error:', customersError)
         throw customersError
       }
-      
+
       return this.buildActivityFromOrders(recentOrders, recentCustomers)
     } catch (error) {
       console.error('Error fetching recent activity:', error)
@@ -418,14 +418,16 @@ export class OrderService {
           sizes: Array.isArray(size.sizes) ? size.sizes[0] : size.sizes
         }));
 
+        const transformedBrandType = brandType ? [{
+          id: brandType.id,
+          brands: Array.isArray(brandType.brands) ? brandType.brands[0] : (brandType.brands || undefined),
+          product_type: Array.isArray(brandType.product_type) ? brandType.product_type[0] : (brandType.product_type || undefined)
+        }] : [];
+
         return {
           ...order,
           customers: customer || null,
-          brand_type: brandType ? [{
-            id: brandType.id,
-            brands: brandType.brands || [],
-            product_type: brandType.product_type || []
-          }] : [],
+          brand_type: transformedBrandType,
           colors: color ? [color] : [],
           product_sizes: formattedSizes || [],
           product_images: images || []
@@ -445,8 +447,8 @@ export class OrderService {
     // Add order activities
     if (recentOrders) {
       recentOrders.forEach((order) => {
-        const customer = Array.isArray(order.customers) 
-          ? order.customers[0] 
+        const customer = Array.isArray(order.customers)
+          ? order.customers[0]
           : order.customers
         activities.push({
           id: `order-${order.id}`,
