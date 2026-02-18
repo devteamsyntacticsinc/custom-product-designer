@@ -22,6 +22,7 @@ export interface Product {
 export interface Brand {
   id: string
   name: string
+  is_Active: boolean
   type_id?: string
 }
 

@@ -30,7 +30,7 @@ export async function POST(request: Request) {
     }
 
     const brand = await ProductService.createBrand(
-      name.trim(), 
+      name.trim(),
       is_Active !== undefined ? is_Active : true
     )
     return NextResponse.json(brand, { status: 201 })
@@ -47,10 +47,11 @@ export async function PUT(request: Request) {
   try {
     const body = await request.json()
     const { id, name, is_Active } = body
+    const idString = id?.toString().trim()
 
-    if (!id || typeof id !== 'string' || id.trim() === '') {
+    if (!id || !idString) {
       return NextResponse.json(
-        { error: 'Brand ID is required and must be a non-empty string' },
+        { error: 'Brand ID is required' },
         { status: 400 }
       )
     }
@@ -63,7 +64,7 @@ export async function PUT(request: Request) {
     }
 
     const brand = await ProductService.updateBrand(
-      id.trim(), 
+      idString.trim(),
       name ? name.trim() : undefined,
       is_Active
     )
