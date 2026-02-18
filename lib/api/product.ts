@@ -4,7 +4,6 @@ import { Product, Brand, Color, ProductType, Size } from "@/types/product"
 export class ProductService {
   static async getProducts(): Promise<Product[]> {
     try {
-      // Since there's no 'products' table, we'll return product combinations from size_product
       const { data, error } = await supabase
         .from('size_product')
         .select(`
@@ -114,7 +113,8 @@ export class ProductService {
             brand_id,
             brands (
               id,
-              name
+              name,
+              is_Active
             )
           `)
           .eq('type_id', typeId)
@@ -128,7 +128,7 @@ export class ProductService {
         // Get all brands
         const { data, error } = await supabase
           .from('brands')
-          .select('id, name')
+          .select('id, name, is_Active')
           .order('name')
 
         if (error) {
@@ -145,6 +145,21 @@ export class ProductService {
 
   static async createBrand(name: string, is_Active: boolean = true): Promise<Brand> {
     try {
+      // Check if brand already exists (case-insensitive)
+      const { data: existingBrand, error: checkError } = await supabase
+        .from('brands')
+        .select('id')
+        .ilike('name', name)
+        .single()
+
+      if (checkError && checkError.code !== 'PGRST116') {
+        throw checkError
+      }
+
+      if (existingBrand) {
+        throw new Error('Brand with this name already exists')
+      }
+
       const { data, error } = await supabase
         .from('brands')
         .insert([{ name, is_Active }])
@@ -169,7 +184,25 @@ export class ProductService {
   static async updateBrand(id: string, name?: string, is_Active?: boolean): Promise<Brand> {
     try {
       const updateData: { name?: string; is_Active?: boolean } = {}
-      if (name !== undefined) updateData.name = name
+      if (name !== undefined) {
+        // Check if brand name already exists (excluding current brand, case-insensitive)
+        const { data: existingBrand, error: checkError } = await supabase
+          .from('brands')
+          .select('id')
+          .ilike('name', name)
+          .neq('id', id)
+          .single()
+
+        if (checkError && checkError.code !== 'PGRST116') {
+          throw checkError
+        }
+
+        if (existingBrand) {
+          throw new Error('Brand with this name already exists')
+        }
+        
+        updateData.name = name
+      }
       if (is_Active !== undefined) updateData.is_Active = is_Active
 
       const { data, error } = await supabase
@@ -214,7 +247,7 @@ export class ProductService {
     try {
       const { data, error } = await supabase
         .from('colors')
-        .select('id, value')
+        .select('id, value, is_Active')
         .order('value')
 
       if (error) {
@@ -230,6 +263,21 @@ export class ProductService {
 
   static async createColor(value: string, is_Active: boolean = true): Promise<Color> {
     try {
+      // Check if color already exists (case-insensitive)
+      const { data: existingColor, error: checkError } = await supabase
+        .from('colors')
+        .select('id')
+        .ilike('value', value)
+        .single()
+
+      if (checkError && checkError.code !== 'PGRST116') {
+        throw checkError
+      }
+
+      if (existingColor) {
+        throw new Error('Color with this value already exists')
+      }
+
       const { data, error } = await supabase
         .from('colors')
         .insert([{ value, is_Active }])
@@ -254,7 +302,25 @@ export class ProductService {
   static async updateColor(id: string, value?: string, is_Active?: boolean): Promise<Color> {
     try {
       const updateData: { value?: string; is_Active?: boolean } = {}
-      if (value !== undefined) updateData.value = value
+      if (value !== undefined) {
+        // Check if color value already exists (excluding current color, case-insensitive)
+        const { data: existingColor, error: checkError } = await supabase
+          .from('colors')
+          .select('id')
+          .ilike('value', value)
+          .neq('id', id)
+          .single()
+
+        if (checkError && checkError.code !== 'PGRST116') {
+          throw checkError
+        }
+
+        if (existingColor) {
+          throw new Error('Color with this value already exists')
+        }
+        
+        updateData.value = value
+      }
       if (is_Active !== undefined) updateData.is_Active = is_Active
 
       const { data, error } = await supabase
@@ -299,7 +365,7 @@ export class ProductService {
     try {
       const { data, error } = await supabase
         .from('product_type')
-        .select('id, name')
+        .select('id, name, is_Active')
         .order('name')
 
       if (error) {
@@ -326,6 +392,21 @@ export class ProductService {
 
   static async createProductType(name: string, is_Active: boolean = true): Promise<ProductType> {
     try {
+      // Check if product type already exists (case-insensitive)
+      const { data: existingProductType, error: checkError } = await supabase
+        .from('product_type')
+        .select('id')
+        .ilike('name', name)
+        .single()
+
+      if (checkError && checkError.code !== 'PGRST116') {
+        throw checkError
+      }
+
+      if (existingProductType) {
+        throw new Error('Product type with this name already exists')
+      }
+
       const { data, error } = await supabase
         .from('product_type')
         .insert([{ name, is_Active }])
@@ -350,7 +431,25 @@ export class ProductService {
   static async updateProductType(id: string, name?: string, is_Active?: boolean): Promise<ProductType> {
     try {
       const updateData: { name?: string; is_Active?: boolean } = {}
-      if (name !== undefined) updateData.name = name
+      if (name !== undefined) {
+        // Check if product type name already exists (excluding current product type, case-insensitive)
+        const { data: existingProductType, error: checkError } = await supabase
+          .from('product_type')
+          .select('id')
+          .ilike('name', name)
+          .neq('id', id)
+          .single()
+
+        if (checkError && checkError.code !== 'PGRST116') {
+          throw checkError
+        }
+
+        if (existingProductType) {
+          throw new Error('Product type with this name already exists')
+        }
+        
+        updateData.name = name
+      }
       if (is_Active !== undefined) updateData.is_Active = is_Active
 
       const { data, error } = await supabase

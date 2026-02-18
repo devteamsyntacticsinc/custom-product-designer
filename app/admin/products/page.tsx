@@ -6,7 +6,6 @@ import { Button } from '@/components/ui/button'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { User } from '@/types/login'
 import { 
-  Plus,
   RefreshCw
 } from 'lucide-react'
 import AdminSidebar from '@/app/components/AdminSidebar'
@@ -77,6 +76,7 @@ export default function ProductsPage() {
     setTimeout(() => setRefreshing(false), 1000)
   }
 
+
   if (!user) {
     return (
       <div className="min-h-screen bg-gray-50 flex">
@@ -131,10 +131,6 @@ export default function ProductsPage() {
               >
                 <RefreshCw className={`h-4 w-4 mr-2 ${refreshing ? 'animate-spin' : ''}`} />
                 Refresh
-              </Button>
-              <Button>
-                <Plus className="h-4 w-4 mr-2" />
-                Add New
               </Button>
             </div>
           </div>
