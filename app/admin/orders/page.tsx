@@ -7,9 +7,8 @@ import { Card } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { User } from '@/types/login'
 import { OrderWithCustomer } from '@/types/order'
-import { 
+import {
   Menu,
-  ArrowLeft,
   User as UserIcon,
   Mail,
   Package,
@@ -97,7 +96,7 @@ export default function OrdersPage() {
     document.cookie = 'user_name=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;'
     document.cookie = 'user_email=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;'
     document.cookie = 'user_role=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;'
-    
+
     router.push('/login')
   }
 
@@ -132,11 +131,11 @@ export default function OrdersPage() {
         <AdminSidebar
           user={null}
           sidebarOpen={false}
-          setSidebarOpen={() => {}}
-          onLogout={() => {}}
-          onNavigate={() => {}}
+          setSidebarOpen={() => { }}
+          onLogout={() => { }}
+          onNavigate={() => { }}
           isCollapsed={false}
-          onToggleCollapse={() => {}}
+          onToggleCollapse={() => { }}
           currentPath="/admin/orders"
         />
         <div className="flex-1 lg:ml-64">
@@ -178,7 +177,7 @@ export default function OrdersPage() {
         onToggleCollapse={() => setIsCollapsed(!isCollapsed)}
         currentPath={currentPath}
       />
-      
+
       {/* Mobile Header */}
       <header className="bg-white shadow-sm border-b lg:hidden fixed top-0 left-0 right-0 z-40">
         <div className="flex items-center justify-between h-16 px-4">
@@ -195,7 +194,7 @@ export default function OrdersPage() {
       </header>
 
       {/* Main Content */}
-      <div className={`flex-1 transition-all duration-300 ${isCollapsed ? 'lg:ml-16' : 'lg:ml-64'} lg:pt-0 pt-16`}>        
+      <div className={`flex-1 transition-all duration-300 ${isCollapsed ? 'lg:ml-16' : 'lg:ml-64'} lg:pt-0 pt-16`}>
         {/* Orders Content */}
         <main className="p-6">
           <div className="mb-8 flex items-center justify-between">
@@ -229,7 +228,7 @@ export default function OrdersPage() {
               orders.map((order) => {
                 const customer = getCustomerInfo(order.customers)
                 const totalQuantity = getTotalQuantity(order)
-                
+
                 return (
                   <Card key={order.id} className="p-6 hover:shadow-md transition-shadow">
                     <div className="space-y-6">
@@ -253,13 +252,13 @@ export default function OrdersPage() {
                               {totalQuantity} items
                             </Badge>
                           </div>
-                          
+
                           <div className="flex items-center space-x-4 text-sm text-gray-600">
-                            {order.brand_type?.[0]?.product_types?.[0]?.name && (
-                              <span>{order.brand_type[0].product_types[0].name}</span>
+                            {order.brand_type?.[0]?.product_type?.name && (
+                              <span>{order.brand_type[0].product_type.name}</span>
                             )}
-                            {order.brand_type?.[0]?.brands?.[0]?.name && (
-                              <span>• {order.brand_type[0].brands[0].name}</span>
+                            {order.brand_type?.[0]?.brands?.name && (
+                              <span>• {order.brand_type[0].brands.name}</span>
                             )}
                             {order.colors?.[0]?.value && (
                               <span>• {order.colors[0].value}</span>

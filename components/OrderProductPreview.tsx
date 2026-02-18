@@ -20,8 +20,22 @@ export default function OrderProductPreview({ order }: OrderProductPreviewProps)
     imagesByPlacement[img.place] = img.url;
   });
 
+  // Extract brand and product type information
+  const brandType = order.brand_type?.[0];
+  const brandName = brandType?.brands?.name || 'Unknown Brand';
+  const productTypeName = brandType?.product_type?.name || 'Unknown Product Type';
+
   return (
-    <div className="relative w-full h-96 flex items-center justify-center rounded-lg overflow-hidden">
+    <div className="space-y-4">
+      {/* Product Info */}
+      <div className="flex items-center gap-4 text-sm text-gray-600">
+        <span className="font-medium">{brandName}</span>
+        <span>•</span>
+        <span className="font-medium">{productTypeName}</span>
+      </div>
+      
+      {/* T-shirt Mockup */}
+      <div className="relative w-full h-96 flex items-center justify-center rounded-lg overflow-hidden">
       {/* T-shirt Mockup */}
       <Image
         src="/image/shirt.png"
@@ -81,6 +95,7 @@ export default function OrderProductPreview({ order }: OrderProductPreviewProps)
           <span className="text-gray-400 text-xs">Back Bottom</span>
         )}
       </div>
+    </div>
     </div>
   );
 }

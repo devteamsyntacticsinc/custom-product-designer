@@ -15,11 +15,11 @@ export interface OrderWithCustomer {
     brands?: {
       id: string;
       name: string;
-    }[];
-    product_types?: {
+    };
+    product_type?: {
       id: string;
       name: string;
-    }[];
+    };
   }[];
   colors?: {
     id: string;

@@ -1,6 +1,12 @@
 import { NextResponse } from 'next/server'
 import { ProductService } from '@/lib/api/product'
 
+interface DatabaseError extends Error {
+  code?: string
+  details?: string
+  hint?: string
+}
+
 export async function GET() {
   try {
     const colors = await ProductService.getColors()
@@ -33,6 +39,12 @@ export async function POST(request: Request) {
     return NextResponse.json(color, { status: 201 })
   } catch (error) {
     console.error('API Error:', error)
+    if (error instanceof Error && error.message === 'Color with this value already exists') {
+      return NextResponse.json(
+        { error: error.message },
+        { status: 409 }
+      )
+    }
     return NextResponse.json(
       { error: 'Internal server error', details: error instanceof Error ? error.message : 'Unknown error' },
       { status: 500 }
@@ -73,6 +85,12 @@ export async function PUT(request: Request) {
         { status: 404 }
       )
     }
+    if (error instanceof Error && error.message === 'Color with this value already exists') {
+      return NextResponse.json(
+        { error: error.message },
+        { status: 409 }
+      )
+    }
     return NextResponse.json(
       { error: 'Internal server error', details: error instanceof Error ? error.message : 'Unknown error' },
       { status: 500 }
@@ -96,6 +114,21 @@ export async function DELETE(request: Request) {
     return NextResponse.json({ message: 'Color deleted successfully' })
   } catch (error) {
     console.error('API Error:', error)
+    
+    // Handle foreign key constraint violation
+    if (error && typeof error === 'object' && error !== null) {
+      const errorObj = error as DatabaseError
+      
+      if (errorObj.message && 
+          (errorObj.message.includes('violates foreign key constraint') || 
+           errorObj.code === '23503')) {
+        return NextResponse.json(
+          { error: 'Cannot delete color that is being used by product orders' },
+          { status: 400 }
+        )
+      }
+    }
+    
     return NextResponse.json(
       { error: 'Internal server error', details: error instanceof Error ? error.message : 'Unknown error' },
       { status: 500 }
