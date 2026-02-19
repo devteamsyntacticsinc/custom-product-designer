@@ -27,7 +27,8 @@ export interface Brand {
 
 export interface Color {
   id: string
-  value: string
+  value: string;
+  is_Active: boolean;
 }
 
 export interface ProductType {
@@ -37,7 +38,8 @@ export interface ProductType {
 
 export interface Size {
   id: string
-  value: string
+  value: string;
+  is_Active: boolean;
 }
 
 export interface OrderData {
