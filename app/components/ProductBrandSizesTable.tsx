@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Button } from "@/components/ui/button";
 import {
   Table,
@@ -22,18 +22,8 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
-
-interface Brand {
-  id: number;
-  name: string;
-  sizes: Record<string, boolean>;
-}
-
-interface ProductType {
-  id: number;
-  name: string;
-  brands: Brand[];
-}
+import { SizeProduct } from "@/types/product";
+import axios from "axios";
 
 const ALL_SIZES = [
   "Extra Small",
@@ -53,173 +43,167 @@ const SIZE_ABBREVIATIONS: Record<string, string> = {
   XXLarge: "XXL",
 };
 
-export default function ProductBrandSizesTable() {
-  const [productTypes, setProductTypes] = useState<ProductType[]>([
-    {
-      id: 1,
-      name: "Shirts",
-      brands: [
-        {
-          id: 101,
-          name: "Penshoppe",
-          sizes: {
-            Small: true,
-            Medium: true,
-            Large: false,
-            "Extra Small": false,
-            "Extra Large": true,
-            XXLarge: false,
-          },
-        },
-        {
-          id: 102,
-          name: "Bench",
-          sizes: {
-            Small: false,
-            Medium: true,
-            Large: true,
-            "Extra Small": true,
-            "Extra Large": false,
-            XXLarge: false,
-          },
-        },
-        {
-          id: 103,
-          name: "Uniqlo",
-          sizes: {
-            Small: true,
-            Medium: true,
-            Large: true,
-            "Extra Small": false,
-            "Extra Large": true,
-            XXLarge: true,
-          },
-        },
-      ],
-    },
-    {
-      id: 2,
-      name: "Jackets",
-      brands: [
-        {
-          id: 201,
-          name: "North Face",
-          sizes: {
-            Small: true,
-            Medium: true,
-            Large: true,
-            "Extra Small": false,
-            "Extra Large": true,
-            XXLarge: false,
-          },
-        },
-        {
-          id: 202,
-          name: "Uniqlo",
-          sizes: {
-            Small: false,
-            Medium: true,
-            Large: true,
-            "Extra Small": false,
-            "Extra Large": false,
-            XXLarge: false,
-          },
-        },
-      ],
-    },
-    {
-      id: 3,
-      name: "Mugs",
-      brands: [
-        {
-          id: 301,
-          name: "Starbucks",
-          sizes: {
-            Small: true,
-            Medium: true,
-            Large: true,
-            "Extra Small": false,
-            "Extra Large": false,
-            XXLarge: false,
-          },
-        },
-        {
-          id: 302,
-          name: "IKEA",
-          sizes: {
-            Small: false,
-            Medium: true,
-            Large: true,
-            "Extra Small": false,
-            "Extra Large": false,
-            XXLarge: false,
-          },
-        },
-      ],
-    },
-  ]);
+const fetchSizeProducts = async () => {
+  try {
+    const response = await axios.get("/api/size-products");
+    if (!response.data) {
+      throw new Error("Failed to fetch sizes");
+    }
+    const data = response.data;
+    return data;
+  } catch (error) {
+    console.error("Error fetching size products:", error);
+    return [];
+  }
+};
 
-  const [expandedTypes, setExpandedTypes] = useState<Set<number>>(new Set([1]));
+export default function ProductBrandSizesTable() {
+  const [sizeProducts, setSizeProducts] = useState<SizeProduct[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+
+  useEffect(() => {
+    const loadData = async () => {
+      setIsLoading(true);
+      try {
+        const data = await fetchSizeProducts();
+        setSizeProducts(data);
+      } catch (error) {
+        console.error("Error loading size products:", error);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+    loadData();
+  }, []);
+
+  const groupedByProductType = useMemo(() => {
+    const map = new Map<
+      string,
+      {
+        productTypeName: string;
+        brandTypes: Map<
+          number,
+          {
+            brandTypeId: number;
+            brandName: string;
+            sizes: Set<string>;
+            brandTypeRef: SizeProduct["brand_type"];
+          }
+        >;
+      }
+    >();
+
+    sizeProducts.forEach((item) => {
+      const productTypeName = item.brand_type?.product_type?.name || "Unknown";
+      const brandName = item.brand_type?.brands?.name || "Unknown";
+
+      if (!map.has(productTypeName)) {
+        map.set(productTypeName, {
+          productTypeName,
+          brandTypes: new Map(),
+        });
+      }
+
+      const productGroup = map.get(productTypeName);
+      if (!productGroup) return;
+
+      if (!productGroup.brandTypes.has(item.brand_type.id)) {
+        productGroup.brandTypes.set(item.brand_type.id, {
+          brandTypeId: item.brand_type.id,
+          brandName,
+          sizes: new Set(),
+          brandTypeRef: item.brand_type,
+        });
+      }
+
+      const brandTypeGroup = productGroup.brandTypes.get(item.brand_type.id);
+      if (!brandTypeGroup) return;
+      brandTypeGroup.sizes.add(item.sizes.value);
+    });
+
+    return Array.from(map.values()).map((group) => ({
+      productTypeName: group.productTypeName,
+      brands: Array.from(group.brandTypes.values()).sort((a, b) =>
+        a.brandName.localeCompare(b.brandName),
+      ),
+    }));
+  }, [sizeProducts]);
+
+  const [expandedTypes, setExpandedTypes] = useState<Set<string>>(
+    new Set(["Shirt"]),
+  );
   const [hasChanges, setHasChanges] = useState(false);
   const [originalState, setOriginalState] = useState(
-    JSON.stringify(productTypes),
+    JSON.stringify(sizeProducts),
   );
 
-  const toggleTypeExpanded = (typeId: number) => {
+  const toggleTypeExpanded = (productTypeName: string) => {
     const newExpanded = new Set(expandedTypes);
-    if (newExpanded.has(typeId)) {
-      newExpanded.delete(typeId);
+    if (newExpanded.has(productTypeName)) {
+      newExpanded.delete(productTypeName);
     } else {
-      newExpanded.add(typeId);
+      newExpanded.add(productTypeName);
     }
     setExpandedTypes(newExpanded);
   };
 
-  const handleSizeChange = (typeId: number, brandId: number, size: string) => {
-    setProductTypes((prevTypes) =>
-      prevTypes.map((type) =>
-        type.id === typeId
-          ? {
-              ...type,
-              brands: type.brands.map((brand) =>
-                brand.id === brandId
-                  ? {
-                      ...brand,
-                      sizes: {
-                        ...brand.sizes,
-                        [size]: !brand.sizes[size],
-                      },
-                    }
-                  : brand,
-              ),
-            }
-          : type,
-      ),
-    );
+  const handleSizeChange = (
+    brandTypeId: number,
+    brandName: string,
+    size: string,
+  ) => {
+    setSizeProducts((prev) => {
+      const existingIndex = prev.findIndex(
+        (item) =>
+          item.brand_type.id === brandTypeId &&
+          (item.brand_type.brands?.name || "Unknown") === brandName &&
+          item.sizes.value === size,
+      );
+
+      if (existingIndex !== -1) {
+        return prev.filter((_, idx) => idx !== existingIndex);
+      }
+
+      const brandTypeRef = prev.find(
+        (item) => item.brand_type.id === brandTypeId,
+      )?.brand_type;
+
+      if (!brandTypeRef) return prev;
+
+      const nextId =
+        prev.reduce((maxId, item) => Math.max(maxId, item.id), 0) + 1;
+      return [
+        ...prev,
+        {
+          id: nextId,
+          sizes: { value: size },
+          brand_type: brandTypeRef,
+        },
+      ];
+    });
     setHasChanges(true);
   };
 
-  const handleDeleteBrand = (typeId: number, brandId: number) => {
-    setProductTypes((prevTypes) =>
-      prevTypes.map((type) =>
-        type.id === typeId
-          ? {
-              ...type,
-              brands: type.brands.filter((b) => b.id !== brandId),
-            }
-          : type,
+  const handleDeleteBrand = (brandTypeId: number, brandName: string) => {
+    setSizeProducts((prev) =>
+      prev.filter(
+        (item) =>
+          !(
+            item.brand_type.id === brandTypeId &&
+            (item.brand_type.brands?.name || "Unknown") === brandName
+          ),
       ),
     );
     setHasChanges(true);
   };
 
   const handleSave = () => {
-    setOriginalState(JSON.stringify(productTypes));
+    setOriginalState(JSON.stringify(sizeProducts));
     setHasChanges(false);
   };
 
   const handleDiscard = () => {
-    setProductTypes(JSON.parse(originalState));
+    setSizeProducts(JSON.parse(originalState));
     setHasChanges(false);
   };
 
@@ -233,88 +217,151 @@ export default function ProductBrandSizesTable() {
       </CardHeader>
 
       <CardContent className="space-y-6">
-        {productTypes.map((productType) => (
-          <div key={productType.id} className="overflow-x-auto">
-            <div className="flex items-center gap-3 pb-4 border-b border-border">
-              <Button
-                onClick={() => toggleTypeExpanded(productType.id)}
-                variant="ghost"
-                size="icon"
-                className="cursor-pointer"
-              >
-                {expandedTypes.has(productType.id) ? (
-                  <ChevronDown className="w-5 h-5" />
-                ) : (
-                  <ChevronRight className="w-5 h-5" />
-                )}
-              </Button>
-              <h2 className="text-xl font-semibold text-foreground">
-                {productType.name}
-              </h2>
-              <span className=" text-muted-foreground ml-auto">
-                {productType.brands.length} brand
-                {productType.brands.length !== 1 ? "s" : ""}
-              </span>
-            </div>
-
-            {expandedTypes.has(productType.id) && (
-              <Table>
-                <TableHeader className="border-b border-border">
-                  <TableRow className="hover:bg-transparent">
-                    <TableHead className="text-muted-foreground">
-                      Brand Name
-                    </TableHead>
-                    {ALL_SIZES.map((size) => (
-                      <TableHead
-                        key={size}
-                        className="text-muted-foreground text-center min-w-24"
-                      >
-                        {SIZE_ABBREVIATIONS[size]}
+        {isLoading
+          ? // Skeleton Loader
+            Array.from({ length: 3 }).map((_, index) => (
+              <div key={index} className="overflow-x-auto">
+                <div className="flex items-center gap-3 pb-4 border-b border-border">
+                  <div className="w-10 h-10 bg-muted animate-pulse rounded-md" />
+                  <div className="h-6 w-32 bg-muted animate-pulse rounded-md" />
+                  <div className="h-5 w-16 bg-muted animate-pulse rounded-md ml-auto" />
+                </div>
+                <Table>
+                  <TableHeader className="border-b border-border">
+                    <TableRow className="hover:bg-transparent">
+                      <TableHead className="text-muted-foreground">
+                        Brand Name
                       </TableHead>
-                    ))}
-                    <TableHead className="text-muted-foreground text-right">
-                      Actions
-                    </TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {productType.brands.map((brand) => (
-                    <TableRow
-                      key={brand.id}
-                      className="border-border hover:bg-secondary/30 transition-colors"
-                    >
-                      <TableCell className="text-foreground font-medium">
-                        {brand.name}
-                      </TableCell>
                       {ALL_SIZES.map((size) => (
-                        <TableCell key={size} className="text-center">
-                          <Checkbox
-                            checked={brand.sizes[size] || false}
-                            onCheckedChange={() =>
-                              handleSizeChange(productType.id, brand.id, size)
-                            }
-                            className="cursor-pointer size-7"
-                          />
-                        </TableCell>
-                      ))}
-                      <TableCell className="text-right">
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          onClick={() =>
-                            handleDeleteBrand(productType.id, brand.id)
-                          }
+                        <TableHead
+                          key={size}
+                          className="text-muted-foreground text-center min-w-24"
                         >
-                          <Trash2 className="h-4 w-4" />
-                        </Button>
-                      </TableCell>
+                          {SIZE_ABBREVIATIONS[size]}
+                        </TableHead>
+                      ))}
+                      <TableHead className="text-muted-foreground text-right">
+                        Actions
+                      </TableHead>
                     </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-            )}
-          </div>
-        ))}
+                  </TableHeader>
+                  <TableBody>
+                    {Array.from({ length: 4 }).map((_, brandIndex) => (
+                      <TableRow
+                        key={brandIndex}
+                        className="border-border hover:bg-secondary/30 transition-colors"
+                      >
+                        <TableCell className="text-foreground font-medium">
+                          <div className="h-5 w-24 bg-muted animate-pulse rounded-md" />
+                        </TableCell>
+                        {ALL_SIZES.map((size) => (
+                          <TableCell key={size} className="text-center">
+                            <div className="w-7 h-7 bg-muted animate-pulse rounded-md mx-auto" />
+                          </TableCell>
+                        ))}
+                        <TableCell className="text-right">
+                          <div className="w-8 h-8 bg-muted animate-pulse rounded-md ml-auto" />
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              </div>
+            ))
+          : groupedByProductType.map((productTypeGroup) => (
+              <div
+                key={productTypeGroup.productTypeName}
+                className="overflow-x-auto"
+              >
+                <div className="flex items-center gap-3 pb-4 border-b border-border">
+                  <Button
+                    onClick={() =>
+                      toggleTypeExpanded(productTypeGroup.productTypeName)
+                    }
+                    variant="ghost"
+                    size="icon"
+                    className="cursor-pointer"
+                  >
+                    {expandedTypes.has(productTypeGroup.productTypeName) ? (
+                      <ChevronDown className="w-5 h-5" />
+                    ) : (
+                      <ChevronRight className="w-5 h-5" />
+                    )}
+                  </Button>
+                  <h2 className="text-xl font-semibold text-foreground">
+                    {productTypeGroup.productTypeName}
+                  </h2>
+                  <span className=" text-muted-foreground ml-auto">
+                    {productTypeGroup.brands.length} brand
+                    {productTypeGroup.brands.length !== 1 ? "s" : ""}
+                  </span>
+                </div>
+
+                {expandedTypes.has(productTypeGroup.productTypeName) && (
+                  <Table>
+                    <TableHeader className="border-b border-border">
+                      <TableRow className="hover:bg-transparent">
+                        <TableHead className="text-muted-foreground">
+                          Brand Name
+                        </TableHead>
+                        {ALL_SIZES.map((size) => (
+                          <TableHead
+                            key={size}
+                            className="text-muted-foreground text-center min-w-24"
+                          >
+                            {SIZE_ABBREVIATIONS[size]}
+                          </TableHead>
+                        ))}
+                        <TableHead className="text-muted-foreground text-right">
+                          Actions
+                        </TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {productTypeGroup.brands.map((brand) => (
+                        <TableRow
+                          key={`${brand.brandTypeId}-${brand.brandName}`}
+                          className="border-border hover:bg-secondary/30 transition-colors"
+                        >
+                          <TableCell className="text-foreground font-medium">
+                            {brand.brandName}
+                          </TableCell>
+                          {ALL_SIZES.map((size) => (
+                            <TableCell key={size} className="text-center">
+                              <Checkbox
+                                checked={brand.sizes.has(size)}
+                                onCheckedChange={() =>
+                                  handleSizeChange(
+                                    brand.brandTypeId,
+                                    brand.brandName,
+                                    size,
+                                  )
+                                }
+                                className="cursor-pointer size-7"
+                              />
+                            </TableCell>
+                          ))}
+                          <TableCell className="text-right">
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              onClick={() =>
+                                handleDeleteBrand(
+                                  brand.brandTypeId,
+                                  brand.brandName,
+                                )
+                              }
+                            >
+                              <Trash2 className="h-4 w-4" />
+                            </Button>
+                          </TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                )}
+              </div>
+            ))}
       </CardContent>
 
       {hasChanges && (

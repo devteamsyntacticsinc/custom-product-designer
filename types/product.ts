@@ -1,43 +1,43 @@
 export interface Product {
-  id: string
-  product_name: string
-  image: string
-  brand_id?: string
+  id: string;
+  product_name: string;
+  image: string;
+  brand_id?: string;
   brand?: {
-    id: string
-    name: string
-  } | null
-  color_id?: string
+    id: string;
+    name: string;
+  } | null;
+  color_id?: string;
   color?: {
-    id: string
-    value: string
-  } | null
-  product_type_id?: string
+    id: string;
+    value: string;
+  } | null;
+  product_type_id?: string;
   product_type?: {
-    id: string
-    name: string
-  } | null
+    id: string;
+    name: string;
+  } | null;
 }
 
 export interface Brand {
-  id: string
-  name: string
-  type_id?: string
+  id: string;
+  name: string;
+  type_id?: string;
 }
 
 export interface Color {
-  id: string
+  id: string;
   value: string;
   is_Active: boolean;
 }
 
 export interface ProductType {
-  id: string
-  name: string
+  id: string;
+  name: string;
 }
 
 export interface Size {
-  id: string
+  id: string;
   value: string;
   is_Active: boolean;
 }
@@ -92,3 +92,12 @@ export interface SizingAndQuantityProps {
   brandId: string;
 }
 
+export interface SizeProduct {
+  id: number;
+  sizes: { value: string };
+  brand_type: {
+    id: number;
+    brands: { name: string };
+    product_type: { name: string };
+  };
+}

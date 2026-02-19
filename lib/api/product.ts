@@ -819,7 +819,7 @@ export class ProductService {
       const { data, error } = await supabase
         .from("size_product")
         .select(
-          "id, sizes!inner(value), brand_type!inner(id, brands!inner(name), product_type!inner(name))",
+          "id, size_id, brandT_id, sizes!inner(value), brand_type!inner(id, brands!inner(name), product_type!inner(name))",
         );
 
       if (error) throw error;
