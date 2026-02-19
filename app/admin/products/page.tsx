@@ -11,6 +11,7 @@ import ProductTypesTab from "@/app/components/ProductTypesTab";
 import BrandsTab from "@/app/components/BrandsTab";
 import ColorsTab from "@/app/components/ColorsTab";
 import SizesTab from "@/app/components/SizesTab";
+import ProductBrandSizesTable from "@/app/components/ProductBrandSizesTable";
 
 export default function ProductsPage() {
   const [user, setUser] = useState<User | null>(null);
@@ -170,8 +171,9 @@ export default function ProductsPage() {
               <ColorsTab />
             </TabsContent>
             {/* Sizes Tab */}
-            <TabsContent value="sizes">
+            <TabsContent value="sizes" className="space-y-6">
               <SizesTab />
+              <ProductBrandSizesTable />
             </TabsContent>
           </Tabs>
         </div>
