@@ -345,11 +345,19 @@ function DeleteDialog({
       addToast("success", "Size deleted successfully");
       setOpen(false);
     } catch (error) {
-      console.error(error);
-      addToast(
-        "error",
-        error instanceof Error ? error.message : "Failed to delete size",
-      );
+      const axiosError = error as AxiosError<{
+        error?: string;
+        message?: string;
+      }>;
+
+      const message =
+        axiosError.response?.data?.error ||
+        axiosError.response?.data?.message ||
+        axiosError.message ||
+        "Failed to save size";
+
+      console.error(message);
+      addToast("error", message);
       // Close dialog on error as well
       setOpen(false);
     } finally {
