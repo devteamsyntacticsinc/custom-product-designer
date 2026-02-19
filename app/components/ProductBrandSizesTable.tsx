@@ -159,9 +159,7 @@ export default function ProductBrandSizesTable() {
     },
   ]);
 
-  const [expandedTypes, setExpandedTypes] = useState<Set<number>>(
-    new Set([1, 2, 3]),
-  );
+  const [expandedTypes, setExpandedTypes] = useState<Set<number>>(new Set([1]));
   const [hasChanges, setHasChanges] = useState(false);
   const [originalState, setOriginalState] = useState(
     JSON.stringify(productTypes),
@@ -263,18 +261,18 @@ export default function ProductBrandSizesTable() {
               <Table>
                 <TableHeader className="border-b border-border">
                   <TableRow className="hover:bg-transparent">
-                    <TableHead className="text-foreground font-semibold min-w-32">
+                    <TableHead className="text-muted-foreground">
                       Brand Name
                     </TableHead>
                     {ALL_SIZES.map((size) => (
                       <TableHead
                         key={size}
-                        className="text-foreground font-semibold text-center min-w-20"
+                        className="text-muted-foreground text-center min-w-24"
                       >
                         {SIZE_ABBREVIATIONS[size]}
                       </TableHead>
                     ))}
-                    <TableHead className="text-foreground font-semibold text-right min-w-16">
+                    <TableHead className="text-muted-foreground text-right">
                       Actions
                     </TableHead>
                   </TableRow>
@@ -290,25 +288,22 @@ export default function ProductBrandSizesTable() {
                       </TableCell>
                       {ALL_SIZES.map((size) => (
                         <TableCell key={size} className="text-center">
-                          <div className="flex justify-center">
-                            <Checkbox
-                              checked={brand.sizes[size] || false}
-                              onCheckedChange={() =>
-                                handleSizeChange(productType.id, brand.id, size)
-                              }
-                              className="cursor-pointer"
-                            />
-                          </div>
+                          <Checkbox
+                            checked={brand.sizes[size] || false}
+                            onCheckedChange={() =>
+                              handleSizeChange(productType.id, brand.id, size)
+                            }
+                            className="cursor-pointer size-7"
+                          />
                         </TableCell>
                       ))}
                       <TableCell className="text-right">
                         <Button
                           variant="ghost"
-                          size="sm"
+                          size="icon"
                           onClick={() =>
                             handleDeleteBrand(productType.id, brand.id)
                           }
-                          className="text-destructive hover:bg-destructive/20 hover:text-destructive"
                         >
                           <Trash2 className="h-4 w-4" />
                         </Button>
@@ -335,11 +330,13 @@ export default function ProductBrandSizesTable() {
               <Button
                 variant="outline"
                 onClick={handleDiscard}
-                className="border-border text-foreground hover:bg-secondary/30"
+                className="cursor-pointer"
               >
                 Discard
               </Button>
-              <Button onClick={handleSave}>Save Changes</Button>
+              <Button onClick={handleSave} className="cursor-pointer">
+                Save Changes
+              </Button>
             </div>
           </div>
         </CardFooter>
