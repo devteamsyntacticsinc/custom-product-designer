@@ -328,13 +328,10 @@ function DeleteDialog({
 
     setIsLoading(true);
     try {
-      const res = await fetch(`/api/sizes?id=${size.id}`, {
-        method: "DELETE",
-      });
+      const res = await axios.delete(`/api/sizes?id=${size.id}`);
 
-      if (!res.ok) {
-        const errorData = await res.json();
-        throw new Error(errorData?.error || "Failed to delete size");
+      if (!res.data) {
+        throw new Error("Failed to delete size");
       }
       await fetchSizes();
       addToast("success", "Size deleted successfully");
