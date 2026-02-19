@@ -44,7 +44,7 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 import { useToast } from "@/contexts/ToastContext";
-import axios from "axios";
+import axios, { AxiosError } from "axios";
 
 export default function SizesTab() {
   const [sizes, setSizes] = useState<Size[]>([]);
@@ -106,11 +106,19 @@ export default function SizesTab() {
 
       await fetchSizes();
     } catch (error) {
-      console.error(error);
-      addToast(
-        "error",
-        error instanceof Error ? error.message : "Failed to save size",
-      );
+      const axiosError = error as AxiosError<{
+        error?: string;
+        message?: string;
+      }>;
+
+      const message =
+        axiosError.response?.data?.error ||
+        axiosError.response?.data?.message ||
+        axiosError.message ||
+        "Failed to save size";
+
+      console.error(message);
+      addToast("error", message);
     } finally {
       setIsMutating(false);
     }
