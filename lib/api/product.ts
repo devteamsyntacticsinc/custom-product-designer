@@ -536,11 +536,11 @@ export class ProductService {
   static async createSize(
     value: string,
     is_Active: boolean = true,
-  ): Promise<Color> {
+  ): Promise<Size> {
     try {
       // Check if size already exists (case-insensitive)
       const { data: existingSize, error: checkError } = await supabase
-        .from("size")
+        .from("sizes")
         .select("id")
         .ilike("value", value)
         .single();
@@ -569,7 +569,7 @@ export class ProductService {
 
       return data;
     } catch (error) {
-      console.error("Error creating color:", error);
+      console.error("Error creating size:", error);
       throw error;
     }
   }
@@ -578,7 +578,7 @@ export class ProductService {
     id: string,
     value?: string,
     is_Active?: boolean,
-  ): Promise<Color> {
+  ): Promise<Size> {
     try {
       const updateData: { value?: string; is_Active?: boolean } = {};
       if (value !== undefined) {
@@ -663,7 +663,8 @@ export class ProductService {
             size_id,
             sizes (
               id,
-              value
+              value,
+              is_Active
             )
           `,
           )
@@ -699,7 +700,8 @@ export class ProductService {
             size_id,
             sizes (
               id,
-              value
+              value,
+              is_Active
             )
           `,
           )
@@ -716,7 +718,8 @@ export class ProductService {
             size_id,
             sizes (
               id,
-              value
+              value,
+              is_Active
             )
           `);
 
