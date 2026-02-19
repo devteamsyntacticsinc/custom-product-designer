@@ -60,7 +60,15 @@ const fetchSizeProducts = async () => {
 export default function ProductBrandSizesTable() {
   const [sizeProducts, setSizeProducts] = useState<SizeProduct[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [expandedTypes, setExpandedTypes] = useState<Set<string>>(
+    new Set(["Shirt"]),
+  );
+  const [hasChanges, setHasChanges] = useState(false);
+  const [originalState, setOriginalState] = useState(
+    JSON.stringify(sizeProducts),
+  );
 
+  // to fetch data by axios and set it to a state
   useEffect(() => {
     const loadData = async () => {
       setIsLoading(true);
@@ -76,6 +84,9 @@ export default function ProductBrandSizesTable() {
     loadData();
   }, []);
 
+  console.log(sizeProducts);
+
+  // Group brands by product type
   const groupedByProductType = useMemo(() => {
     const map = new Map<
       string,
@@ -88,6 +99,7 @@ export default function ProductBrandSizesTable() {
             brandName: string;
             sizes: Set<string>;
             brandTypeRef: SizeProduct["brand_type"];
+            sizeId: number;
           }
         >;
       }
@@ -113,6 +125,7 @@ export default function ProductBrandSizesTable() {
           brandName,
           sizes: new Set(),
           brandTypeRef: item.brand_type,
+          sizeId: item.size_id,
         });
       }
 
@@ -129,14 +142,7 @@ export default function ProductBrandSizesTable() {
     }));
   }, [sizeProducts]);
 
-  const [expandedTypes, setExpandedTypes] = useState<Set<string>>(
-    new Set(["Shirt"]),
-  );
-  const [hasChanges, setHasChanges] = useState(false);
-  const [originalState, setOriginalState] = useState(
-    JSON.stringify(sizeProducts),
-  );
-
+  // Handles the expansion of each product type using a button
   const toggleTypeExpanded = (productTypeName: string) => {
     const newExpanded = new Set(expandedTypes);
     if (newExpanded.has(productTypeName)) {
@@ -147,10 +153,12 @@ export default function ProductBrandSizesTable() {
     setExpandedTypes(newExpanded);
   };
 
+  // Checkbox toggle logic
   const handleSizeChange = (
     brandTypeId: number,
     brandName: string,
     size: string,
+    sizeId: number,
   ) => {
     setSizeProducts((prev) => {
       const existingIndex = prev.findIndex(
@@ -178,25 +186,15 @@ export default function ProductBrandSizesTable() {
           id: nextId,
           sizes: { value: size },
           brand_type: brandTypeRef,
+          brandT_id: brandTypeId,
+          size_id: sizeId,
         },
       ];
     });
     setHasChanges(true);
   };
 
-  const handleDeleteBrand = (brandTypeId: number, brandName: string) => {
-    setSizeProducts((prev) =>
-      prev.filter(
-        (item) =>
-          !(
-            item.brand_type.id === brandTypeId &&
-            (item.brand_type.brands?.name || "Unknown") === brandName
-          ),
-      ),
-    );
-    setHasChanges(true);
-  };
-
+  // Saving the changes logic
   const handleSave = () => {
     setOriginalState(JSON.stringify(sizeProducts));
     setHasChanges(false);
@@ -240,9 +238,6 @@ export default function ProductBrandSizesTable() {
                           {SIZE_ABBREVIATIONS[size]}
                         </TableHead>
                       ))}
-                      <TableHead className="text-muted-foreground text-right">
-                        Actions
-                      </TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
@@ -259,9 +254,6 @@ export default function ProductBrandSizesTable() {
                             <div className="w-7 h-7 bg-muted animate-pulse rounded-md mx-auto" />
                           </TableCell>
                         ))}
-                        <TableCell className="text-right">
-                          <div className="w-8 h-8 bg-muted animate-pulse rounded-md ml-auto" />
-                        </TableCell>
                       </TableRow>
                     ))}
                   </TableBody>
@@ -312,9 +304,6 @@ export default function ProductBrandSizesTable() {
                             {SIZE_ABBREVIATIONS[size]}
                           </TableHead>
                         ))}
-                        <TableHead className="text-muted-foreground text-right">
-                          Actions
-                        </TableHead>
                       </TableRow>
                     </TableHeader>
                     <TableBody>
@@ -335,26 +324,13 @@ export default function ProductBrandSizesTable() {
                                     brand.brandTypeId,
                                     brand.brandName,
                                     size,
+                                    brand.sizeId,
                                   )
                                 }
                                 className="cursor-pointer size-7"
                               />
                             </TableCell>
                           ))}
-                          <TableCell className="text-right">
-                            <Button
-                              variant="ghost"
-                              size="icon"
-                              onClick={() =>
-                                handleDeleteBrand(
-                                  brand.brandTypeId,
-                                  brand.brandName,
-                                )
-                              }
-                            >
-                              <Trash2 className="h-4 w-4" />
-                            </Button>
-                          </TableCell>
                         </TableRow>
                       ))}
                     </TableBody>

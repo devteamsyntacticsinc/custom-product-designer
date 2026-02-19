@@ -95,6 +95,8 @@ export interface SizingAndQuantityProps {
 export interface SizeProduct {
   id: number;
   sizes: { value: string };
+  brandT_id: number;
+  size_id: number;
   brand_type: {
     id: number;
     brands: { name: string };
