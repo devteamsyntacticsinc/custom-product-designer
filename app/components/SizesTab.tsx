@@ -44,6 +44,7 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 import { useToast } from "@/contexts/ToastContext";
+import axios from "axios";
 
 export default function SizesTab() {
   const [sizes, setSizes] = useState<Size[]>([]);
@@ -59,19 +60,13 @@ export default function SizesTab() {
       setError(null);
       setIsFetchingSizes(true);
 
-      const response = await fetch(`/api/sizes`, {
-        cache: "no-store", // Prevent browser caching
-        headers: {
-          "Cache-Control": "no-cache",
-          Pragma: "no-cache",
-        },
-      });
+      const response = await axios.get(`/api/sizes`);
 
-      if (!response.ok) {
+      if (!response.data) {
         throw new Error("Failed to fetch sizes");
       }
 
-      const sizes = await response.json();
+      const sizes = response.data;
       setSizes(sizes);
     } catch (error) {
       console.log(error);
@@ -89,33 +84,22 @@ export default function SizesTab() {
     try {
       if (payload.id) {
         // UPDATE
-        const res = await fetch(`/api/sizes`, {
-          method: "PUT",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({ ...payload, id: payload.id.toString() }),
+        const res = await axios.put(`/api/sizes`, {
+          ...payload,
+          id: payload.id.toString(),
         });
 
         // Check HTTP status
-        if (!res.ok) {
-          const errorData = await res.json();
-          throw new Error(errorData?.error || "Failed to update size");
+        if (!res.data) {
+          throw new Error("Failed to update size");
         }
         addToast("success", "Size updated successfully");
       } else {
         // SAVE
-        const res = await fetch("/api/sizes", {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify(payload),
-        });
+        const res = await axios.post("/api/sizes", payload);
         // Check HTTP status
-        if (!res.ok) {
-          const errorData = await res.json();
-          throw new Error(errorData?.error || "Failed to save size");
+        if (!res.data) {
+          throw new Error("Failed to save size");
         }
         addToast("success", "Size saved successfully");
       }
