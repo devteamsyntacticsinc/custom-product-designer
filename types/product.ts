@@ -1,43 +1,45 @@
 export interface Product {
-  id: string
-  product_name: string
-  image: string
-  brand_id?: string
+  id: string;
+  product_name: string;
+  image: string;
+  brand_id?: string;
   brand?: {
-    id: string
-    name: string
-  } | null
-  color_id?: string
+    id: string;
+    name: string;
+  } | null;
+  color_id?: string;
   color?: {
-    id: string
-    value: string
-  } | null
-  product_type_id?: string
+    id: string;
+    value: string;
+  } | null;
+  product_type_id?: string;
   product_type?: {
-    id: string
-    name: string
-  } | null
+    id: string;
+    name: string;
+  } | null;
 }
 
 export interface Brand {
-  id: string
-  name: string
-  type_id?: string
+  id: string;
+  name: string;
+  type_id?: string;
 }
 
 export interface Color {
-  id: string
-  value: string
+  id: string;
+  value: string;
+  is_Active: boolean;
 }
 
 export interface ProductType {
-  id: string
-  name: string
+  id: string;
+  name: string;
 }
 
 export interface Size {
-  id: string
-  value: string
+  id: number;
+  value: string;
+  is_Active: boolean;
 }
 
 export interface OrderData {
@@ -77,12 +79,12 @@ export interface OrderResult {
 
 export interface SizingAndQuantityProps {
   sizeSelection: {
-    size: string;
+    size: number;
     quantity: number;
   }[];
   setSizeSelection: (
     value: {
-      size: string;
+      size: number;
       quantity: number;
     }[],
   ) => void;
@@ -90,3 +92,22 @@ export interface SizingAndQuantityProps {
   brandId: string;
 }
 
+export interface SizeProduct {
+  id: number;
+  sizes: { value: string };
+  brandT_id: number;
+  size_id: number;
+  brand_type: {
+    id: number;
+    brands: { name: string };
+    product_type: { name: string };
+  };
+}
+
+export interface BrandGroup {
+  brandTypeId: number;
+  brandName: string;
+  sizes: Set<string>;
+  brandTypeRef: SizeProduct["brand_type"];
+  sizeId: number;
+}
