@@ -26,6 +26,16 @@ import { Size, SizeProduct } from "@/types/product";
 import axios, { AxiosError } from "axios";
 import { Toast } from "@/components/ui/toast";
 import { useToast } from "@/contexts/ToastContext";
+import {
+  Dialog,
+  DialogClose,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
 
 const ALL_SIZES = [
   "Extra Small",
@@ -465,17 +475,50 @@ export default function ProductBrandSizesTable() {
               >
                 Discard
               </Button>
-              <Button
-                onClick={handleSave}
-                disabled={isSaving}
-                className="cursor-pointer"
-              >
-                {isSaving ? "Saving..." : "Save Changes"}
-              </Button>
+              <SaveChangesDialog onSubmit={handleSave} isSaving={isSaving}>
+                <Button disabled={isSaving} className="cursor-pointer">
+                  {isSaving ? "Saving..." : "Save Changes"}
+                </Button>
+              </SaveChangesDialog>
             </div>
           </div>
         </CardFooter>
       )}
     </Card>
+  );
+}
+
+function SaveChangesDialog({
+  children,
+  onSubmit,
+  isSaving,
+}: {
+  children: React.ReactNode;
+  onSubmit: () => Promise<void>;
+  isSaving?: boolean;
+}) {
+  return (
+    <Dialog>
+      <DialogTrigger asChild>{children}</DialogTrigger>
+      <DialogContent>
+        <DialogHeader>
+          <DialogTitle>Save Size Changes?</DialogTitle>
+          <DialogDescription>
+            This will update the available sizes for your products. This action
+            cannot be undone.
+          </DialogDescription>
+        </DialogHeader>
+        <DialogFooter>
+          <DialogClose asChild>
+            <Button variant="outline" disabled={isSaving}>
+              Cancel
+            </Button>
+          </DialogClose>
+          <Button onClick={onSubmit} disabled={isSaving}>
+            {isSaving ? "Saving..." : "Confirm Save"}
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
   );
 }
