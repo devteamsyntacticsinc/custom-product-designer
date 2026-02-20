@@ -74,7 +74,7 @@ export default function SizingAndQuantity({
     };
 
     loadSizes();
-  }, [productTypeId, brandId, setSizeSelection]);
+  }, [productTypeId, brandId, setSizeSelection.length]);
 
   // Handle quantity change for a specific size
   const handleQuantityChange = useCallback(

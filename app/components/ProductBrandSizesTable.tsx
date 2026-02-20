@@ -11,7 +11,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Checkbox } from "@/components/ui/checkbox";
-import { CircleQuestionMark, Trash2 } from "lucide-react";
+import { CircleQuestionMark } from "lucide-react";
 import { ChevronDown, ChevronRight } from "lucide-react";
 import {
   Card,
@@ -206,7 +206,7 @@ export default function ProductBrandSizesTable({
         a.brandName.localeCompare(b.brandName),
       ),
     }));
-  }, [sizeProducts]);
+  }, [sizeProducts, originalState]);
 
   // Handles the expansion of each product type using a button
   const toggleTypeExpanded = (productTypeName: string) => {
