@@ -24,6 +24,8 @@ export default function ProductsPage() {
       ? window.location.pathname
       : "/admin/products";
 
+  const [refetchSize, setRefetchSize] = useState<number>(Date.now());
+
   useEffect(() => {
     const checkAuth = () => {
       const userRole = document.cookie
@@ -172,8 +174,8 @@ export default function ProductsPage() {
             </TabsContent>
             {/* Sizes Tab */}
             <TabsContent value="sizes" className="space-y-6">
-              <SizesTab />
-              <ProductBrandSizesTable />
+              <SizesTab setRefetchSize={setRefetchSize} />
+              <ProductBrandSizesTable refetchSize={refetchSize} />
             </TabsContent>
           </Tabs>
         </div>

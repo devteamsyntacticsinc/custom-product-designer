@@ -46,7 +46,11 @@ import {
 import { useToast } from "@/contexts/ToastContext";
 import axios, { AxiosError } from "axios";
 
-export default function SizesTab() {
+export default function SizesTab({
+  setRefetchSize,
+}: {
+  setRefetchSize: (refetchSize: number) => void;
+}) {
   const [sizes, setSizes] = useState<Size[]>([]);
   const [isFetchingSizes, setIsFetchingSizes] = useState(false);
   const [isMutating, setIsMutating] = useState(false);
@@ -105,6 +109,7 @@ export default function SizesTab() {
       }
 
       await fetchSizes();
+      setRefetchSize(Date.now());
     } catch (error) {
       const axiosError = error as AxiosError<{
         error?: string;
@@ -207,6 +212,7 @@ export default function SizesTab() {
                       setIsLoading={setIsMutating}
                       size={size}
                       fetchSizes={fetchSizes}
+                      setRefetchSize={setRefetchSize}
                     >
                       <Button variant="ghost" size="icon" disabled={isMutating}>
                         <Trash2 className="h-4 w-4" />
@@ -321,12 +327,14 @@ function DeleteDialog({
   setIsLoading,
   size,
   fetchSizes,
+  setRefetchSize,
 }: {
   children: React.ReactNode;
   isLoading: boolean;
   setIsLoading: (value: boolean) => void;
   size: Size;
   fetchSizes: () => Promise<void>;
+  setRefetchSize: (refetchSize: number) => void;
 }) {
   const { addToast } = useToast();
   const [open, setOpen] = useState(false);
@@ -344,6 +352,7 @@ function DeleteDialog({
       await fetchSizes();
       addToast("success", "Size deleted successfully");
       setOpen(false);
+      setRefetchSize(Date.now());
     } catch (error) {
       const axiosError = error as AxiosError<{
         error?: string;

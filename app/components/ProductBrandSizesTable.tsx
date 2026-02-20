@@ -83,7 +83,11 @@ const fetchSizes = async () => {
   }
 };
 
-export default function ProductBrandSizesTable() {
+export default function ProductBrandSizesTable({
+  refetchSize,
+}: {
+  refetchSize: number;
+}) {
   const [sizeProducts, setSizeProducts] = useState<SizeProduct[]>([]);
   const [sizes, setSizes] = useState<Size[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -118,7 +122,7 @@ export default function ProductBrandSizesTable() {
       }
     };
     loadData();
-  }, []);
+  }, [refetchSize]);
 
   // Calculate diff between current and original state
   const calculateDiff = (current: SizeProduct[], original: SizeProduct[]) => {
@@ -352,7 +356,7 @@ export default function ProductBrandSizesTable() {
                           key={size}
                           className="text-muted-foreground text-center min-w-24"
                         >
-                          {SIZE_ABBREVIATIONS[size]}
+                          {SIZE_ABBREVIATIONS[size] ?? size}
                         </TableHead>
                       ))}
                     </TableRow>
@@ -418,7 +422,7 @@ export default function ProductBrandSizesTable() {
                             key={id}
                             className="text-muted-foreground text-center min-w-24"
                           >
-                            {SIZE_ABBREVIATIONS[value]}
+                            {SIZE_ABBREVIATIONS[value] ?? value}
                           </TableHead>
                         ))}
                       </TableRow>
