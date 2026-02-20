@@ -35,6 +35,11 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 
 // Abbreviate size values like "Extra Small" to "XS"
 const abbreviateSize = (value: string): string => {
@@ -543,12 +548,17 @@ export default function ProductBrandSizesTable({
                               getSizeOrder(a.value) - getSizeOrder(b.value),
                           )
                           .map(({ id, value }) => (
-                            <TableHead
-                              key={id}
-                              className="text-muted-foreground text-center min-w-24"
-                            >
-                              {abbreviateSize(value)}
-                            </TableHead>
+                            <Tooltip>
+                              <TooltipTrigger asChild>
+                                <TableHead
+                                  key={id}
+                                  className="text-muted-foreground text-center min-w-24"
+                                >
+                                  {abbreviateSize(value)}
+                                </TableHead>
+                              </TooltipTrigger>
+                              <TooltipContent>{value}</TooltipContent>
+                            </Tooltip>
                           ))}
                       </TableRow>
                     </TableHeader>
