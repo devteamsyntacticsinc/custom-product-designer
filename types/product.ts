@@ -37,7 +37,7 @@ export interface ProductType {
 }
 
 export interface Size {
-  id: string;
+  id: number;
   value: string;
   is_Active: boolean;
 }

@@ -22,8 +22,10 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
-import { SizeProduct } from "@/types/product";
-import axios from "axios";
+import { Size, SizeProduct } from "@/types/product";
+import axios, { AxiosError } from "axios";
+import { Toast } from "@/components/ui/toast";
+import { useToast } from "@/contexts/ToastContext";
 
 const ALL_SIZES = [
   "Extra Small",
@@ -57,16 +59,35 @@ const fetchSizeProducts = async () => {
   }
 };
 
+const fetchSizes = async () => {
+  try {
+    const response = await axios.get("/api/sizes");
+    if (!response.data) {
+      throw new Error("Failed to fetch sizes");
+    }
+    const data = response.data;
+    return data;
+  } catch (error) {
+    console.error("Error fetching size products:", error);
+    return [];
+  }
+};
+
 export default function ProductBrandSizesTable() {
   const [sizeProducts, setSizeProducts] = useState<SizeProduct[]>([]);
+  const [sizes, setSizes] = useState<Size[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [isSaving, setIsSaving] = useState(false);
   const [expandedTypes, setExpandedTypes] = useState<Set<string>>(
     new Set(["Shirt"]),
   );
-  const [hasChanges, setHasChanges] = useState(false);
-  const [originalState, setOriginalState] = useState(
-    JSON.stringify(sizeProducts),
-  );
+  const [originalState, setOriginalState] = useState<SizeProduct[]>([]);
+  const [pendingChanges, setPendingChanges] = useState<{
+    toAdd: { brandT_id: number; size_id: number }[];
+    toDelete: number[];
+  }>({ toAdd: [], toDelete: [] });
+
+  const { addToast } = useToast();
 
   // to fetch data by axios and set it to a state
   useEffect(() => {
@@ -75,6 +96,11 @@ export default function ProductBrandSizesTable() {
       try {
         const data = await fetchSizeProducts();
         setSizeProducts(data);
+        setOriginalState(data);
+
+        // Fetch sizes and set them
+        const sizesData = await fetchSizes();
+        setSizes(sizesData);
       } catch (error) {
         console.error("Error loading size products:", error);
       } finally {
@@ -84,7 +110,39 @@ export default function ProductBrandSizesTable() {
     loadData();
   }, []);
 
-  console.log(sizeProducts);
+  // Calculate diff between current and original state
+  const calculateDiff = (current: SizeProduct[], original: SizeProduct[]) => {
+    const toDelete = original
+      .filter(
+        (orig) =>
+          !current.find(
+            (curr) =>
+              curr.brandT_id === orig.brandT_id &&
+              curr.size_id === orig.size_id,
+          ),
+      )
+      .map((item) => item.id);
+
+    const toAdd = current
+      .filter((curr) => {
+        const existsInOriginal = original.find(
+          (orig) =>
+            orig.brandT_id === curr.brandT_id && orig.size_id === curr.size_id,
+        );
+
+        return !existsInOriginal;
+      })
+      .map((item) => ({
+        brandT_id: item.brandT_id,
+        size_id: item.size_id,
+      }));
+
+    return { toAdd, toDelete };
+  };
+
+  // Check if there are pending changes
+  const hasChanges =
+    pendingChanges.toAdd.length > 0 || pendingChanges.toDelete.length > 0;
 
   // Group brands by product type
   const groupedByProductType = useMemo(() => {
@@ -168,41 +226,90 @@ export default function ProductBrandSizesTable() {
           item.sizes.value === size,
       );
 
+      let newProducts;
       if (existingIndex !== -1) {
-        return prev.filter((_, idx) => idx !== existingIndex);
+        newProducts = prev.filter((_, idx) => idx !== existingIndex);
+      } else {
+        const brandTypeRef = prev.find(
+          (item) => item.brand_type.id === brandTypeId,
+        )?.brand_type;
+
+        if (!brandTypeRef) return prev;
+
+        const nextId =
+          prev.reduce((maxId, item) => Math.max(maxId, item.id), 0) + 1;
+        newProducts = [
+          ...prev,
+          {
+            id: nextId,
+            sizes: { value: size },
+            brand_type: brandTypeRef,
+            brandT_id: brandTypeId,
+            size_id: sizeId, // Use the actual sizeId passed from the checkbox
+          },
+        ];
       }
 
-      const brandTypeRef = prev.find(
-        (item) => item.brand_type.id === brandTypeId,
-      )?.brand_type;
+      // Update pending changes with the new state
+      const diff = calculateDiff(newProducts, originalState);
+      setPendingChanges(diff);
 
-      if (!brandTypeRef) return prev;
-
-      const nextId =
-        prev.reduce((maxId, item) => Math.max(maxId, item.id), 0) + 1;
-      return [
-        ...prev,
-        {
-          id: nextId,
-          sizes: { value: size },
-          brand_type: brandTypeRef,
-          brandT_id: brandTypeId,
-          size_id: sizeId,
-        },
-      ];
+      return newProducts;
     });
-    setHasChanges(true);
   };
 
   // Saving the changes logic
-  const handleSave = () => {
-    setOriginalState(JSON.stringify(sizeProducts));
-    setHasChanges(false);
+  const handleSave = async () => {
+    setIsSaving(true);
+    try {
+      const diff = calculateDiff(sizeProducts, originalState);
+
+      // Execute parallel API calls
+      const promises = [];
+
+      if (diff.toAdd.length > 0) {
+        promises.push(axios.post("/api/size-products", { items: diff.toAdd }));
+      }
+
+      if (diff.toDelete.length > 0) {
+        promises.push(
+          axios.delete("/api/size-products", { data: { ids: diff.toDelete } }),
+        );
+      }
+
+      if (promises.length > 0) {
+        await Promise.all(promises);
+
+        // Refresh data after successful save
+        const freshData = await fetchSizeProducts();
+        setSizeProducts(freshData);
+        setOriginalState(freshData);
+        setPendingChanges({ toAdd: [], toDelete: [] });
+      }
+      addToast("success", "Size products saved successfully");
+    } catch (error) {
+      const axiosError = error as AxiosError<{
+        error?: string;
+        message?: string;
+      }>;
+
+      const message =
+        axiosError.response?.data?.error ||
+        axiosError.response?.data?.message ||
+        axiosError.message ||
+        "Failed to save size";
+
+      console.error(message);
+      addToast("error", message);
+    } finally {
+      setIsSaving(false);
+    }
   };
 
+  // Discard changes logic
   const handleDiscard = () => {
-    setSizeProducts(JSON.parse(originalState));
-    setHasChanges(false);
+    setSizeProducts(originalState);
+    setPendingChanges({ toAdd: [], toDelete: [] });
   };
 
   return (
@@ -296,12 +403,12 @@ export default function ProductBrandSizesTable() {
                         <TableHead className="text-muted-foreground">
                           Brand Name
                         </TableHead>
-                        {ALL_SIZES.map((size) => (
+                        {sizes.map(({ id, value }) => (
                           <TableHead
-                            key={size}
+                            key={id}
                             className="text-muted-foreground text-center min-w-24"
                           >
-                            {SIZE_ABBREVIATIONS[size]}
+                            {SIZE_ABBREVIATIONS[value]}
                           </TableHead>
                         ))}
                       </TableRow>
@@ -315,16 +422,16 @@ export default function ProductBrandSizesTable() {
                           <TableCell className="text-foreground font-medium">
                             {brand.brandName}
                           </TableCell>
-                          {ALL_SIZES.map((size) => (
-                            <TableCell key={size} className="text-center">
+                          {sizes.map(({ id, value }) => (
+                            <TableCell key={id} className="text-center">
                               <Checkbox
-                                checked={brand.sizes.has(size)}
+                                checked={brand.sizes.has(value)}
                                 onCheckedChange={() =>
                                   handleSizeChange(
                                     brand.brandTypeId,
                                     brand.brandName,
-                                    size,
-                                    brand.sizeId,
+                                    value,
+                                    id, // Use the correct size_id from mapping
                                   )
                                 }
                                 className="cursor-pointer size-7"
@@ -353,12 +460,17 @@ export default function ProductBrandSizesTable() {
               <Button
                 variant="outline"
                 onClick={handleDiscard}
+                disabled={isSaving}
                 className="cursor-pointer"
               >
                 Discard
               </Button>
-              <Button onClick={handleSave} className="cursor-pointer">
-                Save Changes
+              <Button
+                onClick={handleSave}
+                disabled={isSaving}
+                className="cursor-pointer"
+              >
+                {isSaving ? "Saving..." : "Save Changes"}
               </Button>
             </div>
           </div>

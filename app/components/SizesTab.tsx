@@ -255,7 +255,7 @@ function SizeSheet({
   const handleSubmit = async () => {
     try {
       await onSubmit({
-        id: initialData?.id ?? "",
+        id: initialData?.id ?? 0,
         value: name,
         is_Active: active,
       });

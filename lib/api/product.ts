@@ -829,4 +829,162 @@ export class ProductService {
       return [];
     }
   }
+
+  static async createSizeProduct(brandT_id: number, size_id: number) {
+    try {
+      // Validate brand_type exists
+      const { data: brandType, error: brandTypeError } = await supabase
+        .from("brand_type")
+        .select("id")
+        .eq("id", brandT_id)
+        .single();
+
+      if (brandTypeError || !brandType) {
+        throw new Error("Brand type not found");
+      }
+
+      // Validate size exists
+      const { data: size, error: sizeError } = await supabase
+        .from("sizes")
+        .select("id")
+        .eq("id", size_id)
+        .single();
+
+      if (sizeError || !size) {
+        throw new Error("Size not found");
+      }
+
+      // Check if combination already exists
+      const { data: existing, error: existingError } = await supabase
+        .from("size_product")
+        .select("id")
+        .eq("brandT_id", brandT_id)
+        .eq("size_id", size_id)
+        .single();
+
+      if (existingError && existingError.code !== "PGRST116") {
+        throw existingError;
+      }
+
+      if (existing) {
+        throw new Error("Size product combination already exists");
+      }
+
+      const { data, error } = await supabase
+        .from("size_product")
+        .insert([{ brandT_id, size_id }])
+        .select()
+        .single();
+
+      if (error) throw error;
+      if (!data) throw new Error("Failed to create size product");
+
+      return data;
+    } catch (error) {
+      console.error("Error creating size product:", error);
+      throw error;
+    }
+  }
+
+  static async deleteSizeProduct(id: number) {
+    try {
+      const { error } = await supabase
+        .from("size_product")
+        .delete()
+        .eq("id", id);
+
+      if (error) throw error;
+    } catch (error) {
+      console.error("Error deleting size product:", error);
+      throw error;
+    }
+  }
+
+  static async batchCreateSizeProducts(
+    items: { brandT_id: number; size_id: number }[],
+  ) {
+    try {
+      if (items.length === 0) return [];
+
+      // Validate all brand_types exist
+      const brandTypeIds = [...new Set(items.map((item) => item.brandT_id))];
+      const { data: existingBrandTypes, error: brandTypeError } = await supabase
+        .from("brand_type")
+        .select("id")
+        .in("id", brandTypeIds);
+
+      if (brandTypeError) throw brandTypeError;
+      if (
+        !existingBrandTypes ||
+        existingBrandTypes.length !== brandTypeIds.length
+      ) {
+        throw new Error("One or more brand types not found");
+      }
+
+      // Validate all sizes exist
+      const sizeIds = [...new Set(items.map((item) => item.size_id))];
+      const { data: existingSizes, error: sizeError } = await supabase
+        .from("sizes")
+        .select("id")
+        .in("id", sizeIds);
+
+      if (sizeError) throw sizeError;
+      if (!existingSizes || existingSizes.length !== sizeIds.length) {
+        throw new Error("One or more sizes not found");
+      }
+
+      // Filter out existing combinations
+      const { data: existing, error: existingError } = await supabase
+        .from("size_product")
+        .select("brandT_id, size_id")
+        .or(
+          items
+            .map(
+              (item) =>
+                `brandT_id.eq.${item.brandT_id},size_id.eq.${item.size_id}`,
+            )
+            .join(","),
+        );
+
+      if (existingError) throw existingError;
+
+      const existingSet = new Set(
+        (existing || []).map((item) => `${item.brandT_id}-${item.size_id}`),
+      );
+
+      const newItems = items.filter(
+        (item) => !existingSet.has(`${item.brandT_id}-${item.size_id}`),
+      );
+
+      if (newItems.length === 0) return [];
+
+      const { data, error } = await supabase
+        .from("size_product")
+        .insert(newItems)
+        .select();
+
+      if (error) throw error;
+      return data || [];
+    } catch (error) {
+      console.error("Error batch creating size products:", error);
+      throw error;
+    }
+  }
+
+  static async batchDeleteSizeProducts(ids: number[]) {
+    try {
+      if (ids.length === 0) return { deleted: 0 };
+
+      const { error, count } = await supabase
+        .from("size_product")
+        .delete()
+        .in("id", ids);
+
+      if (error) throw error;
+      return { deleted: count || 0 };
+    } catch (error) {
+      console.error("Error batch deleting size products:", error);
+      throw error;
+    }
+  }
 }
