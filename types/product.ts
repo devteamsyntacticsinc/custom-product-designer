@@ -79,12 +79,12 @@ export interface OrderResult {
 
 export interface SizingAndQuantityProps {
   sizeSelection: {
-    size: string;
+    size: number;
     quantity: number;
   }[];
   setSizeSelection: (
     value: {
-      size: string;
+      size: number;
       quantity: number;
     }[],
   ) => void;
