@@ -112,19 +112,17 @@ export class ProductService {
     }
   }
 
-  static async getBrands(
-    typeId?: number,
-  ): Promise<(Brand & { is_Active: boolean; type_id: number })[]> {
+  static async getBrands(typeId?: number) {
     try {
       if (typeId) {
         // Get brands that have the specified type_id in brand_type table
         const { data, error } = await supabase
           .from("brand_type")
           .select(
-            `
+            `id,
             brand_id,
             type_id,
-            brands (
+            brands(
               id,
               name,
               is_Active
@@ -136,17 +134,18 @@ export class ProductService {
         if (error) {
           throw error;
         }
+        return data.map((brandType) => {
+          const brand = Array.isArray(brandType.brands)
+            ? brandType.brands[0]
+            : brandType.brands;
 
-        return (
-          data
-            ?.map((item) => ({
-              id: item.brands[0].id,
-              name: item.brands[0].name,
-              is_Active: item.brands[0].is_Active,
-              type_id: item.type_id,
-            }))
-            .filter(Boolean) || []
-        );
+          return {
+            id: brandType.brand_id,
+            name: brand!.name,
+            is_Active: brand!.is_Active,
+            type_id: brandType.type_id,
+          };
+        });
       } else {
         // Get all brands with their associated types
         const { data, error } = await supabase

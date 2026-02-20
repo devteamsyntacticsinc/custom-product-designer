@@ -13,7 +13,7 @@ export async function GET(request: Request) {
     const typeId = searchParams.get("typeId");
 
     const brands = await ProductService.getBrands(
-      typeId ? parseInt(typeId) : undefined,
+      typeId ? Number(typeId) : undefined,
     );
     return NextResponse.json(brands);
   } catch (error) {
