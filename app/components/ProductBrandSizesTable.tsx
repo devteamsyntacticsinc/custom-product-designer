@@ -548,7 +548,7 @@ export default function ProductBrandSizesTable({
                               getSizeOrder(a.value) - getSizeOrder(b.value),
                           )
                           .map(({ id, value }) => (
-                            <Tooltip>
+                            <Tooltip key={id}>
                               <TooltipTrigger asChild>
                                 <TableHead
                                   key={id}
