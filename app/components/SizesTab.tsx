@@ -32,7 +32,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { Edit, Trash2, Plus } from "lucide-react";
-import { Color } from "@/types/product";
+import { Size } from "@/types/product";
 import {
   Dialog,
   DialogClose,
@@ -44,89 +44,86 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 import { useToast } from "@/contexts/ToastContext";
+import axios, { AxiosError } from "axios";
 
-export default function ColorsTab() {
-  const [colors, setColors] = useState<Color[]>([]);
-  const [isFetchingColors, setIsFetchingColors] = useState(false);
+export default function SizesTab({
+  setRefetchSize,
+}: {
+  setRefetchSize: (refetchSize: number) => void;
+}) {
+  const [sizes, setSizes] = useState<Size[]>([]);
+  const [isFetchingSizes, setIsFetchingSizes] = useState(false);
   const [isMutating, setIsMutating] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const { addToast } = useToast();
 
-  // fetch all colors using use effect an set state
+  // fetch all sizes using use effect an set state
 
-  const fetchColors = async () => {
+  const fetchSizes = async () => {
     try {
       setError(null);
-      setIsFetchingColors(true);
+      setIsFetchingSizes(true);
 
-      const response = await fetch(`/api/colors`, {
-        cache: "no-store", // Prevent browser caching
-        headers: {
-          "Cache-Control": "no-cache",
-          Pragma: "no-cache",
-        },
-      });
+      const response = await axios.get(`/api/sizes`);
 
-      if (!response.ok) {
-        throw new Error("Failed to fetch colors");
+      if (!response.data) {
+        throw new Error("Failed to fetch sizes");
       }
 
-      const colors = await response.json();
-      setColors(colors);
+      const sizes = response.data;
+      setSizes(sizes);
     } catch (error) {
       console.log(error);
       setError(error instanceof Error ? error.message : "Something went wrong");
     } finally {
-      setIsFetchingColors(false);
+      setIsFetchingSizes(false);
     }
   };
   useEffect(() => {
-    fetchColors();
+    fetchSizes();
   }, []);
 
-  const handleSubmitColor = async (payload: Color) => {
+  const handleSubmitSize = async (payload: Size) => {
     setIsMutating(true);
     try {
       if (payload.id) {
         // UPDATE
-        const res = await fetch(`/api/colors`, {
-          method: "PUT",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({ ...payload, id: payload.id.toString() }),
+        const res = await axios.put(`/api/sizes`, {
+          ...payload,
+          id: payload.id.toString(),
         });
 
         // Check HTTP status
-        if (!res.ok) {
-          const errorData = await res.json();
-          throw new Error(errorData?.error || "Failed to update color");
+        if (!res.data) {
+          throw new Error("Failed to update size");
         }
-        addToast("success", "Color updated successfully");
+        addToast("success", "Size updated successfully");
       } else {
         // SAVE
-        const res = await fetch("/api/colors", {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify(payload),
-        });
+        const res = await axios.post("/api/sizes", payload);
         // Check HTTP status
-        if (!res.ok) {
-          const errorData = await res.json();
-          throw new Error(errorData?.error || "Failed to save color");
+        if (!res.data) {
+          throw new Error("Failed to save size");
         }
-        addToast("success", "Color saved successfully");
+        addToast("success", "Size saved successfully");
       }
 
-      await fetchColors();
+      await fetchSizes();
+      setRefetchSize(Date.now());
     } catch (error) {
-      console.error(error);
-      addToast(
-        "error",
-        error instanceof Error ? error.message : "Failed to save color",
-      );
+      const axiosError = error as AxiosError<{
+        error?: string;
+        message?: string;
+      }>;
+
+      const message =
+        axiosError.response?.data?.error ||
+        axiosError.response?.data?.message ||
+        axiosError.message ||
+        "Failed to save size";
+
+      console.error(message);
+      addToast("error", message);
     } finally {
       setIsMutating(false);
     }
@@ -136,21 +133,21 @@ export default function ColorsTab() {
     <Card>
       <CardHeader className="flex items-center justify-between py-6">
         <div>
-          <CardTitle>Colors</CardTitle>
+          <CardTitle>Sizes</CardTitle>
           <CardDescription>
-            Manage product colors available in your store
+            Manage product sizes available in your store
           </CardDescription>
         </div>
-        <ColorSheet
+        <SizeSheet
           mode="create"
           isLoading={isMutating}
-          onSubmit={handleSubmitColor}
+          onSubmit={handleSubmitSize}
         >
           <Button>
             <Plus className="h-4 w-4 mr-2" />
-            Add Color
+            Add Size
           </Button>
-        </ColorSheet>
+        </SizeSheet>
       </CardHeader>
       <CardContent>
         <Table>
@@ -163,9 +160,9 @@ export default function ColorsTab() {
             </TableRow>
           </TableHeader>
           <TableBody>
-            {isFetchingColors ? (
+            {isFetchingSizes ? (
               Array.from({ length: 5 }).map((_, index) => (
-                <TableRow key={`colors-loading-${index}`}>
+                <TableRow key={`sizes-loading-${index}`}>
                   <TableCell>
                     <Skeleton className="h-4 w-10" />
                   </TableCell>
@@ -190,31 +187,32 @@ export default function ColorsTab() {
                 </TableCell>
               </TableRow>
             ) : (
-              colors.map((color) => (
-                <TableRow key={color.id}>
-                  <TableCell>{color.id}</TableCell>
-                  <TableCell className="font-medium">{color.value}</TableCell>
+              sizes.map((size) => (
+                <TableRow key={size.id}>
+                  <TableCell>{size.id}</TableCell>
+                  <TableCell className="font-medium">{size.value}</TableCell>
                   <TableCell>
-                    <Badge variant={color.is_Active ? "default" : "secondary"}>
-                      {color.is_Active ? "Active" : "Inactive"}
+                    <Badge variant={size.is_Active ? "default" : "secondary"}>
+                      {size.is_Active ? "Active" : "Inactive"}
                     </Badge>
                   </TableCell>
                   <TableCell>
-                    <ColorSheet
+                    <SizeSheet
                       mode="edit"
                       isLoading={isMutating}
-                      initialData={color}
-                      onSubmit={handleSubmitColor}
+                      initialData={size}
+                      onSubmit={handleSubmitSize}
                     >
                       <Button variant="ghost" size="icon" disabled={isMutating}>
                         <Edit className="h-4 w-4" />
                       </Button>
-                    </ColorSheet>
+                    </SizeSheet>
                     <DeleteDialog
                       isLoading={isMutating}
                       setIsLoading={setIsMutating}
-                      color={color}
-                      fetchColors={fetchColors}
+                      size={size}
+                      fetchSizes={fetchSizes}
+                      setRefetchSize={setRefetchSize}
                     >
                       <Button variant="ghost" size="icon" disabled={isMutating}>
                         <Trash2 className="h-4 w-4" />
@@ -231,7 +229,7 @@ export default function ColorsTab() {
   );
 }
 
-function ColorSheet({
+function SizeSheet({
   children,
   mode,
   initialData,
@@ -240,8 +238,8 @@ function ColorSheet({
 }: {
   children: React.ReactNode;
   mode: "create" | "edit";
-  initialData?: Color;
-  onSubmit: (data: Color) => Promise<void>;
+  initialData?: Size;
+  onSubmit: (data: Size) => Promise<void>;
   isLoading: boolean;
 }) {
   const [name, setName] = useState("");
@@ -263,7 +261,7 @@ function ColorSheet({
   const handleSubmit = async () => {
     try {
       await onSubmit({
-        id: initialData?.id ?? "",
+        id: initialData?.id ?? 0,
         value: name,
         is_Active: active,
       });
@@ -282,22 +280,22 @@ function ColorSheet({
 
       <SheetContent>
         <SheetHeader>
-          <SheetTitle>{isEdit ? "Edit Color" : "Add New Color"}</SheetTitle>
+          <SheetTitle>{isEdit ? "Edit Size" : "Add New Size"}</SheetTitle>
           <SheetDescription>
             {isEdit
-              ? "Update the selected color."
-              : "Add a new color to the system."}
+              ? "Update the selected size."
+              : "Add a new size to the system."}
           </SheetDescription>
         </SheetHeader>
 
         <div className="py-6 space-y-4">
           <div className="space-y-2">
-            <Label htmlFor="color-name">Color Name</Label>
+            <Label htmlFor="size-name">Size Name</Label>
             <Input
-              id="color-name"
+              id="size-name"
               value={name}
               onChange={(e) => setName(e.target.value)}
-              placeholder="Enter color name"
+              placeholder="Enter size name"
             />
           </div>
 
@@ -314,8 +312,8 @@ function ColorSheet({
                 ? "Updating..."
                 : "Saving..."
               : isEdit
-                ? "Update Color"
-                : "Save Color"}
+                ? "Update Size"
+                : "Save Size"}
           </Button>
         </SheetFooter>
       </SheetContent>
@@ -327,40 +325,48 @@ function DeleteDialog({
   children,
   isLoading,
   setIsLoading,
-  color,
-  fetchColors,
+  size,
+  fetchSizes,
+  setRefetchSize,
 }: {
   children: React.ReactNode;
   isLoading: boolean;
   setIsLoading: (value: boolean) => void;
-  color: Color;
-  fetchColors: () => Promise<void>;
+  size: Size;
+  fetchSizes: () => Promise<void>;
+  setRefetchSize: (refetchSize: number) => void;
 }) {
   const { addToast } = useToast();
   const [open, setOpen] = useState(false);
 
-  const handleDeleteColor = async () => {
-    if (!color.id) return;
+  const handleDeleteSize = async () => {
+    if (!size.id) return;
 
     setIsLoading(true);
     try {
-      const res = await fetch(`/api/colors?id=${color.id}`, {
-        method: "DELETE",
-      });
+      const res = await axios.delete(`/api/sizes?id=${size.id}`);
 
-      if (!res.ok) {
-        const errorData = await res.json();
-        throw new Error(errorData?.error || "Failed to delete color");
+      if (!res.data) {
+        throw new Error("Failed to delete size");
       }
-      await fetchColors();
-      addToast("success", "Color deleted successfully");
+      await fetchSizes();
+      addToast("success", "Size deleted successfully");
       setOpen(false);
+      setRefetchSize(Date.now());
     } catch (error) {
-      console.error(error);
-      addToast(
-        "error",
-        error instanceof Error ? error.message : "Failed to delete color",
-      );
+      const axiosError = error as AxiosError<{
+        error?: string;
+        message?: string;
+      }>;
+
+      const message =
+        axiosError.response?.data?.error ||
+        axiosError.response?.data?.message ||
+        axiosError.message ||
+        "Failed to save size";
+
+      console.error(message);
+      addToast("error", message);
       // Close dialog on error as well
       setOpen(false);
     } finally {
@@ -374,8 +380,8 @@ function DeleteDialog({
         <DialogHeader>
           <DialogTitle>Are you absolutely sure?</DialogTitle>
           <DialogDescription>
-            This action cannot be undone. This will permanently delete your
-            color &quot;{color.value}&quot;.
+            This action cannot be undone. This will permanently delete your size
+            &quot;{size.value}&quot;.
           </DialogDescription>
         </DialogHeader>
         <DialogFooter>
@@ -385,7 +391,7 @@ function DeleteDialog({
           <Button
             variant="destructive"
             className="text-background"
-            onClick={handleDeleteColor}
+            onClick={handleDeleteSize}
             disabled={isLoading}
           >
             {isLoading ? "Deleting..." : "Delete"}
