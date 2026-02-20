@@ -25,7 +25,7 @@ export default function ProductCustomizer() {
   const [color, setColor] = useState("");
   const [sizeSelection, setSizeSelection] = useState<
     {
-      size: string;
+      size: number;
       quantity: number;
     }[]
   >([]);
@@ -120,7 +120,7 @@ export default function ProductCustomizer() {
     setProductType("");
     setBrand("");
     setColor("");
-    setSizeSelection([{ size: "", quantity: 1 }]);
+    setSizeSelection([{ size: 0, quantity: 1 }]);
     setAssets({
       "front-top-left": null,
       "front-center": null,
