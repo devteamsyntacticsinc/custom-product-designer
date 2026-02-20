@@ -41,43 +41,6 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 
-const abbreviateSize = (value: string): string => {
-  const WORD_MAP: Record<string, string> = {
-    extra: "X",
-    double: "XX",
-    triple: "XXX",
-  };
-
-  // Count leading X's (case-insensitive) followed by an uppercase base word
-  const leadingXMatch = value.match(/^(X+)([A-Z][a-z]*.*)/i);
-
-  if (leadingXMatch) {
-    const xCount = leadingXMatch[1].length; // number of leading X's
-    const rest = leadingXMatch[2]; // everything after the X's e.g. "Large"
-    const xPrefix = "X".repeat(xCount); // "XXXXX"
-
-    // Split the rest by spaces/hyphens and abbreviate normally
-    const restAbbr = rest
-      .split(/[\s-]+/)
-      .map((word) => {
-        const lower = word.toLowerCase();
-        return WORD_MAP[lower] ?? word[0].toUpperCase();
-      })
-      .join("");
-
-    return xPrefix + restAbbr; // "XXXXL"
-  }
-
-  // No leading X's — just split and abbreviate normally
-  return value
-    .split(/[\s-]+/)
-    .map((word) => {
-      const lower = word.toLowerCase();
-      return WORD_MAP[lower] ?? word[0].toUpperCase();
-    })
-    .join("");
-};
-
 // Get size order for sorting from smallest to largest
 const getSizeOrder = (value: string): number => {
   const normalized = value.toLowerCase().replace(/\s+/g, " ").trim();
@@ -568,7 +531,7 @@ export default function ProductBrandSizesTable({
                                     key={id}
                                     className="text-muted-foreground text-center min-w-24"
                                   >
-                                    {abbreviateSize(value)}
+                                    {value}
                                   </TableHead>
                                 </TooltipTrigger>
                                 <TooltipContent>{value}</TooltipContent>
