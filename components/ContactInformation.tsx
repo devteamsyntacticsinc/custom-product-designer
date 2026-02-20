@@ -13,7 +13,7 @@ interface ContactInformationProps {
   brand: string;
   color: string;
   sizeSelection: {
-    size: string;
+    size: number;
     quantity: number;
   }[];
   assets: Record<string, File | null>;

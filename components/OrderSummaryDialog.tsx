@@ -15,7 +15,7 @@ interface OrderSummaryDialogProps {
   productType: string;
   brand: string;
   color: string;
-  sizeSelection: { size: string; quantity: number }[];
+  sizeSelection: { size: number; quantity: number }[];
   assets: Record<string, File | null>;
   contactInformation: {
     fullName: string;
@@ -55,9 +55,9 @@ export default function OrderSummaryDialog({
     fetchSizes();
   }, []);
 
-  const getSizeName = (sizeId: string): string => {
-    const size = sizes.find((s) => s.id === Number(sizeId));
-    return size?.value || sizeId;
+  const getSizeName = (sizeId: number): string => {
+    const size = sizes.find((s) => s.id === sizeId);
+    return size?.value || sizeId.toString();
   };
 
   const handleSubmit = async () => {

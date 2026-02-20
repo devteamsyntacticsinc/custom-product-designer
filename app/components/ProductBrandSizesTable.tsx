@@ -11,7 +11,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Checkbox } from "@/components/ui/checkbox";
-import { CircleQuestionMark } from "lucide-react";
+import { ChevronUp, CircleQuestionMark } from "lucide-react";
 import { ChevronDown, ChevronRight } from "lucide-react";
 import {
   Card,
@@ -35,25 +35,30 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 
-const ALL_SIZES = [
-  "Extra Small",
-  "Small",
-  "Medium",
-  "Large",
-  "Extra Large",
-  "XXLarge",
-];
+// Get size order for sorting from smallest to largest
+const getSizeOrder = (value: string): number => {
+  const normalized = value.toLowerCase().replace(/\s+/g, " ").trim();
 
-const SIZE_ABBREVIATIONS: Record<string, string> = {
-  "Extra Small": "XS",
-  Small: "S",
-  Medium: "M",
-  Large: "L",
-  "Extra Large": "XL",
-  XXLarge: "XXL",
+  // Count how many "extra"/"x" prefixes there are to handle XS, XL, XXL, XXXL etc.
+  const extraPrefixMatch = normalized.match(/^(x+|extra\s+)+/);
+  const prefixCount = extraPrefixMatch
+    ? extraPrefixMatch[0].replace(/extra\s+/g, "x").replace(/\s/g, "").length
+    : 0;
+
+  if (normalized.includes("small")) return 10 - prefixCount; // XS=9, XXS=8 (smaller = lower index)
+  if (normalized === "medium" || normalized === "m") return 20;
+  if (normalized.includes("large")) return 30 + prefixCount; // L=30, XL=31, XXL=32 (larger = higher index)
+
+  return 99; // unknown sizes go to the end
 };
 
+// Fetch size products from API
 const fetchSizeProducts = async () => {
   try {
     const response = await axios.get("/api/size-products");
@@ -68,6 +73,7 @@ const fetchSizeProducts = async () => {
   }
 };
 
+// Fetch sizes from API
 const fetchSizes = async () => {
   try {
     const response = await axios.get("/api/sizes");
@@ -94,6 +100,7 @@ export default function ProductBrandSizesTable({
   const [expandedTypes, setExpandedTypes] = useState<Set<string>>(
     new Set(["Shirt"]),
   );
+  const [hasExpanded, setHasExpanded] = useState(false);
   const [originalState, setOriginalState] = useState<SizeProduct[]>([]);
   const [pendingChanges, setPendingChanges] = useState<{
     toAdd: { brandT_id: number; size_id: number }[];
@@ -102,7 +109,7 @@ export default function ProductBrandSizesTable({
 
   const { addToast } = useToast();
 
-  // to fetch data by axios and set it to a state
+  // Fetch data by axios and set it to a state
   useEffect(() => {
     const loadData = async () => {
       setIsLoading(true);
@@ -209,7 +216,15 @@ export default function ProductBrandSizesTable({
   }, [sizeProducts, originalState]);
 
   // Handles the expansion of each product type using a button
-  const toggleTypeExpanded = (productTypeName: string) => {
+  const toggleTypeExpanded = (
+    productTypeName: string,
+    productTypeNames?: string[],
+  ) => {
+    if (productTypeNames && productTypeNames.length > 0) {
+      const newExpanded = new Set(productTypeNames);
+      setExpandedTypes(newExpanded);
+      return;
+    }
     const newExpanded = new Set(expandedTypes);
     if (newExpanded.has(productTypeName)) {
       newExpanded.delete(productTypeName);
@@ -224,6 +239,7 @@ export default function ProductBrandSizesTable({
     return sizes.every(({ value }) => brand.sizes.has(value));
   };
 
+  // Handles the "ALL" checkbox functionality
   const handleAllToggle = (brand: BrandGroup, isChecked: boolean) => {
     const brandTypeRef =
       sizeProducts.find((item) => item.brand_type.id === brand.brandTypeId)
@@ -376,12 +392,44 @@ export default function ProductBrandSizesTable({
   };
 
   return (
-    <Card className={cn("relative py-6", hasChanges && "pb-[105px]")}>
-      <CardHeader className="">
-        <CardTitle>Brand Sizes</CardTitle>
-        <CardDescription>
-          Manage sizes for each brand in your store.
-        </CardDescription>
+    <Card
+      className={cn("relative py-6 max-w-full", hasChanges && "pb-[105px]")}
+    >
+      <CardHeader className="flex justify-between">
+        <div>
+          <CardTitle>Brand Sizes</CardTitle>
+          <CardDescription>
+            Manage sizes for each brand in your store.
+          </CardDescription>
+        </div>
+        <Button
+          variant="outline"
+          className="gap-2 pl-3 cursor-pointer"
+          onClick={() => {
+            if (!hasExpanded) {
+              const productTypeNames = groupedByProductType.map(
+                (productType) => productType.productTypeName,
+              );
+              toggleTypeExpanded("", productTypeNames);
+              setHasExpanded(true);
+            } else {
+              setExpandedTypes(new Set());
+              setHasExpanded(false);
+            }
+          }}
+        >
+          {hasExpanded ? (
+            <>
+              <ChevronUp className="size-4" />
+              Hide All Products
+            </>
+          ) : (
+            <>
+              <ChevronDown className="size-4" />
+              Show All Products
+            </>
+          )}
+        </Button>
       </CardHeader>
 
       <CardContent className="space-y-6">
@@ -394,7 +442,7 @@ export default function ProductBrandSizesTable({
                   <div className="h-6 w-32 bg-muted animate-pulse rounded-md" />
                   <div className="h-5 w-16 bg-muted animate-pulse rounded-md ml-auto" />
                 </div>
-                <Table>
+                <Table className="w-full min-w-max">
                   <TableHeader className="border-b border-border">
                     <TableRow className="hover:bg-transparent">
                       <TableHead className="text-muted-foreground">
@@ -403,12 +451,12 @@ export default function ProductBrandSizesTable({
                       <TableHead className="text-muted-foreground text-center min-w-24">
                         ALL
                       </TableHead>
-                      {ALL_SIZES.map((size) => (
+                      {Array.from({ length: 6 }).map((_, index) => (
                         <TableHead
-                          key={size}
+                          key={index}
                           className="text-muted-foreground text-center min-w-24"
                         >
-                          {SIZE_ABBREVIATIONS[size] ?? size}
+                          <div className="h-5 w-24 bg-muted animate-pulse rounded-md" />
                         </TableHead>
                       ))}
                     </TableRow>
@@ -425,7 +473,7 @@ export default function ProductBrandSizesTable({
                         <TableCell className="text-center">
                           <div className="w-7 h-7 bg-muted animate-pulse rounded-md mx-auto" />
                         </TableCell>
-                        {ALL_SIZES.map((size) => (
+                        {Array.from({ length: 6 }).map((_, size) => (
                           <TableCell key={size} className="text-center">
                             <div className="w-7 h-7 bg-muted animate-pulse rounded-md mx-auto" />
                           </TableCell>
@@ -437,93 +485,100 @@ export default function ProductBrandSizesTable({
               </div>
             ))
           : groupedByProductType.map((productTypeGroup) => (
-              <div
-                key={productTypeGroup.productTypeName}
-                className="overflow-x-auto"
-              >
+              <div key={productTypeGroup.productTypeName}>
                 <div className="flex items-center gap-3 pb-4 border-b border-border">
                   <Button
                     onClick={() =>
                       toggleTypeExpanded(productTypeGroup.productTypeName)
                     }
                     variant="ghost"
-                    size="icon"
-                    className="cursor-pointer"
+                    className="cursor-pointer gap-2 pl-2"
                   >
                     {expandedTypes.has(productTypeGroup.productTypeName) ? (
-                      <ChevronDown className="w-5 h-5" />
+                      <ChevronDown className="size-5!" />
                     ) : (
-                      <ChevronRight className="w-5 h-5" />
+                      <ChevronRight className="size-5!" />
                     )}
+                    <h2 className="text-xl font-semibold text-foreground">
+                      {productTypeGroup.productTypeName}
+                    </h2>
                   </Button>
-                  <h2 className="text-xl font-semibold text-foreground">
-                    {productTypeGroup.productTypeName}
-                  </h2>
                   <span className=" text-muted-foreground ml-auto">
                     {productTypeGroup.brands.length} brand
                     {productTypeGroup.brands.length !== 1 ? "s" : ""}
                   </span>
                 </div>
-
-                {expandedTypes.has(productTypeGroup.productTypeName) && (
-                  <Table>
-                    <TableHeader className="border-b border-border">
-                      <TableRow className="hover:bg-transparent">
-                        <TableHead className="text-muted-foreground">
-                          Brand Name
-                        </TableHead>
-                        <TableHead className="text-muted-foreground text-center min-w-24">
-                          ALL
-                        </TableHead>
-                        {sizes.map(({ id, value }) => (
-                          <TableHead
-                            key={id}
-                            className="text-muted-foreground text-center min-w-24"
-                          >
-                            {SIZE_ABBREVIATIONS[value] ?? value}
+                <div className="overflow-x-auto">
+                  {expandedTypes.has(productTypeGroup.productTypeName) && (
+                    <Table className="w-full min-w-max">
+                      <TableHeader className="border-b border-border">
+                        <TableRow className="hover:bg-transparent">
+                          <TableHead className="text-muted-foreground sticky left-0 bg-background">
+                            Brand Name
                           </TableHead>
-                        ))}
-                      </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                      {productTypeGroup.brands.map((brand) => (
-                        <TableRow
-                          key={`${brand.brandTypeId}-${brand.brandName}`}
-                          className="border-border hover:bg-secondary/30 transition-colors"
-                        >
-                          <TableCell className="text-foreground font-medium">
-                            {brand.brandName}
-                          </TableCell>
-                          <TableCell className="text-center">
-                            <Checkbox
-                              checked={isAllChecked(brand)}
-                              onCheckedChange={(checked) =>
-                                handleAllToggle(brand, checked as boolean)
-                              }
-                              className="cursor-pointer size-7"
-                            />
-                          </TableCell>
-                          {sizes.map(({ id, value }) => (
-                            <TableCell key={id} className="text-center">
+                          <TableHead className="text-muted-foreground text-center min-w-24 sticky left-0 bg-background">
+                            ALL
+                          </TableHead>
+                          {sizes
+                            .sort(
+                              (a, b) =>
+                                getSizeOrder(a.value) - getSizeOrder(b.value),
+                            )
+                            .map(({ id, value }) => (
+                              <Tooltip key={id}>
+                                <TooltipTrigger asChild>
+                                  <TableHead
+                                    key={id}
+                                    className="text-muted-foreground text-center min-w-24"
+                                  >
+                                    {value}
+                                  </TableHead>
+                                </TooltipTrigger>
+                                <TooltipContent>{value}</TooltipContent>
+                              </Tooltip>
+                            ))}
+                        </TableRow>
+                      </TableHeader>
+                      <TableBody>
+                        {productTypeGroup.brands.map((brand) => (
+                          <TableRow
+                            key={`${brand.brandTypeId}-${brand.brandName}`}
+                            className="border-border hover:bg-secondary/30 transition-colors"
+                          >
+                            <TableCell className="text-foreground font-medium sticky left-0 bg-background">
+                              {brand.brandName}
+                            </TableCell>
+                            <TableCell className="text-center sticky left-0 bg-background">
                               <Checkbox
-                                checked={brand.sizes.has(value)}
-                                onCheckedChange={() =>
-                                  handleSizeChange(
-                                    brand.brandTypeId,
-                                    brand.brandName,
-                                    value,
-                                    id, // Use the correct size_id from mapping
-                                  )
+                                checked={isAllChecked(brand)}
+                                onCheckedChange={(checked) =>
+                                  handleAllToggle(brand, checked as boolean)
                                 }
                                 className="cursor-pointer size-7"
                               />
                             </TableCell>
-                          ))}
-                        </TableRow>
-                      ))}
-                    </TableBody>
-                  </Table>
-                )}
+                            {sizes.map(({ id, value }) => (
+                              <TableCell key={id} className="text-center">
+                                <Checkbox
+                                  checked={brand.sizes.has(value)}
+                                  onCheckedChange={() =>
+                                    handleSizeChange(
+                                      brand.brandTypeId,
+                                      brand.brandName,
+                                      value,
+                                      id, // Use the correct size_id from mapping
+                                    )
+                                  }
+                                  className="cursor-pointer size-7"
+                                />
+                              </TableCell>
+                            ))}
+                          </TableRow>
+                        ))}
+                      </TableBody>
+                    </Table>
+                  )}
+                </div>
               </div>
             ))}
       </CardContent>

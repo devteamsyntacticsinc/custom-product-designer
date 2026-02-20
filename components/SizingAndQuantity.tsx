@@ -78,7 +78,7 @@ export default function SizingAndQuantity({
 
   // Handle quantity change for a specific size
   const handleQuantityChange = useCallback(
-    (sizeId: string, quantity: string) => {
+    (sizeId: number, quantity: string) => {
       console.log("handleQuantityChange called:", {
         sizeId,
         quantity,
@@ -125,7 +125,7 @@ export default function SizingAndQuantity({
 
   // Get quantity for a specific size
   const getQuantity = useCallback(
-    (sizeId: string): number => {
+    (sizeId: number): number => {
       const quantity =
         sizeSelection.find((item) => item.size === sizeId)?.quantity || 0;
       console.log("getQuantity for", sizeId, ":", quantity);
@@ -175,14 +175,11 @@ export default function SizingAndQuantity({
                 </p>
                 <Input
                   type="text"
-                  value={getQuantity(size.id.toString())}
+                  value={getQuantity(size.id)}
                   onChange={(e) => {
                     // Only allow numbers
                     const value = e.target.value.replace(/[^0-9]/g, "");
-                    handleQuantityChange(
-                      size.id.toString(), // Use ID instead of value
-                      value,
-                    );
+                    handleQuantityChange(size.id, value);
                   }}
                   disabled={!available}
                   className="flex-1"
