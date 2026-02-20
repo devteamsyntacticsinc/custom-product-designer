@@ -56,7 +56,7 @@ export default function OrderSummaryDialog({
   }, []);
 
   const getSizeName = (sizeId: string): string => {
-    const size = sizes.find(s => s.id === sizeId);
+    const size = sizes.find((s) => s.id === Number(sizeId));
     return size?.value || sizeId;
   };
 
@@ -83,15 +83,15 @@ export default function OrderSummaryDialog({
         // Map to readable placement names
         const placementMap: Record<string, string> = {
           "front-top-left": "Front - Top Left",
-          "front-center": "Front - Center", 
+          "front-center": "Front - Center",
           "back-top": "Back - Top",
-          "back-bottom": "Back - Bottom"
+          "back-bottom": "Back - Bottom",
         };
-        
+
         return {
           id: key,
           name: file?.name || "Unknown file",
-          placement: placementMap[key] || key
+          placement: placementMap[key] || key,
         };
       });
   };
@@ -118,8 +118,10 @@ export default function OrderSummaryDialog({
         <div className="p-6 space-y-6">
           {/* Product Details */}
           <div className="space-y-4">
-            <h3 className="text-lg font-medium text-gray-900">Product Details</h3>
-            
+            <h3 className="text-lg font-medium text-gray-900">
+              Product Details
+            </h3>
+
             <div className="grid grid-cols-2 gap-4 text-sm">
               <div>
                 <Label className="text-gray-600">Brand:</Label>
@@ -134,40 +136,60 @@ export default function OrderSummaryDialog({
 
           {/* Sizing and Quantity */}
           <div className="space-y-4">
-            <h3 className="text-lg font-medium text-gray-900">Sizing and Quantity</h3>
-            
+            <h3 className="text-lg font-medium text-gray-900">
+              Sizing and Quantity
+            </h3>
+
             <div className="space-y-2">
               {sizeSelection
-                .filter(item => item.quantity > 0)
-                .map(item => (
+                .filter((item) => item.quantity > 0)
+                .map((item) => (
                   <div key={item.size} className="flex justify-between text-sm">
-                    <span className="text-gray-600">{getSizeName(item.size)}:</span>
+                    <span className="text-gray-600">
+                      {getSizeName(item.size)}:
+                    </span>
                     <span className="font-medium">{item.quantity}pcs</span>
                   </div>
                 ))}
             </div>
-            
+
             <div className="pt-2 text-sm text-gray-600">
-              Total Items: <span className="font-medium">{getTotalItems()}</span>
+              Total Items:{" "}
+              <span className="font-medium">{getTotalItems()}</span>
             </div>
           </div>
 
           {/* Assets */}
           <div className="space-y-4">
             <h3 className="text-lg font-medium text-gray-900">Assets</h3>
-            
+
             <div className="space-y-2">
-              {getAssetList().map(asset => (
-                <div key={asset.id} className="flex items-center justify-between text-sm">
+              {getAssetList().map((asset) => (
+                <div
+                  key={asset.id}
+                  className="flex items-center justify-between text-sm"
+                >
                   <div className="flex items-center gap-2">
                     <div className="w-8 h-8 bg-gray-100 rounded flex items-center justify-center">
-                      <svg className="w-4 h-4 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2v6a2 2 0 012 2h10a2 2 0 012-2v-6a2 2 0 01-2-2z" />
+                      <svg
+                        className="w-4 h-4 text-gray-500"
+                        fill="none"
+                        stroke="currentColor"
+                        viewBox="0 0 24 24"
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth={2}
+                          d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2v6a2 2 0 012 2h10a2 2 0 012-2v-6a2 2 0 01-2-2z"
+                        />
                       </svg>
                     </div>
                     <div>
                       <span className="text-gray-700">{asset.name}</span>
-                      <div className="text-xs text-gray-500">{asset.placement}</div>
+                      <div className="text-xs text-gray-500">
+                        {asset.placement}
+                      </div>
                     </div>
                   </div>
                 </div>
@@ -177,8 +199,10 @@ export default function OrderSummaryDialog({
 
           {/* Contact Information */}
           <div className="space-y-4">
-            <h3 className="text-lg font-medium text-gray-900">Contact Information</h3>
-            
+            <h3 className="text-lg font-medium text-gray-900">
+              Contact Information
+            </h3>
+
             <div className="grid grid-cols-1 gap-3 text-sm">
               <div>
                 <Label className="text-gray-600">Full Name:</Label>
@@ -190,7 +214,9 @@ export default function OrderSummaryDialog({
               </div>
               <div>
                 <Label className="text-gray-600">Number:</Label>
-                <p className="font-medium">{contactInformation.contactNumber}</p>
+                <p className="font-medium">
+                  {contactInformation.contactNumber}
+                </p>
               </div>
               <div>
                 <Label className="text-gray-600">Address:</Label>
@@ -202,17 +228,26 @@ export default function OrderSummaryDialog({
 
         {/* Actions */}
         <div className="flex gap-3 p-6 border-t bg-gray-50">
-          <Button variant="outline" onClick={onBack} className="flex-1" disabled={isLoading}>
+          <Button
+            variant="outline"
+            onClick={onBack}
+            className="flex-1"
+            disabled={isLoading}
+          >
             Back to editing
           </Button>
-          <Button onClick={handleSubmit} className="flex-1 bg-gray-800 hover:bg-gray-900" disabled={isLoading}>
+          <Button
+            onClick={handleSubmit}
+            className="flex-1 bg-gray-800 hover:bg-gray-900"
+            disabled={isLoading}
+          >
             {isLoading ? (
               <div className="flex items-center gap-2">
                 <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
                 Submitting...
               </div>
             ) : (
-              'Submit'
+              "Submit"
             )}
           </Button>
         </div>

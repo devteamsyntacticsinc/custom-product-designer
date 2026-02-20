@@ -59,14 +59,14 @@ export default function SizingAndQuantity({
         // Remove initialization - let user input control the values
         // Only initialize if sizeSelection is completely empty
         if (sizeSelection.length === 0) {
-          console.log('Creating empty sizeSelection array');
+          console.log("Creating empty sizeSelection array");
           const initialSelection = sizes.map((size: Size) => ({
             size: size.id, // Store ID instead of value
             quantity: 0,
           }));
           setSizeSelection(initialSelection);
         } else {
-          console.log('SizeSelection already exists, not initializing');
+          console.log("SizeSelection already exists, not initializing");
         }
       }
 
@@ -77,53 +77,62 @@ export default function SizingAndQuantity({
   }, [productTypeId, brandId, setSizeSelection]);
 
   // Handle quantity change for a specific size
-  const handleQuantityChange = useCallback((sizeId: string, quantity: string) => {
-    console.log('handleQuantityChange called:', {
-      sizeId,
-      quantity,
-      currentSizeSelection: sizeSelection
-    });
-    
-    const numValue = parseInt(quantity) || 0;
-    console.log('Setting new value:', numValue);
-    
-    setSizeSelection(
-      sizeSelection.map((item) =>
-        item.size === sizeId ? { ...item, quantity: numValue } : item,
-      ),
-    );
-  }, [sizeSelection, setSizeSelection]);
+  const handleQuantityChange = useCallback(
+    (sizeId: string, quantity: string) => {
+      console.log("handleQuantityChange called:", {
+        sizeId,
+        quantity,
+        currentSizeSelection: sizeSelection,
+      });
+
+      const numValue = parseInt(quantity) || 0;
+      console.log("Setting new value:", numValue);
+
+      setSizeSelection(
+        sizeSelection.map((item) =>
+          item.size === sizeId ? { ...item, quantity: numValue } : item,
+        ),
+      );
+    },
+    [sizeSelection, setSizeSelection],
+  );
 
   useEffect(() => {
-    console.log('sizeSelection updated:', sizeSelection);
+    console.log("sizeSelection updated:", sizeSelection);
   }, [sizeSelection]);
 
-  const isSizeAvailable = (sizeId: string): boolean => {
-    console.log('isSizeAvailable called with:', {
+  const isSizeAvailable = (sizeId: number): boolean => {
+    console.log("isSizeAvailable called with:", {
       sizeId,
       productTypeId,
       brandId,
       sizesByProductTypeAndBrand,
-      hasProductOrBrand: !!(productTypeId || brandId)
+      hasProductOrBrand: !!(productTypeId || brandId),
     });
-    
+
     // If no product type or brand is selected, disable all inputs
     if (!productTypeId && !brandId) {
-      console.log('No product type or brand selected - disabling');
+      console.log("No product type or brand selected - disabling");
       return false;
     }
     // Check if the size exists in the filtered list by ID
-    const isAvailable = sizesByProductTypeAndBrand.some((size) => size.id === sizeId);
-    console.log('Size availability for', sizeId, ':', isAvailable);
+    const isAvailable = sizesByProductTypeAndBrand.some(
+      (size) => size.id === Number(sizeId),
+    );
+    console.log("Size availability for", sizeId, ":", isAvailable);
     return isAvailable;
   };
 
   // Get quantity for a specific size
-  const getQuantity = useCallback((sizeId: string): number => {
-    const quantity = sizeSelection.find((item) => item.size === sizeId)?.quantity || 0;
-    console.log('getQuantity for', sizeId, ':', quantity);
-    return quantity;
-  }, [sizeSelection]);
+  const getQuantity = useCallback(
+    (sizeId: string): number => {
+      const quantity =
+        sizeSelection.find((item) => item.size === sizeId)?.quantity || 0;
+      console.log("getQuantity for", sizeId, ":", quantity);
+      return quantity;
+    },
+    [sizeSelection],
+  );
 
   return (
     <div className="flex flex-col gap-2">
@@ -166,12 +175,12 @@ export default function SizingAndQuantity({
                 </p>
                 <Input
                   type="text"
-                  value={getQuantity(size.id).toString()}
+                  value={getQuantity(size.id.toString())}
                   onChange={(e) => {
                     // Only allow numbers
-                    const value = e.target.value.replace(/[^0-9]/g, '');
+                    const value = e.target.value.replace(/[^0-9]/g, "");
                     handleQuantityChange(
-                      size.id, // Use ID instead of value
+                      size.id.toString(), // Use ID instead of value
                       value,
                     );
                   }}
