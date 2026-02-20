@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
+import { Menu, X } from "lucide-react";
 import {
   Select,
   SelectContent,
@@ -19,6 +20,7 @@ import ProductCustomizerSkeleton from "./ProductCustomizerSkeleton";
 
 export default function ProductCustomizer() {
   const { assets, setAssets } = useAssets();
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [currentStep, setCurrentStep] = useState<'customize' | 'contact'>('customize');
   const [productType, setProductType] = useState("");
   const [brand, setBrand] = useState("");
@@ -58,7 +60,7 @@ export default function ProductCustomizer() {
     address: string;
   }) => {
     console.log('Contact data submitted:', contactData);
-    
+
     try {
       // Get the display names for the selected IDs
       const selectedBrand = brands.find(b => String(b.id) === brand);
@@ -67,10 +69,10 @@ export default function ProductCustomizer() {
       const colorName = selectedColor?.value || color;
       const selectedProductType = productTypes.find(pt => pt.id === productType);
       const productTypeName = selectedProductType?.name || productType;
-      
+
       // Create FormData to handle file uploads
       const formData = new FormData();
-      
+
       // Add all the order data as JSON with both IDs and display names
       const orderData = {
         // IDs for database insertion
@@ -84,9 +86,9 @@ export default function ProductCustomizer() {
         sizeSelection,
         contactInformation: contactData,
       };
-      
+
       formData.append('orderData', JSON.stringify(orderData));
-      
+
       // Add files to FormData
       Object.entries(assets).forEach(([key, file]) => {
         if (file) {
@@ -105,11 +107,11 @@ export default function ProductCustomizer() {
 
       const result = await response.json();
       console.log('Order submitted successfully:', result);
-      
+
       // Reset form after successful submission
       handleReset();
       setCurrentStep('customize');
-      
+
     } catch (error) {
       console.error('Error submitting order:', error);
       throw error; // Re-throw to let toast handle it
@@ -192,188 +194,267 @@ export default function ProductCustomizer() {
     // Get the actual product type name
     const selectedProductType = productTypes.find(pt => pt.id === productType);
     const productTypeName = selectedProductType?.name || productType;
-    
+
     return (
-      <ContactInformation
-        onBack={handleBack}
-        onSubmit={handleContactSubmit}
-        productType={productTypeName}
-        brand={brandName}
-        color={colorName}
-        sizeSelection={sizeSelection}
-        assets={assets}
-        contactData={contactData}
-        setContactData={setContactData}
-      />
+      <>
+        {/* Burger Button */}
+        <button
+          onClick={() => setIsMobileMenuOpen(true)}
+          className="lg:hidden fixed top-4 left-4 z-40 p-2 bg-white rounded-md shadow-md border border-gray-200"
+        >
+          <Menu className="h-6 w-6 text-gray-700" />
+        </button>
+
+        {/* Backdrop */}
+        {isMobileMenuOpen && (
+          <div
+            className="lg:hidden fixed inset-0 bg-black/50 z-40"
+            onClick={() => setIsMobileMenuOpen(false)}
+          />
+        )}
+
+        <div className={`
+          fixed inset-y-0 left-0 z-50 w-80 bg-white shadow-lg p-6 overflow-y-auto flex flex-col min-h-full
+          transform transition-transform duration-300 ease-in-out
+          ${isMobileMenuOpen ? 'translate-x-0' : '-translate-x-full'}
+          lg:relative lg:translate-x-0 lg:flex lg:z-0
+        `}>
+          <div className="lg:hidden flex justify-end mb-4">
+            <button
+              onClick={() => setIsMobileMenuOpen(false)}
+              className="p-2 text-gray-500 hover:text-gray-700"
+            >
+              <X className="h-6 w-6" />
+            </button>
+          </div>
+          <ContactInformation
+            onBack={handleBack}
+            onSubmit={handleContactSubmit}
+            productType={productTypeName}
+            brand={brandName}
+            color={colorName}
+            sizeSelection={sizeSelection}
+            assets={assets}
+            contactData={contactData}
+            setContactData={setContactData}
+          />
+        </div>
+      </>
     );
   }
 
   // Render Product Customizer step 
   // Show skeleton while initial product types are loading
   if (loadingProductTypes) {
-    return <ProductCustomizerSkeleton />;
+    return (
+      <>
+        {/* Burger Button */}
+        <button
+          onClick={() => setIsMobileMenuOpen(true)}
+          className="lg:hidden fixed top-4 left-4 z-40 p-2 bg-white rounded-md shadow-md border border-gray-200"
+        >
+          <Menu className="h-6 w-6 text-gray-700" />
+        </button>
+
+        <div className="lg:relative lg:translate-x-0">
+          <ProductCustomizerSkeleton />
+        </div>
+      </>
+    );
   }
 
   return (
-    <div className="w-80 bg-white shadow-lg p-6 overflow-y-auto flex flex-col min-h-full">
-      <h2 className="text-2xl font-bold text-gray-900 mb-6">
-        Customize Your Product
-      </h2>
+    <>
+      {/* Burger Button */}
+      <button
+        onClick={() => setIsMobileMenuOpen(true)}
+        className="lg:hidden fixed top-4 left-4 z-40 p-2 bg-white rounded-md shadow-md border border-gray-200"
+      >
+        <Menu className="h-6 w-6 text-gray-700" />
+      </button>
 
-      {/* Product Type */}
-      <div className="mb-6">
-        <Label
-          htmlFor="product-type"
-          className="text-sm font-medium text-gray-700 mb-2 block"
-        >
-          Product Type
-        </Label>
-        <Select
-          value={productType}
-          onValueChange={setProductType}
-          disabled={loadingProductTypes}
-        >
-          <SelectTrigger id="product-type">
-            <SelectValue
-              placeholder={
-                loadingProductTypes
-                  ? "Loading product types..."
-                  : "Select product type"
-              }
-            />
-          </SelectTrigger>
-          <SelectContent>
-            {loadingProductTypes ? (
-              <div className="p-2">
-                <div className="flex items-center space-x-2">
-                  <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-gray-900"></div>
-                  <span className="text-sm">Loading...</span>
-                </div>
-              </div>
-            ) : (
-              Array.isArray(productTypes) &&
-              productTypes.map((type) => (
-                <SelectItem key={type.id} value={type.id}>
-                  {type.name}
-                </SelectItem>
-              ))
-            )}
-          </SelectContent>
-        </Select>
-      </div>
-
-      {/* Brand */}
-      <div className="mb-6">
-        <Label
-          htmlFor="brand"
-          className="text-sm font-medium text-gray-700 mb-2 block"
-        >
-          Brand
-        </Label>
-        <Select
-          value={brand}
-          onValueChange={setBrand}
-          disabled={loadingBrands || brands.length === 0}
-        >
-          <SelectTrigger id="brand">
-            <SelectValue
-              placeholder={loadingBrands ? "Loading brands..." : "Select brand"}
-            />
-          </SelectTrigger>
-          <SelectContent>
-            {loadingBrands ? (
-              <div className="p-2">
-                <div className="flex items-center space-x-2">
-                  <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-gray-900"></div>
-                  <span className="text-sm">Loading brands...</span>
-                </div>
-              </div>
-            ) : brands.length === 0 ? (
-              <SelectItem value="none" disabled>
-                No brands available
-              </SelectItem>
-            ) : (
-              brands.map((b) => (
-                <SelectItem key={b.id} value={String(b.id)}>
-                  {b.name}
-                </SelectItem>
-              ))
-            )}
-          </SelectContent>
-        </Select>
-      </div>
-
-      {/* Select Color */}
-      <div className="mb-6">
-        <Label
-          htmlFor="color"
-          className="text-sm font-medium text-gray-700 mb-2 block"
-        >
-          Select color
-        </Label>
-        <Select
-          value={color}
-          onValueChange={setColor}
-          disabled={loadingColors || colors.length === 0}
-        >
-          <SelectTrigger id="color">
-            <SelectValue
-              placeholder={loadingColors ? "Loading colors..." : "Select color"}
-            />
-          </SelectTrigger>
-          <SelectContent>
-            {loadingColors ? (
-              <div className="p-2">
-                <div className="flex items-center space-x-2">
-                  <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-gray-900"></div>
-                  <span className="text-sm">Loading colors...</span>
-                </div>
-              </div>
-            ) : colors.length === 0 ? (
-              <SelectItem value="none" disabled>
-                No colors available
-              </SelectItem>
-            ) : (
-              colors.map((c) => (
-                <SelectItem key={c.id} value={String(c.id)}>
-                  {c.value}
-                </SelectItem>
-              ))
-            )}
-          </SelectContent>
-        </Select>
-      </div>
-
-      {/* Place Your Assets */}
-      <div className="mb-6">
-        <h3 className="text-lg font-semibold text-gray-900 mb-4">
-          Place your assets
-        </h3>
-        <AssetUpload assets={assets} setAssets={setAssets} />
-      </div>
-
-      {/* Sizing and Quantity */}
-      <div className="mb-6">
-        <h3 className="text-lg font-semibold text-gray-900 mb-4">
-          Sizing and Quantity
-        </h3>
-        <SizingAndQuantity
-          brandId={brand}
-          productTypeId={productType}
-          sizeSelection={sizeSelection}
-          setSizeSelection={setSizeSelection}
+      {/* Backdrop */}
+      {isMobileMenuOpen && (
+        <div
+          className="lg:hidden fixed inset-0 bg-black/50 z-40"
+          onClick={() => setIsMobileMenuOpen(false)}
         />
-      </div>
+      )}
 
-      {/* Action Buttons */}
-      <div className="flex gap-3 mt-auto pt-6">
-        <Button variant="outline" className="flex-1" onClick={handleReset}>
-          Reset
-        </Button>
-        <Button className="flex-1 bg-gray-800 hover:bg-gray-900" onClick={handleNext}>
-          Next
-        </Button>
+      <div className={`
+        fixed inset-y-0 left-0 z-50 w-80 bg-white shadow-lg p-6 overflow-y-auto flex flex-col min-h-full
+        transform transition-transform duration-300 ease-in-out
+        ${isMobileMenuOpen ? 'translate-x-0' : '-translate-x-full'}
+        lg:relative lg:translate-x-0 lg:flex lg:z-0
+      `}>
+        <div className="lg:hidden flex justify-end mb-4">
+          <button
+            onClick={() => setIsMobileMenuOpen(false)}
+            className="p-2 text-gray-500 hover:text-gray-700"
+          >
+            <X className="h-6 w-6" />
+          </button>
+        </div>
+
+        <h2 className="text-2xl font-bold text-gray-900 mb-6">
+          Customize Your Product
+        </h2>
+
+        {/* Product Type */}
+        <div className="mb-6">
+          <Label
+            htmlFor="product-type"
+            className="text-sm font-medium text-gray-700 mb-2 block"
+          >
+            Product Type
+          </Label>
+          <Select
+            value={productType}
+            onValueChange={setProductType}
+            disabled={loadingProductTypes}
+          >
+            <SelectTrigger id="product-type">
+              <SelectValue
+                placeholder={
+                  loadingProductTypes
+                    ? "Loading product types..."
+                    : "Select product type"
+                }
+              />
+            </SelectTrigger>
+            <SelectContent>
+              {loadingProductTypes ? (
+                <div className="p-2">
+                  <div className="flex items-center space-x-2">
+                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-gray-900"></div>
+                    <span className="text-sm">Loading...</span>
+                  </div>
+                </div>
+              ) : (
+                Array.isArray(productTypes) &&
+                productTypes.map((type) => (
+                  <SelectItem key={type.id} value={type.id}>
+                    {type.name}
+                  </SelectItem>
+                ))
+              )}
+            </SelectContent>
+          </Select>
+        </div>
+
+        {/* Brand */}
+        <div className="mb-6">
+          <Label
+            htmlFor="brand"
+            className="text-sm font-medium text-gray-700 mb-2 block"
+          >
+            Brand
+          </Label>
+          <Select
+            value={brand}
+            onValueChange={setBrand}
+            disabled={loadingBrands || brands.length === 0}
+          >
+            <SelectTrigger id="brand">
+              <SelectValue
+                placeholder={loadingBrands ? "Loading brands..." : "Select brand"}
+              />
+            </SelectTrigger>
+            <SelectContent>
+              {loadingBrands ? (
+                <div className="p-2">
+                  <div className="flex items-center space-x-2">
+                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-gray-900"></div>
+                    <span className="text-sm">Loading brands...</span>
+                  </div>
+                </div>
+              ) : brands.length === 0 ? (
+                <SelectItem value="none" disabled>
+                  No brands available
+                </SelectItem>
+              ) : (
+                brands.map((b) => (
+                  <SelectItem key={b.id} value={String(b.id)}>
+                    {b.name}
+                  </SelectItem>
+                ))
+              )}
+            </SelectContent>
+          </Select>
+        </div>
+
+        {/* Select Color */}
+        <div className="mb-6">
+          <Label
+            htmlFor="color"
+            className="text-sm font-medium text-gray-700 mb-2 block"
+          >
+            Select color
+          </Label>
+          <Select
+            value={color}
+            onValueChange={setColor}
+            disabled={loadingColors || colors.length === 0}
+          >
+            <SelectTrigger id="color">
+              <SelectValue
+                placeholder={loadingColors ? "Loading colors..." : "Select color"}
+              />
+            </SelectTrigger>
+            <SelectContent>
+              {loadingColors ? (
+                <div className="p-2">
+                  <div className="flex items-center space-x-2">
+                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-gray-900"></div>
+                    <span className="text-sm">Loading colors...</span>
+                  </div>
+                </div>
+              ) : colors.length === 0 ? (
+                <SelectItem value="none" disabled>
+                  No colors available
+                </SelectItem>
+              ) : (
+                colors.map((c) => (
+                  <SelectItem key={c.id} value={String(c.id)}>
+                    {c.value}
+                  </SelectItem>
+                ))
+              )}
+            </SelectContent>
+          </Select>
+        </div>
+
+        {/* Place Your Assets */}
+        <div className="mb-6">
+          <h3 className="text-lg font-semibold text-gray-900 mb-4">
+            Place your assets
+          </h3>
+          <AssetUpload assets={assets} setAssets={setAssets} />
+        </div>
+
+        {/* Sizing and Quantity */}
+        <div className="mb-6">
+          <h3 className="text-lg font-semibold text-gray-900 mb-4">
+            Sizing and Quantity
+          </h3>
+          <SizingAndQuantity
+            brandId={brand}
+            productTypeId={productType}
+            sizeSelection={sizeSelection}
+            setSizeSelection={setSizeSelection}
+          />
+        </div>
+
+        {/* Action Buttons */}
+        <div className="flex gap-3 mt-auto pt-6">
+          <Button variant="outline" className="flex-1" onClick={handleReset}>
+            Reset
+          </Button>
+          <Button className="flex-1 bg-gray-800 hover:bg-gray-900" onClick={handleNext}>
+            Next
+          </Button>
+        </div>
       </div>
-    </div>
+    </>
   );
 }

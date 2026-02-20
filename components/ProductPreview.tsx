@@ -36,52 +36,65 @@ export default function ProductPreview() {
   }, [assets]);
 
   return (
-    <div className="flex-1 p-8">
-      <div className="max-w-6xl mx-auto h-full">
+    <div className="flex-1 p-4 lg:p-8 overflow-y-auto">
+      <div className="max-w-7xl mx-auto h-full pt-10">
         <h2 className="text-2xl font-bold text-gray-900 mb-8">Product Preview</h2>
 
         {/* Product Display */}
-        <div className="relative w-full h-full flex items-center justify-center">
-          {/* T-shirt Mockup */}
-          <Image
-            src="/image/shirt.png"
-            alt="T-Shirt Front"
-            fill
-            className="object-contain"
-          />
-          {/* Front Design Area - Top Left */}
-          <div className="absolute top-[40%] left-[34%] w-15 h-15 border-2 border-dashed border-gray-400 rounded flex items-center justify-center transform -translate-x-1/2 -translate-y-1/2 overflow-hidden bg-white/50">
-            {previews["front-top-left"] ? (
-              <BlobImage src={previews["front-top-left"]} alt="Preview" className="w-full h-full object-contain" />
-            ) : (
-              <span className="text-gray-400 text-xs">Front Top Left</span>
-            )}
-          </div>
-          {/* Front Design Area - Center Large */}
-          <div className="absolute top-[55%] left-[28%] w-48 h-56 border-2 border-dashed border-gray-400 rounded flex items-center justify-center transform -translate-x-1/2 -translate-y-1/2 overflow-hidden bg-white/50">
-            {previews["front-center"] ? (
-              <BlobImage src={previews["front-center"]} alt="Preview" className="w-full h-full object-contain" />
-            ) : (
-              <span className="text-gray-400 text-xs">Front Center</span>
-            )}
-          </div>
-          {/* Back Design Area - Top Center */}
-          <div className="absolute top-[50%] left-[71%] w-24 h-24 border-2 border-dashed border-gray-400 rounded flex items-center justify-center transform -translate-x-1/2 -translate-y-1/2 overflow-hidden bg-white/50">
-            {previews["back-top"] ? (
-              <BlobImage src={previews["back-top"]} alt="Preview" className="w-full h-full object-contain" />
-            ) : (
-              <span className="text-gray-400 text-xs">Back Top</span>
-            )}
-          </div>
-          {/* Back Design Area - Bottom Center */}
-          <div className="absolute top-[66%] left-[71%] w-48 h-10 border-2 border-dashed border-gray-400 rounded flex items-center justify-center transform -translate-x-1/2 -translate-y-1/2 overflow-hidden bg-white/50">
-            {previews["back-bottom"] ? (
-              <BlobImage src={previews["back-bottom"]} alt="Preview" className="w-full h-full object-contain" />
-            ) : (
-              <span className="text-gray-400 text-xs">Back Bottom</span>
-            )}
+        <div className="flex flex-col lg:flex-row w-full relative justify-center items-start">
+          {/* Front T-shirt */}
+          <div className="relative w-full aspect-square">
+            <Image
+              src="/image/Front Shirt.png"
+              alt="T-Shirt Front"
+              width={1000}
+              height={1000}
+              className="object-contain"
+            />
+            {/* Front Design Area - Top Left */}
+            <div className="absolute top-[35%] left-[63%] w-[10%] h-[10%] border-2 border-dashed border-gray-400 rounded flex items-center justify-center transform -translate-x-1/2 -translate-y-1/2 overflow-hidden bg-white/50 z-10">
+              {previews["front-top-left"] ? (
+                <BlobImage src={previews["front-top-left"]} alt="Preview" className="w-full h-full object-contain" />
+              ) : (
+                <span className="text-gray-400 text-[10px]">Front Top Left</span>
+              )}
+            </div>
+            {/* Front Design Area - Center Large */}
+            <div className="absolute top-[58%] left-[50%] w-[30%] h-[35%] border-2 border-dashed border-gray-400 rounded flex items-center justify-center transform -translate-x-1/2 -translate-y-1/2 overflow-hidden bg-white/50 z-10">
+              {previews["front-center"] ? (
+                <BlobImage src={previews["front-center"]} alt="Preview" className="w-full h-full object-contain" />
+              ) : (
+                <span className="text-gray-400 text-[10px]">Front Center</span>
+              )}
+            </div>
           </div>
 
+          {/* Back T-shirt */}
+          <div className="relative w-full aspect-square">
+            <Image
+              src="/image/Back Shirt.png"
+              alt="T-Shirt Back"
+              width={1000}
+              height={1000}
+              className="object-contain"
+            />
+            {/* Back Design Area - Top Center */}
+            <div className="absolute top-[35%] left-[50%] w-[10%] h-[10%] border-2 border-dashed border-gray-400 rounded flex items-center justify-center transform -translate-x-1/2 -translate-y-1/2 overflow-hidden bg-white/50 z-10">
+              {previews["back-top"] ? (
+                <BlobImage src={previews["back-top"]} alt="Preview" className="w-full h-full object-contain" />
+              ) : (
+                <span className="text-gray-400 text-[10px]">Back Top</span>
+              )}
+            </div>
+            {/* Back Design Area - Bottom Center */}
+            <div className="absolute top-[70%] left-[50%] w-[38%] h-[8%] border-2 border-dashed border-gray-400 rounded flex items-center justify-center transform -translate-x-1/2 -translate-y-1/2 overflow-hidden bg-white/50 z-10">
+              {previews["back-bottom"] ? (
+                <BlobImage src={previews["back-bottom"]} alt="Preview" className="w-full h-full object-contain" />
+              ) : (
+                <span className="text-gray-400 text-[10px]">Back Bottom</span>
+              )}
+            </div>
+          </div>
         </div>
 
       </div>
