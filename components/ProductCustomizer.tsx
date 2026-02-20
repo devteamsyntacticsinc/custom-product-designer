@@ -17,6 +17,7 @@ import AssetUpload from "./AssetUpload";
 import { useAssets } from "@/contexts/AssetsContext";
 import ContactInformation from "./ContactInformation";
 import ProductCustomizerSkeleton from "./ProductCustomizerSkeleton";
+import { CardTitle } from "@/components/ui/card";
 
 export default function ProductCustomizer() {
   const { assets, setAssets } = useAssets();
@@ -251,14 +252,13 @@ export default function ProductCustomizer() {
         {/* Burger Button */}
         <button
           onClick={() => setIsMobileMenuOpen(true)}
-          className="lg:hidden fixed top-4 left-4 z-40 p-2 bg-white rounded-md shadow-md border border-gray-200"
+          className="lg:hidden fixed w-full z-40 p-4 bg-white shadow-md border border-gray-200"
         >
-          <Menu className="h-6 w-6 text-gray-700" />
+          <div className="flex items-center content-center gap-3">
+            <Menu className="h-6 w-6 text-gray-700" />
+            <CardTitle className="text-2xl font-bold text-center">Print Pro</CardTitle>
+          </div>
         </button>
-
-        <div className="lg:relative lg:translate-x-0">
-          <ProductCustomizerSkeleton />
-        </div>
       </>
     );
   }
@@ -268,9 +268,12 @@ export default function ProductCustomizer() {
       {/* Burger Button */}
       <button
         onClick={() => setIsMobileMenuOpen(true)}
-        className="lg:hidden fixed top-4 left-4 z-40 p-2 bg-white rounded-md shadow-md border border-gray-200"
+        className="lg:hidden fixed w-full z-40 p-4 bg-white shadow-md border border-gray-200"
       >
-        <Menu className="h-6 w-6 text-gray-700" />
+        <div className="flex items-center content-center gap-3">
+          <Menu className="h-6 w-6 text-gray-700" />
+          <CardTitle className="text-2xl font-bold text-center">Print Pro</CardTitle>
+        </div>
       </button>
 
       {/* Backdrop */}
@@ -292,11 +295,16 @@ export default function ProductCustomizer() {
             onClick={() => setIsMobileMenuOpen(false)}
             className="p-2 text-gray-500 hover:text-gray-700"
           >
-            <X className="h-6 w-6" />
+            <div className="flex items-flex-start content-center justify-between">
+              <h2 className="text-2xl font-bold text-gray-900 mb-6">
+                Customize Your Product
+              </h2>
+              <X className="h-6 w-6" />
+            </div>
           </button>
         </div>
 
-        <h2 className="text-2xl font-bold text-gray-900 mb-6">
+        <h2 className="hidden lg:block text-2xl font-bold text-gray-900 mb-6">
           Customize Your Product
         </h2>
 

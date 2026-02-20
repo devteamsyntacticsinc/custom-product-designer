@@ -37,7 +37,7 @@ export default function ProductPreview() {
 
   return (
     <div className="flex-1 p-4 lg:p-8 overflow-y-auto">
-      <div className="max-w-7xl mx-auto h-full pt-10">
+      <div className="max-w-7xl mx-auto h-full pt-15">
         <h2 className="text-2xl font-bold text-gray-900 mb-8">Product Preview</h2>
 
         {/* Product Display */}
