@@ -22,9 +22,8 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
-import { Size, SizeProduct } from "@/types/product";
+import { BrandGroup, Size, SizeProduct } from "@/types/product";
 import axios, { AxiosError } from "axios";
-import { Toast } from "@/components/ui/toast";
 import { useToast } from "@/contexts/ToastContext";
 import {
   Dialog,
@@ -164,45 +163,40 @@ export default function ProductBrandSizesTable({
       string,
       {
         productTypeName: string;
-        brandTypes: Map<
-          number,
-          {
-            brandTypeId: number;
-            brandName: string;
-            sizes: Set<string>;
-            brandTypeRef: SizeProduct["brand_type"];
-            sizeId: number;
-          }
-        >;
+        brandTypes: Map<number, BrandGroup>;
       }
     >();
-
-    sizeProducts.forEach((item) => {
+    // ✅ First, seed ALL brands from originalState so they always appear
+    originalState.forEach((item) => {
       const productTypeName = item.brand_type?.product_type?.name || "Unknown";
       const brandName = item.brand_type?.brands?.name || "Unknown";
 
       if (!map.has(productTypeName)) {
-        map.set(productTypeName, {
-          productTypeName,
-          brandTypes: new Map(),
-        });
+        map.set(productTypeName, { productTypeName, brandTypes: new Map() });
       }
 
-      const productGroup = map.get(productTypeName);
-      if (!productGroup) return;
+      const productGroup = map.get(productTypeName)!;
 
       if (!productGroup.brandTypes.has(item.brand_type.id)) {
         productGroup.brandTypes.set(item.brand_type.id, {
           brandTypeId: item.brand_type.id,
           brandName,
-          sizes: new Set(),
+          sizes: new Set(), // Start empty — sizes will be added below
           brandTypeRef: item.brand_type,
           sizeId: item.size_id,
         });
       }
+    });
+
+    // ✅ Then, populate only the currently checked sizes from sizeProducts
+    sizeProducts.forEach((item) => {
+      const productTypeName = item.brand_type?.product_type?.name || "Unknown";
+      const productGroup = map.get(productTypeName);
+      if (!productGroup) return;
 
       const brandTypeGroup = productGroup.brandTypes.get(item.brand_type.id);
       if (!brandTypeGroup) return;
+
       brandTypeGroup.sizes.add(item.sizes.value);
     });
 
@@ -225,6 +219,60 @@ export default function ProductBrandSizesTable({
     setExpandedTypes(newExpanded);
   };
 
+  // Helper functions for "ALL" checkbox functionality
+  const isAllChecked = (brand: BrandGroup): boolean => {
+    return sizes.every(({ value }) => brand.sizes.has(value));
+  };
+
+  const handleAllToggle = (brand: BrandGroup, isChecked: boolean) => {
+    const brandTypeRef =
+      sizeProducts.find((item) => item.brand_type.id === brand.brandTypeId)
+        ?.brand_type ??
+      originalState.find((item) => item.brand_type.id === brand.brandTypeId)
+        ?.brand_type; // ✅ fallback
+
+    if (!brandTypeRef) return;
+
+    setSizeProducts((prev) => {
+      let newProducts = [...prev];
+
+      if (isChecked) {
+        // Add all missing sizes for this brand
+        sizes.forEach(({ id: sizeId, value }) => {
+          const exists = newProducts.some(
+            (item) =>
+              item.brand_type.id === brand.brandTypeId &&
+              item.sizes.value === value,
+          );
+
+          if (!exists) {
+            const nextId =
+              newProducts.reduce((maxId, item) => Math.max(maxId, item.id), 0) +
+              1;
+            newProducts.push({
+              id: nextId,
+              sizes: { value },
+              brand_type: brandTypeRef,
+              brandT_id: brand.brandTypeId,
+              size_id: sizeId,
+            });
+          }
+        });
+      } else {
+        // Remove all sizes for this brand
+        newProducts = newProducts.filter(
+          (item) => item.brand_type.id !== brand.brandTypeId,
+        );
+      }
+
+      // Update pending changes
+      const diff = calculateDiff(newProducts, originalState);
+      setPendingChanges(diff);
+
+      return newProducts;
+    });
+  };
+
   // Checkbox toggle logic
   const handleSizeChange = (
     brandTypeId: number,
@@ -244,9 +292,10 @@ export default function ProductBrandSizesTable({
       if (existingIndex !== -1) {
         newProducts = prev.filter((_, idx) => idx !== existingIndex);
       } else {
-        const brandTypeRef = prev.find(
-          (item) => item.brand_type.id === brandTypeId,
-        )?.brand_type;
+        const brandTypeRef =
+          prev.find((item) => item.brand_type.id === brandTypeId)?.brand_type ??
+          originalState.find((item) => item.brand_type.id === brandTypeId)
+            ?.brand_type; // ✅ fallback
 
         if (!brandTypeRef) return prev;
 
@@ -351,6 +400,9 @@ export default function ProductBrandSizesTable({
                       <TableHead className="text-muted-foreground">
                         Brand Name
                       </TableHead>
+                      <TableHead className="text-muted-foreground text-center min-w-24">
+                        ALL
+                      </TableHead>
                       {ALL_SIZES.map((size) => (
                         <TableHead
                           key={size}
@@ -369,6 +421,9 @@ export default function ProductBrandSizesTable({
                       >
                         <TableCell className="text-foreground font-medium">
                           <div className="h-5 w-24 bg-muted animate-pulse rounded-md" />
+                        </TableCell>
+                        <TableCell className="text-center">
+                          <div className="w-7 h-7 bg-muted animate-pulse rounded-md mx-auto" />
                         </TableCell>
                         {ALL_SIZES.map((size) => (
                           <TableCell key={size} className="text-center">
@@ -417,6 +472,9 @@ export default function ProductBrandSizesTable({
                         <TableHead className="text-muted-foreground">
                           Brand Name
                         </TableHead>
+                        <TableHead className="text-muted-foreground text-center min-w-24">
+                          ALL
+                        </TableHead>
                         {sizes.map(({ id, value }) => (
                           <TableHead
                             key={id}
@@ -435,6 +493,15 @@ export default function ProductBrandSizesTable({
                         >
                           <TableCell className="text-foreground font-medium">
                             {brand.brandName}
+                          </TableCell>
+                          <TableCell className="text-center">
+                            <Checkbox
+                              checked={isAllChecked(brand)}
+                              onCheckedChange={(checked) =>
+                                handleAllToggle(brand, checked as boolean)
+                              }
+                              className="cursor-pointer size-7"
+                            />
                           </TableCell>
                           {sizes.map(({ id, value }) => (
                             <TableCell key={id} className="text-center">

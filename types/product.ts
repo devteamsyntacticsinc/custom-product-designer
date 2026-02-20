@@ -103,3 +103,11 @@ export interface SizeProduct {
     product_type: { name: string };
   };
 }
+
+export interface BrandGroup {
+  brandTypeId: number;
+  brandName: string;
+  sizes: Set<string>;
+  brandTypeRef: SizeProduct["brand_type"];
+  sizeId: number;
+}
