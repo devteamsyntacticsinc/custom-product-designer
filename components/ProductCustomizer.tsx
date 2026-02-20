@@ -304,6 +304,10 @@ export default function ProductCustomizer() {
           </button>
         </div>
 
+        <h2 className="hidden lg:block text-2xl font-bold text-gray-900 mb-6">
+          Customize Your Product
+        </h2>
+
         {/* Product Type */}
         <div className="mb-6">
           <Label
