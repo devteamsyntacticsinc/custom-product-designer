@@ -1,5 +1,12 @@
 import { supabase } from "@/lib/supabase";
-import { Product, Brand, Color, ProductType, Size } from "@/types/product";
+import {
+  Product,
+  Brand,
+  Color,
+  ProductType,
+  Size,
+  BrandType,
+} from "@/types/product";
 
 export class ProductService {
   static async getProducts(): Promise<Product[]> {
@@ -105,7 +112,9 @@ export class ProductService {
     }
   }
 
-  static async getBrands(typeId?: string): Promise<Brand[]> {
+  static async getBrands(
+    typeId?: number,
+  ): Promise<(Brand & { is_Active: boolean; type_id: number })[]> {
     try {
       if (typeId) {
         // Get brands that have the specified type_id in brand_type table
@@ -114,6 +123,7 @@ export class ProductService {
           .select(
             `
             brand_id,
+            type_id,
             brands (
               id,
               name,
@@ -128,23 +138,42 @@ export class ProductService {
         }
 
         return (
-          (data
-            ?.map((item) => item.brands)
-            .filter(Boolean)
-            .flat() as unknown as Brand[]) || []
+          data
+            ?.map((item) => ({
+              id: item.brands[0].id,
+              name: item.brands[0].name,
+              is_Active: item.brands[0].is_Active,
+              type_id: item.type_id,
+            }))
+            .filter(Boolean) || []
         );
       } else {
-        // Get all brands
+        // Get all brands with their associated types
         const { data, error } = await supabase
           .from("brands")
-          .select("id, name, is_Active")
+          .select(
+            `
+            id, 
+            name, 
+            is_Active,
+            brand_type (
+              type_id
+            )
+          `,
+          )
           .order("name");
 
         if (error) {
           throw error;
         }
 
-        return data || [];
+        // Transform data to include type_id from first association
+        return (
+          data?.map((brand) => ({
+            ...brand,
+            type_id: brand.brand_type?.[0]?.type_id || null,
+          })) || []
+        );
       }
     } catch (error) {
       console.error("Error fetching brands:", error);
@@ -193,8 +222,27 @@ export class ProductService {
     }
   }
 
+  static async createBrandWithType(
+    name: string,
+    type_id: number,
+    is_Active: boolean = true,
+  ): Promise<{ brand: Brand; brandType: BrandType }> {
+    try {
+      // Create the brand first
+      const brand = await this.createBrand(name, is_Active);
+
+      // Then create the brand-type association
+      const brandType = await this.createBrandType(brand.id, type_id);
+
+      return { brand, brandType };
+    } catch (error) {
+      console.error("Error creating brand with type:", error);
+      throw error;
+    }
+  }
+
   static async updateBrand(
-    id: string,
+    id: number,
     name?: string,
     is_Active?: boolean,
   ): Promise<Brand> {
@@ -243,8 +291,23 @@ export class ProductService {
     }
   }
 
-  static async deleteBrand(id: string): Promise<void> {
+  static async deleteBrand(id: number): Promise<void> {
     try {
+      // First delete all brand-type associations for this brand
+      const { error: brandTypeError } = await supabase
+        .from("brand_type")
+        .delete()
+        .eq("brand_id", id);
+
+      if (brandTypeError) {
+        console.error(
+          "Error deleting brand-type associations:",
+          brandTypeError,
+        );
+        throw brandTypeError;
+      }
+
+      // Then delete the brand
       const { error } = await supabase.from("brands").delete().eq("id", id);
 
       if (error) {
@@ -389,9 +452,9 @@ export class ProductService {
         console.error("Error fetching product types:", error);
         // Return fallback data if Supabase is down
         return [
-          { id: "1", name: "T-Shirt" },
-          { id: "2", name: "Hoodie" },
-          { id: "3", name: "Mug" },
+          { id: 1, name: "T-Shirt" },
+          { id: 2, name: "Hoodie" },
+          { id: 3, name: "Mug" },
         ];
       }
 
@@ -400,9 +463,9 @@ export class ProductService {
       console.error("Error fetching product types:", error);
       // Return fallback data if there's a network error
       return [
-        { id: "1", name: "T-Shirt" },
-        { id: "2", name: "Hoodie" },
-        { id: "3", name: "Mug" },
+        { id: 1, name: "T-Shirt" },
+        { id: 2, name: "Hoodie" },
+        { id: 3, name: "Mug" },
       ];
     }
   }
@@ -814,6 +877,7 @@ export class ProductService {
     }
   }
 
+  // size_product table logic
   static async getSizeProduct() {
     try {
       const { data, error } = await supabase
@@ -984,6 +1048,191 @@ export class ProductService {
       return { deleted: count || 0 };
     } catch (error) {
       console.error("Error batch deleting size products:", error);
+      throw error;
+    }
+  }
+
+  // brand_type logic
+  static async getBrandTypes(): Promise<
+    (BrandType & { brand_name?: string; product_type_name?: string })[]
+  > {
+    try {
+      const { data, error } = await supabase
+        .from("brand_type")
+        .select(
+          `
+          id, 
+          brand_id, 
+          type_id,
+          brands (
+            name
+          ),
+          product_type (
+            name
+          )
+        `,
+        )
+        .order("id");
+
+      if (error) {
+        throw error;
+      }
+
+      return (
+        data?.map((item) => ({
+          ...item,
+          brand_name: item.brands?.[0]?.name,
+          product_type_name: item.product_type?.[0]?.name,
+        })) || []
+      );
+    } catch (error) {
+      console.error("Error fetching brand types:", error);
+      throw error;
+    }
+  }
+
+  static async createBrandType(
+    brand_id: number,
+    type_id: number,
+  ): Promise<BrandType> {
+    try {
+      // Validate brand exists
+      const { data: brand, error: brandError } = await supabase
+        .from("brands")
+        .select("id")
+        .eq("id", brand_id)
+        .single();
+
+      if (brandError || !brand) {
+        throw new Error("Brand not found");
+      }
+
+      // Validate type exists
+      const { data: type, error: typeError } = await supabase
+        .from("product_type")
+        .select("id")
+        .eq("id", type_id)
+        .single();
+
+      if (typeError || !type) {
+        throw new Error("Product type not found");
+      }
+      // Check if brand and product type combination already exists
+      const { data: existingBrandType, error: checkError } = await supabase
+        .from("brand_type")
+        .select("id")
+        .eq("brand_id", brand_id)
+        .eq("type_id", type_id)
+        .single();
+
+      if (checkError && checkError.code !== "PGRST116") {
+        throw checkError;
+      }
+
+      if (existingBrandType) {
+        throw new Error(
+          "Brand type with this brand_id and type_id already exists",
+        );
+      }
+
+      const { data, error } = await supabase
+        .from("brand_type")
+        .insert([{ brand_id, type_id }])
+        .select()
+        .single();
+
+      if (error) {
+        throw error;
+      }
+
+      if (!data) {
+        throw new Error("Failed to create brand type");
+      }
+
+      return data;
+    } catch (error) {
+      console.error("Error creating brand type:", error);
+      throw error;
+    }
+  }
+
+  static async updateBrandType(
+    id: number,
+    brand_id: number,
+    type_id: number,
+  ): Promise<BrandType> {
+    try {
+      // Validate brand exists
+      const { data: brand, error: brandError } = await supabase
+        .from("brands")
+        .select("id")
+        .eq("id", brand_id)
+        .single();
+
+      if (brandError || !brand) {
+        throw new Error("Brand not found");
+      }
+
+      // Validate type exists
+      const { data: type, error: typeError } = await supabase
+        .from("product_types")
+        .select("id")
+        .eq("id", type_id)
+        .single();
+
+      if (typeError || !type) {
+        throw new Error("Type not found");
+      }
+      // Check if brand and product type combination already exists
+      const { data: existingBrandType, error: checkError } = await supabase
+        .from("brand_type")
+        .select("id")
+        .eq("brand_id", brand_id)
+        .eq("type_id", type_id)
+        .neq("id", id) // Exclude current record
+        .single();
+
+      if (checkError && checkError.code !== "PGRST116") {
+        throw checkError;
+      }
+
+      if (existingBrandType) {
+        throw new Error(
+          "Brand type with this brand_id and type_id already exists",
+        );
+      }
+
+      const { data, error } = await supabase
+        .from("brand_type")
+        .update({ brand_id, type_id })
+        .eq("id", id)
+        .select()
+        .single();
+
+      if (error) {
+        throw error;
+      }
+
+      if (!data) {
+        throw new Error("Failed to update brand type");
+      }
+
+      return data;
+    } catch (error) {
+      console.error("Error updating brand type:", error);
+      throw error;
+    }
+  }
+
+  static async deleteBrandType(id: number): Promise<void> {
+    try {
+      const { error } = await supabase.from("brand_type").delete().eq("id", id);
+
+      if (error) {
+        throw error;
+      }
+    } catch (error) {
+      console.error("Error deleting brand type:", error);
       throw error;
     }
   }
