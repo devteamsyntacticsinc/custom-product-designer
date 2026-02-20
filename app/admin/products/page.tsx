@@ -11,6 +11,7 @@ import ProductTypesTab from "@/app/components/ProductTypesTab";
 import BrandsTab from "@/app/components/BrandsTab";
 import ColorsTab from "@/app/components/ColorsTab";
 import SizesTab from "@/app/components/SizesTab";
+import ProductBrandSizesTable from "@/app/components/ProductBrandSizesTable";
 
 export default function ProductsPage() {
   const [user, setUser] = useState<User | null>(null);
@@ -22,6 +23,8 @@ export default function ProductsPage() {
     typeof window !== "undefined"
       ? window.location.pathname
       : "/admin/products";
+
+  const [refetchSize, setRefetchSize] = useState<number>(Date.now());
 
   useEffect(() => {
     const checkAuth = () => {
@@ -170,8 +173,9 @@ export default function ProductsPage() {
               <ColorsTab />
             </TabsContent>
             {/* Sizes Tab */}
-            <TabsContent value="sizes">
-              <SizesTab />
+            <TabsContent value="sizes" className="space-y-6">
+              <SizesTab setRefetchSize={setRefetchSize} />
+              <ProductBrandSizesTable refetchSize={refetchSize} />
             </TabsContent>
           </Tabs>
         </div>
