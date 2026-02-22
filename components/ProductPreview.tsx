@@ -36,9 +36,9 @@ export default function ProductPreview() {
   }, [assets]);
 
   return (
-    <div className="flex-1 p-4 lg:p-8 overflow-y-auto">
-      <div className="max-w-7xl mx-auto h-full pt-15">
-        <h2 className="text-2xl font-bold text-gray-900 mb-8">Product Preview</h2>
+    <div className="flex-1 p-4 lg:p-8 overflow-y-auto lg:overflow-hidden scrollbar-hide">
+      <div className="max-w-7xl mx-auto h-full pt-15 md:pt-10 lg:pt-5">
+        <h2 className="text-lg md:text-xl lg:text-2xl font-bold text-gray-900 mb-8">Product Preview</h2>
 
         {/* Product Display */}
         <div className="flex flex-col lg:flex-row w-full relative justify-center items-start">

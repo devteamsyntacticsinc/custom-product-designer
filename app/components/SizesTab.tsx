@@ -130,11 +130,11 @@ export default function SizesTab({
   };
 
   return (
-    <Card>
-      <CardHeader className="flex items-center justify-between py-6">
+    <Card className="overflow-hidden">
+      <CardHeader className="flex flex-col sm:flex-row items-start sm:items-center justify-between space-y-4 sm:space-y-0 py-4 sm:py-6">
         <div>
-          <CardTitle>Sizes</CardTitle>
-          <CardDescription>
+          <CardTitle className="text-lg lg:text-xl">Sizes</CardTitle>
+          <CardDescription className="text-xs lg:text-sm">
             Manage product sizes available in your store
           </CardDescription>
         </div>
@@ -143,87 +143,97 @@ export default function SizesTab({
           isLoading={isMutating}
           onSubmit={handleSubmitSize}
         >
-          <Button>
+          <Button size="sm" className="w-full sm:w-auto text-xs lg:text-sm h-8 lg:h-10">
             <Plus className="h-4 w-4 mr-2" />
             Add Size
           </Button>
         </SizeSheet>
       </CardHeader>
-      <CardContent>
-        <Table>
-          <TableHeader>
-            <TableRow>
-              <TableHead>ID</TableHead>
-              <TableHead>Name</TableHead>
-              <TableHead>Status</TableHead>
-              <TableHead>Actions</TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {isFetchingSizes ? (
-              Array.from({ length: 5 }).map((_, index) => (
-                <TableRow key={`sizes-loading-${index}`}>
-                  <TableCell>
-                    <Skeleton className="h-4 w-10" />
-                  </TableCell>
-                  <TableCell>
-                    <Skeleton className="h-4 w-20" />
-                  </TableCell>
-                  <TableCell>
-                    <Skeleton className="h-6 w-20" />
-                  </TableCell>
-                  <TableCell>
-                    <div className="flex items-center gap-2">
-                      <Skeleton className="h-8 w-8" />
-                      <Skeleton className="h-8 w-8" />
-                    </div>
-                  </TableCell>
-                </TableRow>
-              ))
-            ) : error ? (
-              <TableRow>
-                <TableCell colSpan={4} className="text-sm text-red-600">
-                  {error}
-                </TableCell>
+      <CardContent className="p-0 sm:p-6">
+        <div className="overflow-x-auto">
+          <Table>
+            <TableHeader>
+              <TableRow className="text-xs lg:text-sm">
+                <TableHead className="w-[60px]">ID</TableHead>
+                <TableHead>Value</TableHead>
+                <TableHead>Status</TableHead>
+                <TableHead className="text-right">Actions</TableHead>
               </TableRow>
-            ) : (
-              sizes.map((size) => (
-                <TableRow key={size.id}>
-                  <TableCell>{size.id}</TableCell>
-                  <TableCell className="font-medium">{size.value}</TableCell>
-                  <TableCell>
-                    <Badge variant={size.is_Active ? "default" : "secondary"}>
-                      {size.is_Active ? "Active" : "Inactive"}
-                    </Badge>
-                  </TableCell>
-                  <TableCell>
-                    <SizeSheet
-                      mode="edit"
-                      isLoading={isMutating}
-                      initialData={size}
-                      onSubmit={handleSubmitSize}
-                    >
-                      <Button variant="ghost" size="icon" disabled={isMutating}>
-                        <Edit className="h-4 w-4" />
-                      </Button>
-                    </SizeSheet>
-                    <DeleteDialog
-                      isLoading={isMutating}
-                      setIsLoading={setIsMutating}
-                      size={size}
-                      fetchSizes={fetchSizes}
-                      setRefetchSize={setRefetchSize}
-                    >
-                      <Button variant="ghost" size="icon" disabled={isMutating}>
-                        <Trash2 className="h-4 w-4" />
-                      </Button>
-                    </DeleteDialog>
+            </TableHeader>
+            <TableBody>
+              {isFetchingSizes ? (
+                Array.from({ length: 5 }).map((_, index) => (
+                  <TableRow key={`sizes-loading-${index}`}>
+                    <TableCell>
+                      <Skeleton className="h-4 w-6" />
+                    </TableCell>
+                    <TableCell>
+                      <Skeleton className="h-4 w-20" />
+                    </TableCell>
+                    <TableCell>
+                      <Skeleton className="h-6 w-16" />
+                    </TableCell>
+                    <TableCell className="text-right">
+                      <div className="flex items-center justify-end gap-1">
+                        <Skeleton className="h-8 w-8" />
+                        <Skeleton className="h-8 w-8" />
+                      </div>
+                    </TableCell>
+                  </TableRow>
+                ))
+              ) : error ? (
+                <TableRow>
+                  <TableCell colSpan={4} className="text-sm text-red-600 p-4">
+                    {error}
                   </TableCell>
                 </TableRow>
-              ))
-            )}
-          </TableBody>
-        </Table>
+              ) : sizes.length === 0 ? (
+                <TableRow>
+                  <TableCell colSpan={4} className="text-center py-8 text-gray-500">
+                    No sizes found
+                  </TableCell>
+                </TableRow>
+              ) : (
+                sizes.map((size) => (
+                  <TableRow key={size.id}>
+                    <TableCell className="text-xs lg:text-sm text-gray-500 py-3">#{size.id}</TableCell>
+                    <TableCell className="font-medium text-xs lg:text-sm py-3">{size.value}</TableCell>
+                    <TableCell className="py-3">
+                      <Badge variant={size.is_Active ? "default" : "secondary"} className="text-[10px] px-2 py-0">
+                        {size.is_Active ? "Active" : "Inactive"}
+                      </Badge>
+                    </TableCell>
+                    <TableCell className="text-right py-3 pr-4">
+                      <div className="flex items-center justify-end gap-1">
+                        <SizeSheet
+                          mode="edit"
+                          isLoading={isMutating}
+                          initialData={size}
+                          onSubmit={handleSubmitSize}
+                        >
+                          <Button variant="ghost" size="icon" className="h-8 w-8" disabled={isMutating}>
+                            <Edit className="h-3.5 w-3.5" />
+                          </Button>
+                        </SizeSheet>
+                        <DeleteDialog
+                          isLoading={isMutating}
+                          setIsLoading={setIsMutating}
+                          size={size}
+                          fetchSizes={fetchSizes}
+                          setRefetchSize={setRefetchSize}
+                        >
+                          <Button variant="ghost" size="icon" className="h-8 w-8 text-destructive" disabled={isMutating}>
+                            <Trash2 className="h-3.5 w-3.5" />
+                          </Button>
+                        </DeleteDialog>
+                      </div>
+                    </TableCell>
+                  </TableRow>
+                ))
+              )}
+            </TableBody>
+          </Table>
+        </div>
       </CardContent>
     </Card>
   );
@@ -278,8 +288,8 @@ function SizeSheet({
     <Sheet open={open} onOpenChange={handleOpenChange}>
       <SheetTrigger asChild>{children}</SheetTrigger>
 
-      <SheetContent>
-        <SheetHeader>
+      <SheetContent className="w-full sm:max-w-md">
+        <SheetHeader className="text-xs lg:text-sm">
           <SheetTitle>{isEdit ? "Edit Size" : "Add New Size"}</SheetTitle>
           <SheetDescription>
             {isEdit
@@ -290,23 +300,24 @@ function SizeSheet({
 
         <div className="py-6 space-y-4">
           <div className="space-y-2">
-            <Label htmlFor="size-name">Size Name</Label>
+            <Label htmlFor="size-name" className="text-xs lg:text-sm">Size Name</Label>
             <Input
               id="size-name"
               value={name}
               onChange={(e) => setName(e.target.value)}
               placeholder="Enter size name"
+              className="text-xs lg:text-sm h-8 lg:h-10"
             />
           </div>
 
           <div className="flex items-center space-x-2">
-            <Switch checked={active} onCheckedChange={setActive} />
-            <Label>{active ? "Active" : "Inactive"}</Label>
+            <Switch checked={active} onCheckedChange={setActive} className="text-xs lg:text-sm" />
+            <Label className="text-xs lg:text-sm">{active ? "Active" : "Inactive"}</Label>
           </div>
         </div>
 
         <SheetFooter>
-          <Button onClick={handleSubmit} disabled={isLoading}>
+          <Button onClick={handleSubmit} disabled={isLoading} className="text-xs lg:text-sm h-8 lg:h-10">
             {isLoading
               ? isEdit
                 ? "Updating..."

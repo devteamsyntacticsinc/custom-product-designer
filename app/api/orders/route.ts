@@ -6,15 +6,15 @@ import nodemailer from 'nodemailer';
 export async function POST(request: NextRequest) {
   try {
     const formData = await request.formData();
-    
+
     // Parse the order data from JSON string
     const orderDataJson = formData.get('orderData') as string;
     const orderData: OrderData = JSON.parse(orderDataJson);
-    
+
     // Extract files from FormData
     const assets: Record<string, File | null> = {};
     const assetKeys = ['front-top-left', 'front-center', 'back-top', 'back-bottom'];
-    
+
     assetKeys.forEach(key => {
       const file = formData.get(key) as File;
       assets[key] = file && file.size > 0 ? file : null;
@@ -26,13 +26,16 @@ export async function POST(request: NextRequest) {
     // Process order using OrderService
     const { customerData, productOrderData } = await OrderService.processOrder(orderData);
 
-    // Send email notification to company owner
-    await sendOrderEmail(orderData, customerData.id);
+    // Send email notifications
+    await Promise.allSettled([
+      sendOrderEmail(orderData, customerData.id),
+      sendCustomerConfirmationEmail(orderData, customerData.id)
+    ]);
 
-    return NextResponse.json({ 
-      success: true, 
+    return NextResponse.json({
+      success: true,
       orderId: productOrderData.id,
-      customerId: customerData.id 
+      customerId: customerData.id
     });
 
   } catch (error) {
@@ -43,21 +46,9 @@ export async function POST(request: NextRequest) {
 
 async function sendOrderEmail(orderData: OrderData, customerId: string) {
   try {
-    // Create transporter with SMTP configuration
-    const transporter = nodemailer.createTransport({
-      host: process.env.SMTP_HOST,
-      port: parseInt(process.env.SMTP_PORT || '465'),
-      secure: process.env.SMTP_SECURE === 'true',
-      auth: {
-        user: process.env.SMTP_USER,
-        pass: process.env.SMTP_PASS,
-      },
-    });
+    const transporter = createEmailTransporter();
+    const emailHTML = generateOrderEmailHTML(orderData, customerId, false);
 
-    // Generate email HTML content
-    const emailHTML = generateOrderEmailHTML(orderData, customerId);
-
-    // Send email
     await transporter.sendMail({
       from: process.env.MAIL_FROM,
       to: process.env.COMPANY_OWNER_EMAIL,
@@ -65,16 +56,46 @@ async function sendOrderEmail(orderData: OrderData, customerId: string) {
       html: emailHTML,
     });
 
-    console.log('Order email sent successfully');
+    console.log('Owner notification email sent successfully');
   } catch (error) {
-    console.error('Error sending order email:', error);
-    // Don't throw error to prevent order failure, but log it
+    console.error('Error sending order email to owner:', error);
   }
 }
 
-function generateOrderEmailHTML(orderData: OrderData, customerId: string): string {
+async function sendCustomerConfirmationEmail(orderData: OrderData, customerId: string) {
+  try {
+    const transporter = createEmailTransporter();
+    const emailHTML = generateOrderEmailHTML(orderData, customerId, true);
+
+    await transporter.sendMail({
+      from: process.env.MAIL_FROM,
+      to: orderData.contactInformation.email,
+      subject: `Order Confirmation - ${orderData.productType}`,
+      html: emailHTML,
+    });
+
+    console.log('Customer confirmation email sent successfully');
+  } catch (error) {
+    console.error('Error sending confirmation email to customer:', error);
+  }
+}
+
+function createEmailTransporter() {
+  return nodemailer.createTransport({
+    host: process.env.SMTP_HOST,
+    port: parseInt(process.env.SMTP_PORT || '465'),
+    secure: process.env.SMTP_SECURE === 'true',
+    auth: {
+      user: process.env.SMTP_USER,
+      pass: process.env.SMTP_PASS,
+    },
+  });
+}
+
+function generateOrderEmailHTML(orderData: OrderData, customerId: string, isCustomer: boolean = false): string {
+  const title = isCustomer ? "Order Confirmation" : "New Order Received";
   const totalItems = orderData.sizeSelection.reduce((total, item) => total + item.quantity, 0);
-  
+
   const sizeRows = orderData.sizeSelection
     .filter(item => item.quantity > 0)
     .map(item => `
@@ -89,11 +110,11 @@ function generateOrderEmailHTML(orderData: OrderData, customerId: string): strin
     .map(([key, file]) => {
       const placementMap: Record<string, string> = {
         "front-top-left": "Front - Top Left",
-        "front-center": "Front - Center", 
+        "front-center": "Front - Center",
         "back-top": "Back - Top",
         "back-bottom": "Back - Bottom"
       };
-      
+
       return `
         <tr>
           <td style="padding: 8px; border: 1px solid #ddd;">${file?.name || 'Unknown file'}</td>
@@ -107,11 +128,14 @@ function generateOrderEmailHTML(orderData: OrderData, customerId: string): strin
     <html>
     <head>
       <meta charset="utf-8">
-      <title>New Order Received</title>
+      <title>${title}</title>
     </head>
     <body style="font-family: Arial, sans-serif; margin: 0; padding: 20px; background-color: #f4f4f4;">
       <div style="max-width: 600px; margin: 0 auto; background-color: white; padding: 20px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
-        <h1 style="color: #333; border-bottom: 2px solid #333; padding-bottom: 10px;">New Order Received</h1>
+        <h1 style="color: #333; border-bottom: 2px solid #333; padding-bottom: 10px;">${title}</h1>
+        
+        ${isCustomer ? `<p style="color: #666; font-size: 16px;">Thank you for your order, ${orderData.contactInformation.fullName}! We have received your order and are processing it.</p>` : ''}
+        
         
         <div style="margin-bottom: 20px;">
           <h2 style="color: #555; font-size: 18px;">Order Information</h2>

@@ -123,7 +123,7 @@ export default function ProductCustomizer() {
     setProductType("");
     setBrand("");
     setColor("");
-    setSizeSelection([{ size: 0, quantity: 1 }]);
+    setSizeSelection([]);
     setAssets({
       "front-top-left": null,
       "front-center": null,
@@ -215,12 +215,15 @@ export default function ProductCustomizer() {
         )}
 
         <div className={`
-          fixed inset-y-0 left-0 z-50 w-80 bg-white shadow-lg p-6 overflow-y-auto flex flex-col min-h-full
+          fixed inset-y-0 left-0 z-50 w-80 bg-white shadow-lg p-6 overflow-y-auto scrollbar-hide flex flex-col h-full
           transform transition-transform duration-300 ease-in-out
           ${isMobileMenuOpen ? 'translate-x-0' : '-translate-x-full'}
           lg:relative lg:translate-x-0 lg:flex lg:z-0
         `}>
-          <div className="lg:hidden flex justify-end mb-4">
+          <div className="lg:hidden flex items-center justify-between mb-6">
+            <h2 className="text-2xl font-bold text-gray-900">
+              Print Pro
+            </h2>
             <button
               onClick={() => setIsMobileMenuOpen(false)}
               className="p-2 text-gray-500 hover:text-gray-700"
@@ -256,7 +259,7 @@ export default function ProductCustomizer() {
         >
           <div className="flex items-center content-center gap-3">
             <Menu className="h-6 w-6 text-gray-700" />
-            <CardTitle className="text-2xl font-bold text-center">Print Pro</CardTitle>
+            <CardTitle className="text-lg md:text-xl lg:text-2xl font-bold text-center">Print Pro</CardTitle>
           </div>
         </button>
       </>
@@ -268,11 +271,11 @@ export default function ProductCustomizer() {
       {/* Burger Button */}
       <button
         onClick={() => setIsMobileMenuOpen(true)}
-        className="lg:hidden fixed w-full z-40 p-4 bg-white shadow-md border border-gray-200"
+        className="lg:hidden fixed w-full z-40 p-4 bg-gray-50 border border-gray-200"
       >
         <div className="flex items-center content-center gap-3">
           <Menu className="h-6 w-6 text-gray-700" />
-          <CardTitle className="text-2xl font-bold text-center">Print Pro</CardTitle>
+          <CardTitle className="text-lg md:text-xl lg:text-2xl font-bold text-center">Print Pro</CardTitle>
         </div>
       </button>
 
@@ -285,27 +288,25 @@ export default function ProductCustomizer() {
       )}
 
       <div className={`
-        fixed inset-y-0 left-0 z-50 w-80 bg-white shadow-lg p-6 overflow-y-auto flex flex-col min-h-full
+        fixed inset-y-0 left-0 z-50 w-80 bg-white shadow-lg p-6 overflow-y-auto scrollbar-hide flex flex-col h-full
         transform transition-transform duration-300 ease-in-out
         ${isMobileMenuOpen ? 'translate-x-0' : '-translate-x-full'}
         lg:relative lg:translate-x-0 lg:flex lg:z-0
       `}>
-        <div className="lg:hidden flex justify-end mb-4">
+        <div className="lg:hidden flex items-center justify-between mb-6">
+          <h2 className="text-2xl font-bold text-gray-900">
+            Print Pro
+          </h2>
           <button
             onClick={() => setIsMobileMenuOpen(false)}
             className="p-2 text-gray-500 hover:text-gray-700"
           >
-            <div className="flex items-flex-start content-center justify-between">
-              <h2 className="text-2xl font-bold text-gray-900 mb-6">
-                Customize Your Product
-              </h2>
-              <X className="h-6 w-6" />
-            </div>
+            <X className="h-6 w-6" />
           </button>
         </div>
 
         <h2 className="hidden lg:block text-2xl font-bold text-gray-900 mb-6">
-          Customize Your Product
+          Print Pro
         </h2>
 
         {/* Product Type */}

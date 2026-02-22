@@ -258,7 +258,8 @@ export class OrderService {
           customers (
             id,
             name,
-            email
+            email,
+            contact_number
           )
         `)
         .order('created_at', { ascending: false })
@@ -280,7 +281,7 @@ export class OrderService {
         const customerIds = ordersData?.map(order => order.customer_id).filter(Boolean) || []
         const { data: customersData, error: customersFetchError } = await supabase
           .from('customers')
-          .select('id, name, email')
+          .select('id, name, email, contact_number')
           .in('id', customerIds)
 
         if (customersFetchError) {
@@ -300,7 +301,7 @@ export class OrderService {
       // Get recent customers
       const { data: recentCustomers, error: customersError } = await supabase
         .from('customers')
-        .select('id, name, email, created_at')
+        .select('id, name, email, contact_number, created_at')
         .order('created_at', { ascending: false })
         .limit(2)
 
@@ -343,7 +344,7 @@ export class OrderService {
       const customerIds = orders.map(order => order.customer_id).filter(Boolean);
       const { data: customers, error: customersError } = await supabase
         .from('customers')
-        .select('id, name, email')
+        .select('id, name, email, contact_number')
         .in('id', customerIds);
 
       if (customersError) {

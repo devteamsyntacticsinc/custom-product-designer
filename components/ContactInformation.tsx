@@ -28,8 +28,8 @@ interface ContactData {
   address: string;
 }
 
-export default function ContactInformation({ 
-  onBack, 
+export default function ContactInformation({
+  onBack,
   onSubmit,
   productType,
   brand,
@@ -62,96 +62,97 @@ export default function ContactInformation({
   };
 
   return (
-    <>
-      {/* Contact Form */}
-      <div className="w-80 bg-white shadow-lg p-6 overflow-y-auto flex flex-col min-h-full">
-        <h2 className="text-2xl font-bold text-gray-900 mb-6">
-          Contact Information
-        </h2>
+    <div className="flex flex-col flex-1 h-full">
+      <h2 className="hidden lg:block text-2xl font-bold text-gray-900 mb-6">
+        Contact Information
+      </h2>
 
-        <div className="flex-1 space-y-6">
-          {/* Full Name */}
-          <div>
-            <Label
-              htmlFor="full-name"
-              className="text-sm font-medium text-gray-700 mb-2 block"
-            >
-              Full Name
-            </Label>
-            <Input
-              id="full-name"
-              type="text"
-              value={contactData.fullName}
-              onChange={handleInputChange("fullName")}
-              placeholder="Enter your full name"
-              className="w-full"
-            />
-          </div>
+      <h2 className="lg:hidden text-xl font-bold text-gray-900 mb-6">
+        Contact Information
+      </h2>
 
-          {/* Email */}
-          <div>
-            <Label
-              htmlFor="email"
-              className="text-sm font-medium text-gray-700 mb-2 block"
-            >
-              Email
-            </Label>
-            <Input
-              id="email"
-              type="email"
-              value={contactData.email}
-              onChange={handleInputChange("email")}
-              placeholder="Enter your email"
-              className="w-full"
-            />
-          </div>
-
-          {/* Contact Number */}
-          <div>
-            <Label
-              htmlFor="contact-number"
-              className="text-sm font-medium text-gray-700 mb-2 block"
-            >
-              Contact Number
-            </Label>
-            <Input
-              id="contact-number"
-              type="tel"
-              value={contactData.contactNumber}
-              onChange={handleInputChange("contactNumber")}
-              placeholder="Enter your contact number"
-              className="w-full"
-            />
-          </div>
-
-          {/* Address */}
-          <div>
-            <Label
-              htmlFor="address"
-              className="text-sm font-medium text-gray-700 mb-2 block"
-            >
-              Address
-            </Label>
-            <Input
-              id="address"
-              type="text"
-              value={contactData.address}
-              onChange={handleInputChange("address")}
-              placeholder="Enter your address"
-              className="w-full"
-            />
-          </div>
+      <div className="flex-1 space-y-6">
+        {/* Full Name */}
+        <div>
+          <Label
+            htmlFor="full-name"
+            className="text-sm font-medium text-gray-700 mb-2 block"
+          >
+            Full Name
+          </Label>
+          <Input
+            id="full-name"
+            type="text"
+            value={contactData.fullName}
+            onChange={handleInputChange("fullName")}
+            placeholder="Enter your full name"
+            className="w-full"
+          />
         </div>
 
-        {/* Action Buttons */}
-        <div className="flex gap-3 mt-auto pt-6">
-          <Button variant="outline" className="flex-1" onClick={onBack}>
-            Back
-          </Button>
-          <Button className="flex-1 bg-gray-800 hover:bg-gray-900" onClick={handleSubmit}>
-            Submit
-          </Button>
+        {/* Email */}
+        <div>
+          <Label
+            htmlFor="email"
+            className="text-sm font-medium text-gray-700 mb-2 block"
+          >
+            Email
+          </Label>
+          <Input
+            id="email"
+            type="email"
+            value={contactData.email}
+            onChange={handleInputChange("email")}
+            placeholder="Enter your email"
+            className="w-full"
+          />
         </div>
+
+        {/* Contact Number */}
+        <div>
+          <Label
+            htmlFor="contact-number"
+            className="text-sm font-medium text-gray-700 mb-2 block"
+          >
+            Contact Number
+          </Label>
+          <Input
+            id="contact-number"
+            type="tel"
+            value={contactData.contactNumber}
+            onChange={handleInputChange("contactNumber")}
+            placeholder="Enter your contact number"
+            className="w-full"
+          />
+        </div>
+
+        {/* Address */}
+        <div>
+          <Label
+            htmlFor="address"
+            className="text-sm font-medium text-gray-700 mb-2 block"
+          >
+            Address
+          </Label>
+          <Input
+            id="address"
+            type="text"
+            value={contactData.address}
+            onChange={handleInputChange("address")}
+            placeholder="Enter your address"
+            className="w-full"
+          />
+        </div>
+      </div>
+
+      {/* Action Buttons */}
+      <div className="flex gap-3 mt-auto pt-6 bg-white border-t lg:border-none">
+        <Button variant="outline" className="flex-1" onClick={onBack}>
+          Back
+        </Button>
+        <Button className="flex-1 bg-gray-800 hover:bg-gray-900" onClick={handleSubmit}>
+          Submit
+        </Button>
       </div>
 
       {/* Order Summary Dialog */}
@@ -167,6 +168,6 @@ export default function ContactInformation({
         assets={assets}
         contactInformation={contactData}
       />
-    </>
+    </div>
   );
 }

@@ -1,6 +1,7 @@
 "use client";
 
 import React from "react";
+import { createPortal } from "react-dom";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { X } from "lucide-react";
@@ -11,7 +12,7 @@ interface OrderSummaryDialogProps {
   isOpen: boolean;
   onClose: () => void;
   onBack: () => void;
-  onSubmit: () => Promise<void>; // Changed to async
+  onSubmit: () => Promise<void>;
   productType: string;
   brand: string;
   color: string;
@@ -38,11 +39,13 @@ export default function OrderSummaryDialog({
   contactInformation,
 }: OrderSummaryDialogProps) {
   const [isLoading, setIsLoading] = React.useState(false);
+  const [mounted, setMounted] = React.useState(false);
   const { addToast } = useToast();
 
   const [sizes, setSizes] = React.useState<Size[]>([]);
 
   React.useEffect(() => {
+    setMounted(true);
     const fetchSizes = async () => {
       try {
         const response = await fetch("/api/sizes");
@@ -65,7 +68,6 @@ export default function OrderSummaryDialog({
     try {
       await onSubmit();
       addToast("success", "Order submitted successfully!");
-      // Don't close dialog here - let parent handle it
     } catch (error) {
       addToast("error", "Failed to submit order. Please try again.");
       console.error("Error submitting order:", error);
@@ -74,13 +76,12 @@ export default function OrderSummaryDialog({
     }
   };
 
-  if (!isOpen) return null;
+  if (!isOpen || !mounted) return null;
 
   const getAssetList = () => {
     return Object.entries(assets)
       .filter(([, file]) => file !== null)
       .map(([key, file]) => {
-        // Map to readable placement names
         const placementMap: Record<string, string> = {
           "front-top-left": "Front - Top Left",
           "front-center": "Front - Center",
@@ -100,9 +101,9 @@ export default function OrderSummaryDialog({
     return sizeSelection.reduce((total, item) => total + item.quantity, 0);
   };
 
-  return (
-    <div className="fixed inset-0 bg-[rgba(0,0,0,0.3)] flex items-center justify-center z-50">
-      <div className="bg-white rounded-lg shadow-xl max-w-2xl w-full mx-4 max-h-[90vh] overflow-y-auto">
+  return createPortal(
+    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-100 p-4">
+      <div className="bg-white rounded-lg shadow-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
         {/* Header */}
         <div className="flex items-center justify-between p-6 border-b">
           <h2 className="text-xl font-semibold">Order Summary</h2>
@@ -252,6 +253,7 @@ export default function OrderSummaryDialog({
           </Button>
         </div>
       </div>
-    </div>
+    </div>,
+    document.body
   );
 }
