@@ -136,7 +136,7 @@ export default function ColorsTab() {
     <Card className="overflow-hidden">
       <CardHeader className="flex flex-col sm:flex-row items-start sm:items-center justify-between space-y-4 sm:space-y-0 py-4 sm:py-6">
         <div>
-          <CardTitle className="text-xl sm:text-2xl">Colors</CardTitle>
+          <CardTitle className="text-lg sm:text-2xl">Colors</CardTitle>
           <CardDescription className="text-xs sm:text-sm">
             Manage product colors available in your store
           </CardDescription>
@@ -146,8 +146,8 @@ export default function ColorsTab() {
           isLoading={isMutating}
           onSubmit={handleSubmitColor}
         >
-          <Button size="sm" className="w-full sm:w-auto">
-            <Plus className="h-4 w-4 mr-2" />
+          <Button size="sm" className="w-full sm:w-auto h-8 lg:h-10 text-xs lg:text-sm">
+            <Plus className="h-4 w-4 mr-2 lg:h-5 lg:w-5" />
             Add Color
           </Button>
         </ColorSheet>
@@ -156,7 +156,7 @@ export default function ColorsTab() {
         <div className="overflow-x-auto">
           <Table>
             <TableHeader>
-              <TableRow>
+              <TableRow className="text-xs lg:text-sm">
                 <TableHead className="w-[60px]">ID</TableHead>
                 <TableHead>Value</TableHead>
                 <TableHead>Status</TableHead>
@@ -186,7 +186,7 @@ export default function ColorsTab() {
                 ))
               ) : error ? (
                 <TableRow>
-                  <TableCell colSpan={4} className="text-sm text-red-600 p-4">
+                  <TableCell colSpan={4} className="text-xs lg:text-sm text-red-600 p-4">
                     {error}
                   </TableCell>
                 </TableRow>
@@ -199,8 +199,8 @@ export default function ColorsTab() {
               ) : (
                 colors.map((color) => (
                   <TableRow key={color.id}>
-                    <TableCell className="text-xs text-gray-500">#{color.id}</TableCell>
-                    <TableCell className="font-medium text-sm">{color.value}</TableCell>
+                    <TableCell className="text-xs lg:text-sm text-gray-500">#{color.id}</TableCell>
+                    <TableCell className="font-medium text-xs lg:text-sm">{color.value}</TableCell>
                     <TableCell>
                       <Badge variant={color.is_Active ? "default" : "secondary"} className="text-[10px] px-2 py-0">
                         {color.is_Active ? "Active" : "Inactive"}
@@ -290,8 +290,8 @@ function ColorSheet({
     <Sheet open={open} onOpenChange={handleOpenChange}>
       <SheetTrigger asChild>{children}</SheetTrigger>
 
-      <SheetContent>
-        <SheetHeader>
+      <SheetContent className="w-full sm:max-w-md">
+        <SheetHeader className="text-xs lg:text-sm">
           <SheetTitle>{isEdit ? "Edit Color" : "Add New Color"}</SheetTitle>
           <SheetDescription>
             {isEdit
@@ -302,23 +302,24 @@ function ColorSheet({
 
         <div className="py-6 space-y-4">
           <div className="space-y-2">
-            <Label htmlFor="color-name">Color Name</Label>
+            <Label htmlFor="color-name" className="text-xs lg:text-sm">Color Name</Label>
             <Input
               id="color-name"
               value={name}
               onChange={(e) => setName(e.target.value)}
               placeholder="Enter color name"
+              className="text-xs lg:text-sm h-8 lg:h-10"
             />
           </div>
 
           <div className="flex items-center space-x-2">
-            <Switch checked={active} onCheckedChange={setActive} />
-            <Label>{active ? "Active" : "Inactive"}</Label>
+            <Switch checked={active} onCheckedChange={setActive} className="text-xs lg:text-sm" />
+            <Label className="text-xs lg:text-sm">{active ? "Active" : "Inactive"}</Label>
           </div>
         </div>
 
         <SheetFooter>
-          <Button onClick={handleSubmit} disabled={isLoading}>
+          <Button onClick={handleSubmit} disabled={isLoading} className="text-xs lg:text-sm h-8 lg:h-10">
             {isLoading
               ? isEdit
                 ? "Updating..."

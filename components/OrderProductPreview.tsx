@@ -80,11 +80,11 @@ export default function OrderProductPreview({ order }: OrderProductPreviewProps)
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 p-4 bg-white border border-gray-100 rounded-xl shadow-sm">
         <div className="flex items-center gap-4 text-sm text-gray-600">
           <div className="flex flex-col">
-            <span className="font-semibold text-gray-900 text-base">{brandName}</span>
-            <span className="text-xs text-gray-500">{productTypeName}</span>
+            <span className="font-semibold text-gray-900 text-sm lg:text-lg">{brandName}</span>
+            <span className="text-xs lg:text-base text-gray-500">{productTypeName}</span>
           </div>
           <div className="h-8 w-px bg-gray-200 hidden sm:block" />
-          <p className="text-xs text-gray-400 max-w-[200px]">
+          <p className="text-xs lg:text-base text-gray-400 max-w-[200px]">
             Tip: Click specific design areas on the mockup to download individual files.
           </p>
         </div>

@@ -141,36 +141,34 @@ export default function ProductsPage() {
       </header>
 
       <div
-        className={`flex-1 transition-all duration-300 ${isCollapsed ? "lg:ml-16" : "lg:ml-64"} lg:pt-0 pt-16`}
+        className={`flex-1 w-full overflow-x-hidden min-w-0 transition-all duration-300 ${isCollapsed ? "lg:ml-16" : "lg:ml-64"} lg:pt-0 pt-16`}
       >
         <div className="p-4 sm:p-6 lg:p-8">
           {/* Header */}
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6 sm:mb-8">
+          <div className="flex flex-row items-center justify-between gap-4 mb-6 sm:mb-8">
             <div>
-              <div className="flex items-center justify-between">
-                <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">Products</h1>
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  onClick={handleRefresh}
-                  disabled={refreshing}
-                  className="rounded-full h-8 w-8 text-gray-400 hover:bg-gray-200 hover:text-gray-900 transition-colors"
-                >
-                  <RefreshCw
-                    className={`h-4 w-4 ${refreshing ? "animate-spin" : ""}`}
-                  />
-                  <span className="sr-only">Refresh</span>
-                </Button>
-              </div>
-              <p className="text-sm sm:text-base text-gray-600 mt-1 sm:mt-2">
+              <h1 className="text-xl sm:text-3xl font-bold text-gray-900">Products</h1>
+              <p className="text-xs lg:text-base text-gray-600 mt-1 sm:mt-2">
                 Manage product types, brands, and colors
               </p>
             </div>
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={handleRefresh}
+              disabled={refreshing}
+              className="rounded-full h-8 w-8 sm:h-10 sm:w-10 text-gray-400 hover:bg-gray-200 hover:text-gray-900 transition-colors shrink-0"
+            >
+              <RefreshCw
+                className={`h-4 w-4 sm:h-5 sm:w-5 ${refreshing ? "animate-spin" : ""}`}
+              />
+              <span className="sr-only">Refresh</span>
+            </Button>
           </div>
 
           {/* Tabs */}
           <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
-            <TabsList className="w-full flex h-11 p-1 bg-gray-100 rounded-lg lg:grid lg:grid-cols-4 lg:h-10">
+            <TabsList className="w-full flex h-9 p-1 bg-gray-100 rounded-lg lg:grid lg:grid-cols-4 lg:h-10">
               {/* First 3 tabs: Always visible */}
               <TabsTrigger
                 value="product-types"

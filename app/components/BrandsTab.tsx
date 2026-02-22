@@ -137,7 +137,7 @@ export default function BrandsTab() {
     <Card className="overflow-hidden">
       <CardHeader className="flex flex-col sm:flex-row items-start sm:items-center justify-between space-y-4 sm:space-y-0 py-4 sm:py-6">
         <div>
-          <CardTitle className="text-xl sm:text-2xl">Brands</CardTitle>
+          <CardTitle className="text-lg lg:text-2xl">Brands</CardTitle>
           <CardDescription className="text-xs sm:text-sm">
             Manage product brands available in your store
           </CardDescription>
@@ -147,7 +147,7 @@ export default function BrandsTab() {
           isLoading={isMutating}
           onSubmit={handleSubmitBrand}
         >
-          <Button size="sm" className="w-full sm:w-auto">
+          <Button size="sm" className="w-full sm:w-auto text-xs sm:text-sm h-8 sm:h-10">
             <Plus className="h-4 w-4 mr-2" />
             Add Brand
           </Button>
@@ -157,7 +157,7 @@ export default function BrandsTab() {
         <div className="overflow-x-auto">
           <Table>
             <TableHeader>
-              <TableRow>
+              <TableRow className="text-xs sm:text-sm">
                 <TableHead className="w-[60px]">ID</TableHead>
                 <TableHead>Name</TableHead>
                 <TableHead>Status</TableHead>
@@ -200,8 +200,8 @@ export default function BrandsTab() {
               ) : (
                 brands.map((brand) => (
                   <TableRow key={brand.id}>
-                    <TableCell className="text-xs text-gray-500">#{brand.id}</TableCell>
-                    <TableCell className="font-medium text-sm">{brand.name}</TableCell>
+                    <TableCell className="text-xs lg:text-sm text-gray-500">#{brand.id}</TableCell>
+                    <TableCell className="font-medium text-xs lg:text-sm">{brand.name}</TableCell>
                     <TableCell>
                       <Badge variant={brand.is_Active ? "default" : "secondary"} className="text-[10px] px-2 py-0">
                         {brand.is_Active ? "Active" : "Inactive"}
@@ -291,10 +291,10 @@ function BrandSheet({
     <Sheet open={open} onOpenChange={handleOpenChange}>
       <SheetTrigger asChild>{children}</SheetTrigger>
 
-      <SheetContent>
+      <SheetContent className="w-full sm:max-w-md">
         <SheetHeader>
-          <SheetTitle>{isEdit ? "Edit Brand" : "Add New Brand"}</SheetTitle>
-          <SheetDescription>
+          <SheetTitle className="text-lg lg:text-xl">{isEdit ? "Edit Brand" : "Add New Brand"}</SheetTitle>
+          <SheetDescription className="text-xs lg:text-sm">
             {isEdit
               ? "Update the selected brand."
               : "Add a new brand to the system."}
@@ -303,23 +303,24 @@ function BrandSheet({
 
         <div className="py-6 space-y-4">
           <div className="space-y-2">
-            <Label htmlFor="brand-name">Brand Name</Label>
+            <Label htmlFor="brand-name" className="text-xs lg:text-sm">Brand Name</Label>
             <Input
               id="brand-name"
               value={name}
               onChange={(e) => setName(e.target.value)}
               placeholder="Enter brand name"
+              className="text-xs lg:text-sm h-8 lg:h-10"
             />
           </div>
 
           <div className="flex items-center space-x-2">
             <Switch checked={active} onCheckedChange={setActive} />
-            <Label>{active ? "Active" : "Inactive"}</Label>
+            <Label className="text-xs lg:text-sm">{active ? "Active" : "Inactive"}</Label>
           </div>
         </div>
 
         <SheetFooter>
-          <Button onClick={handleSubmit} disabled={isLoading}>
+          <Button onClick={handleSubmit} disabled={isLoading} className="text-xs lg:text-sm h-8 lg:h-10">
             {isLoading
               ? isEdit
                 ? "Updating..."

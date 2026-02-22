@@ -198,27 +198,26 @@ export default function OrdersPage() {
       <div className={`flex-1 transition-all duration-300 ${isCollapsed ? 'lg:ml-16' : 'lg:ml-64'} lg:pt-0 pt-16`}>
         {/* Orders Content */}
         <main className="p-4 sm:p-6 lg:p-8">
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6 sm:mb-8">
+          {/* Header */}
+          <div className="flex flex-row items-center justify-between gap-4 mb-6 sm:mb-8">
             <div>
-              <div className="flex items-center justify-between">
-                <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">Orders</h1>
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  onClick={handleRefresh}
-                  disabled={refreshing}
-                  className="rounded-full h-8 w-8 text-gray-400 hover:bg-gray-200 hover:text-gray-900 transition-colors"
-                >
-                  <RefreshCw
-                    className={`h-4 w-4 ${refreshing ? "animate-spin" : ""}`}
-                  />
-                  <span className="sr-only">Refresh</span>
-                </Button>
-              </div>
-              <p className="text-sm sm:text-base text-gray-600 mt-1 sm:mt-2">
+              <h1 className="text-xl sm:text-3xl font-bold text-gray-900">Orders</h1>
+              <p className="text-xs lg:text-base text-gray-600 mt-1 sm:mt-2">
                 Manage all customer orders
               </p>
             </div>
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={handleRefresh}
+              disabled={refreshing}
+              className="rounded-full h-8 w-8 sm:h-10 sm:w-10 text-gray-400 hover:bg-gray-200 hover:text-gray-900 transition-colors shrink-0"
+            >
+              <RefreshCw
+                className={`h-4 w-4 sm:h-5 sm:w-5 ${refreshing ? "animate-spin" : ""}`}
+              />
+              <span className="sr-only">Refresh</span>
+            </Button>
           </div>
 
           {/* Orders List */}
@@ -239,7 +238,7 @@ export default function OrdersPage() {
                     <div className="space-y-6">
                       {/* Product Preview */}
                       <div>
-                        <h3 className="text-base sm:text-lg font-semibold text-gray-900 mb-3 sm:mb-4">Product Design</h3>
+                        <h3 className="text-base lg:text-lg font-semibold text-gray-900 mb-3 sm:mb-4">Product Design</h3>
                         <OrderProductPreview order={order} />
                       </div>
 

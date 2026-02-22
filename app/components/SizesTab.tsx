@@ -133,8 +133,8 @@ export default function SizesTab({
     <Card className="overflow-hidden">
       <CardHeader className="flex flex-col sm:flex-row items-start sm:items-center justify-between space-y-4 sm:space-y-0 py-4 sm:py-6">
         <div>
-          <CardTitle className="text-xl sm:text-2xl">Sizes</CardTitle>
-          <CardDescription className="text-xs sm:text-sm">
+          <CardTitle className="text-lg lg:text-xl">Sizes</CardTitle>
+          <CardDescription className="text-xs lg:text-sm">
             Manage product sizes available in your store
           </CardDescription>
         </div>
@@ -143,7 +143,7 @@ export default function SizesTab({
           isLoading={isMutating}
           onSubmit={handleSubmitSize}
         >
-          <Button size="sm" className="w-full sm:w-auto">
+          <Button size="sm" className="w-full sm:w-auto text-xs lg:text-sm h-8 lg:h-10">
             <Plus className="h-4 w-4 mr-2" />
             Add Size
           </Button>
@@ -153,7 +153,7 @@ export default function SizesTab({
         <div className="overflow-x-auto">
           <Table>
             <TableHeader>
-              <TableRow>
+              <TableRow className="text-xs lg:text-sm">
                 <TableHead className="w-[60px]">ID</TableHead>
                 <TableHead>Value</TableHead>
                 <TableHead>Status</TableHead>
@@ -196,8 +196,8 @@ export default function SizesTab({
               ) : (
                 sizes.map((size) => (
                   <TableRow key={size.id}>
-                    <TableCell className="text-xs text-gray-500 py-3">#{size.id}</TableCell>
-                    <TableCell className="font-medium text-sm py-3">{size.value}</TableCell>
+                    <TableCell className="text-xs lg:text-sm text-gray-500 py-3">#{size.id}</TableCell>
+                    <TableCell className="font-medium text-xs lg:text-sm py-3">{size.value}</TableCell>
                     <TableCell className="py-3">
                       <Badge variant={size.is_Active ? "default" : "secondary"} className="text-[10px] px-2 py-0">
                         {size.is_Active ? "Active" : "Inactive"}
@@ -288,8 +288,8 @@ function SizeSheet({
     <Sheet open={open} onOpenChange={handleOpenChange}>
       <SheetTrigger asChild>{children}</SheetTrigger>
 
-      <SheetContent>
-        <SheetHeader>
+      <SheetContent className="w-full sm:max-w-md">
+        <SheetHeader className="text-xs lg:text-sm">
           <SheetTitle>{isEdit ? "Edit Size" : "Add New Size"}</SheetTitle>
           <SheetDescription>
             {isEdit
@@ -300,23 +300,24 @@ function SizeSheet({
 
         <div className="py-6 space-y-4">
           <div className="space-y-2">
-            <Label htmlFor="size-name">Size Name</Label>
+            <Label htmlFor="size-name" className="text-xs lg:text-sm">Size Name</Label>
             <Input
               id="size-name"
               value={name}
               onChange={(e) => setName(e.target.value)}
               placeholder="Enter size name"
+              className="text-xs lg:text-sm h-8 lg:h-10"
             />
           </div>
 
           <div className="flex items-center space-x-2">
-            <Switch checked={active} onCheckedChange={setActive} />
-            <Label>{active ? "Active" : "Inactive"}</Label>
+            <Switch checked={active} onCheckedChange={setActive} className="text-xs lg:text-sm" />
+            <Label className="text-xs lg:text-sm">{active ? "Active" : "Inactive"}</Label>
           </div>
         </div>
 
         <SheetFooter>
-          <Button onClick={handleSubmit} disabled={isLoading}>
+          <Button onClick={handleSubmit} disabled={isLoading} className="text-xs lg:text-sm h-8 lg:h-10">
             {isLoading
               ? isEdit
                 ? "Updating..."

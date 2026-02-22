@@ -137,7 +137,7 @@ export default function ProductTypesTab() {
     <Card className="overflow-hidden">
       <CardHeader className="flex flex-col sm:flex-row items-start sm:items-center justify-between space-y-4 sm:space-y-0 py-4 sm:py-6">
         <div>
-          <CardTitle className="text-xl sm:text-2xl">Product Types</CardTitle>
+          <CardTitle className="text-lg sm:text-2xl">Product Types</CardTitle>
           <CardDescription className="text-xs sm:text-sm">
             Manage different types of products available in your store
           </CardDescription>
@@ -147,67 +147,67 @@ export default function ProductTypesTab() {
           isLoading={isMutating}
           onSubmit={handleSubmitProductType}
         >
-          <Button size="sm" className="w-full sm:w-auto">
-            <Plus className="h-4 w-4 mr-2" />
+          <Button size="sm" className="w-full sm:w-auto text-xs sm:text-sm h-8 sm:h-10">
+            <Plus className="h-4 w-4 mr-2 text-xs sm:text-sm" />
             Add Product Type
           </Button>
         </ProductTypeSheet>
       </CardHeader>
       <CardContent className="p-0 sm:p-6">
-        <div className="overflow-x-auto">
+        <div className="overflow-x-auto p-2">
           <Table>
             <TableHeader>
-              <TableRow>
-                <TableHead className="w-[60px]">ID</TableHead>
-                <TableHead>Name</TableHead>
-                <TableHead>Status</TableHead>
-                <TableHead className="text-right">Actions</TableHead>
+              <TableRow className="h-10 sm:h-12">
+                <TableHead className="w-[50px] sm:w-[60px] px-2 sm:px-4 text-xs sm:text-sm">ID</TableHead>
+                <TableHead className="px-2 sm:px-4 text-xs sm:text-sm">Name</TableHead>
+                <TableHead className="px-2 sm:px-4 text-xs sm:text-sm">Status</TableHead>
+                <TableHead className="text-right px-2 sm:px-4 text-xs sm:text-sm">Actions</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
               {isFetchingProductTypes ? (
                 Array.from({ length: 5 }).map((_, index) => (
-                  <TableRow key={`product-types-loading-${index}`}>
-                    <TableCell>
-                      <Skeleton className="h-4 w-6" />
+                  <TableRow key={`product-types-loading-${index}`} className="h-10 sm:h-12">
+                    <TableCell className="px-2 sm:px-4">
+                      <Skeleton className="h-3 w-4 sm:h-4 sm:w-6" />
                     </TableCell>
-                    <TableCell>
-                      <Skeleton className="h-4 w-20" />
+                    <TableCell className="px-2 sm:px-4">
+                      <Skeleton className="h-3 w-16 sm:h-4 sm:w-20" />
                     </TableCell>
-                    <TableCell>
-                      <Skeleton className="h-6 w-16" />
+                    <TableCell className="px-2 sm:px-4">
+                      <Skeleton className="h-5 w-12 sm:h-6 sm:w-16" />
                     </TableCell>
-                    <TableCell className="text-right">
+                    <TableCell className="text-right px-2 sm:px-4">
                       <div className="flex items-center justify-end gap-1">
-                        <Skeleton className="h-8 w-8" />
-                        <Skeleton className="h-8 w-8" />
+                        <Skeleton className="h-7 w-7 sm:h-8 sm:w-8" />
+                        <Skeleton className="h-7 w-7 sm:h-8 sm:w-8" />
                       </div>
                     </TableCell>
                   </TableRow>
                 ))
               ) : error ? (
                 <TableRow>
-                  <TableCell colSpan={4} className="text-sm text-red-600 p-4">
+                  <TableCell colSpan={4} className="text-xs text-red-600 p-4">
                     {error}
                   </TableCell>
                 </TableRow>
               ) : productTypes.length === 0 ? (
                 <TableRow>
-                  <TableCell colSpan={4} className="text-center py-8 text-gray-500">
+                  <TableCell colSpan={4} className="text-center py-8 text-gray-400 text-xs sm:text-sm">
                     No product types found
                   </TableCell>
                 </TableRow>
               ) : (
                 productTypes.map((productType) => (
-                  <TableRow key={productType.id}>
-                    <TableCell className="text-xs text-gray-500">#{productType.id}</TableCell>
-                    <TableCell className="font-medium text-sm">{productType.name}</TableCell>
-                    <TableCell>
-                      <Badge variant={productType.is_Active ? "default" : "secondary"} className="text-[10px] px-2 py-0">
+                  <TableRow key={productType.id} className="h-10 sm:h-12">
+                    <TableCell className="text-xs sm:text-sm text-gray-500 px-2 sm:px-4">#{productType.id}</TableCell>
+                    <TableCell className="font-medium text-[11px] sm:text-sm px-2 sm:px-4">{productType.name}</TableCell>
+                    <TableCell className="px-2 sm:px-4">
+                      <Badge variant={productType.is_Active ? "default" : "secondary"} className="text-[9px] sm:text-[10px] px-1.5 sm:px-2 py-0">
                         {productType.is_Active ? "Active" : "Inactive"}
                       </Badge>
                     </TableCell>
-                    <TableCell className="text-right">
+                    <TableCell className="text-right px-2 sm:px-4">
                       <div className="flex items-center justify-end gap-1">
                         <ProductTypeSheet
                           mode="edit"
@@ -215,8 +215,8 @@ export default function ProductTypesTab() {
                           initialData={productType}
                           onSubmit={handleSubmitProductType}
                         >
-                          <Button variant="ghost" size="icon" className="h-8 w-8" disabled={isMutating}>
-                            <Edit className="h-3.5 w-3.5" />
+                          <Button variant="ghost" size="icon" className="h-7 w-7 sm:h-8 sm:w-8" disabled={isMutating}>
+                            <Edit className="h-3 w-3 sm:h-3.5 sm:w-3.5" />
                           </Button>
                         </ProductTypeSheet>
                         <DeleteDialog
@@ -225,8 +225,8 @@ export default function ProductTypesTab() {
                           productType={productType}
                           fetchProductTypes={fetchProductTypes}
                         >
-                          <Button variant="ghost" size="icon" className="h-8 w-8 text-destructive" disabled={isMutating}>
-                            <Trash2 className="h-3.5 w-3.5" />
+                          <Button variant="ghost" size="icon" className="h-7 w-7 sm:h-8 sm:w-8 text-destructive" disabled={isMutating}>
+                            <Trash2 className="h-3 w-3 sm:h-3.5 sm:w-3.5" />
                           </Button>
                         </DeleteDialog>
                       </div>
@@ -291,10 +291,10 @@ function ProductTypeSheet({
     <Sheet open={open} onOpenChange={handleOpenChange}>
       <SheetTrigger asChild>{children}</SheetTrigger>
 
-      <SheetContent>
+      <SheetContent className="w-full sm:max-w-md">
         <SheetHeader>
-          <SheetTitle>{isEdit ? "Edit Product Type" : "Add New Product Type"}</SheetTitle>
-          <SheetDescription>
+          <SheetTitle className="text-lg sm:text-xl">{isEdit ? "Edit Product Type" : "Add New Product Type"}</SheetTitle>
+          <SheetDescription className="text-xs sm:text-sm">
             {isEdit
               ? "Update the selected product type."
               : "Add a new product type to the system."}
@@ -303,23 +303,24 @@ function ProductTypeSheet({
 
         <div className="py-6 space-y-4">
           <div className="space-y-2">
-            <Label htmlFor="product-type-name">Product Type Name</Label>
+            <Label htmlFor="product-type-name" className="text-sm">Product Type Name</Label>
             <Input
               id="product-type-name"
               value={name}
               onChange={(e) => setName(e.target.value)}
               placeholder="Enter product type name"
+              className="text-sm"
             />
           </div>
 
           <div className="flex items-center space-x-2">
-            <Switch checked={active} onCheckedChange={setActive} />
-            <Label>{active ? "Active" : "Inactive"}</Label>
+            <Switch checked={active} onCheckedChange={setActive} id="product-type-active" />
+            <Label htmlFor="product-type-active" className="text-sm">{active ? "Active" : "Inactive"}</Label>
           </div>
         </div>
 
-        <SheetFooter>
-          <Button onClick={handleSubmit} disabled={isLoading}>
+        <SheetFooter className="mt-6 sm:mt-0">
+          <Button onClick={handleSubmit} disabled={isLoading} className="w-full sm:w-auto">
             {isLoading
               ? isEdit
                 ? "Updating..."

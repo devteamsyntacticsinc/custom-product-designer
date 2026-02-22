@@ -188,8 +188,8 @@ export default function AdminDashboard() {
         <main className="p-6">
           <div className="mb-8 flex items-center justify-between">
             <div>
-              <h1 className="text-3xl font-bold text-gray-900">Dashboard</h1>
-              <p className="text-gray-600">Welcome back, {user.name}!</p>
+              <h1 className="text-xl lg:text-2xl font-bold text-gray-900">Dashboard</h1>
+              <p className="text-gray-600 text-sm lg:text-base">Welcome back, {user.name}!</p>
             </div>
             <Button
               variant="outline"
@@ -199,15 +199,14 @@ export default function AdminDashboard() {
               className="flex items-center gap-2"
             >
               <RefreshCw className={`h-4 w-4 ${refreshing ? 'animate-spin' : ''}`} />
-              Refresh
             </Button>
           </div>
 
           {/* Stats Cards */}
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
+          <div className="grid grid-cols-2 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
             <Card className="p-6">
               <div className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium">Total Orders</CardTitle>
+                <CardTitle className="text-sm lg:text-base font-medium">Total Orders</CardTitle>
                 <ShoppingBag className="h-4 w-4 text-muted-foreground" />
               </div>
               <div>
@@ -218,7 +217,7 @@ export default function AdminDashboard() {
 
             <Card className="p-6">
               <div className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium">Total Users</CardTitle>
+                <CardTitle className="text-sm lg:text-base font-medium">Total Users</CardTitle>
                 <Users className="h-4 w-4 text-muted-foreground" />
               </div>
               <div>
@@ -229,7 +228,7 @@ export default function AdminDashboard() {
 
             <Card className="p-6">
               <div className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium">Active Products</CardTitle>
+                <CardTitle className="text-sm lg:text-base font-medium">Active Products</CardTitle>
                 <ShoppingBag className="h-4 w-4 text-muted-foreground" />
               </div>
               <div>
@@ -242,8 +241,8 @@ export default function AdminDashboard() {
           {/* Recent Activity */}
           <Card className="p-6">
             <div>
-              <CardTitle className="mb-2">Recent Activity</CardTitle>
-              <CardDescription className="mb-4">Latest actions in the system</CardDescription>
+              <CardTitle className="mb-2 text-sm lg:text-base">Recent Activity</CardTitle>
+              <CardDescription className="mb-4 text-xs lg:text-sm">Latest actions in the system</CardDescription>
             </div>
             <div className="space-y-4">
               {dashboardData?.recentActivity.map((activity) => {
@@ -275,10 +274,10 @@ export default function AdminDashboard() {
                   <div key={activity.id} className="flex items-center space-x-4">
                     <div className={`w-2 h-2 ${getActivityColor(activity.type)} rounded-full`}></div>
                     <div className="flex-1">
-                      <p className="text-sm font-medium">{activity.title}</p>
-                      <p className="text-xs text-gray-500">{activity.description}</p>
+                      <p className="text-sm lg:text-base font-medium">{activity.title}</p>
+                      <p className="text-xs lg:text-sm text-gray-500">{activity.description}</p>
                     </div>
-                    <span className="text-xs text-gray-500">{getTimeAgo(activity.timestamp)}</span>
+                    <span className="text-xs lg:text-sm text-gray-500">{getTimeAgo(activity.timestamp)}</span>
                   </div>
                 )
               }) || (
