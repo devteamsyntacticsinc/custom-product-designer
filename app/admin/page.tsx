@@ -5,9 +5,9 @@ import { useRouter } from 'next/navigation'
 import { Button } from '@/components/ui/button'
 import { Card, CardDescription, CardTitle } from '@/components/ui/card'
 import { User } from '@/types/login'
-import { 
+import {
   Menu,
-  Users, 
+  Users,
   ShoppingBag,
   RefreshCw
 } from 'lucide-react'
@@ -110,7 +110,7 @@ export default function AdminDashboard() {
     document.cookie = 'user_name=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;'
     document.cookie = 'user_email=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;'
     document.cookie = 'user_role=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;'
-    
+
     router.push('/login')
   }
 
@@ -120,11 +120,11 @@ export default function AdminDashboard() {
         <AdminSidebar
           user={null}
           sidebarOpen={false}
-          setSidebarOpen={() => {}}
-          onLogout={() => {}}
-          onNavigate={() => {}}
+          setSidebarOpen={() => { }}
+          onLogout={() => { }}
+          onNavigate={() => { }}
           isCollapsed={false}
-          onToggleCollapse={() => {}}
+          onToggleCollapse={() => { }}
           currentPath="/admin"
         />
         <div className="flex-1 lg:ml-64">
@@ -166,30 +166,30 @@ export default function AdminDashboard() {
         onToggleCollapse={() => setIsCollapsed(!isCollapsed)}
         currentPath={currentPath}
       />
-      
+
       {/* Mobile Header */}
-      <header className="bg-white shadow-sm border-b lg:hidden fixed top-0 left-0 right-0 z-40">
-        <div className="flex items-center justify-between h-16 px-4">
+      <header className="bg-white shadow-sm border-b lg:hidden fixed top-0 left-0 right-0 z-40 px-4">
+        <div className="relative flex items-center justify-center h-16">
           <Button
             variant="ghost"
             size="sm"
             onClick={() => setSidebarOpen(true)}
+            className="absolute left-0"
           >
             <Menu className="h-4 w-4" />
           </Button>
-          <h1 className="text-lg font-semibold">Dashboard</h1>
-          <div></div>
+          <h1 className="text-lg font-bold tracking-tight text-gray-900">Print Pro</h1>
         </div>
       </header>
 
       {/* Main Content */}
-      <div className={`flex-1 transition-all duration-300 ${isCollapsed ? 'lg:ml-16' : 'lg:ml-64'} lg:pt-0 pt-16`}>        
+      <div className={`flex-1 transition-all duration-300 ${isCollapsed ? 'lg:ml-16' : 'lg:ml-64'} lg:pt-0 pt-16`}>
         {/* Dashboard Content */}
         <main className="p-6">
           <div className="mb-8 flex items-center justify-between">
             <div>
-              <h1 className="text-3xl font-bold text-gray-900">Dashboard</h1>
-              <p className="text-gray-600">Welcome back, {user.name}!</p>
+              <h1 className="text-xl lg:text-2xl font-bold text-gray-900">Dashboard</h1>
+              <p className="text-gray-600 text-sm lg:text-base">Welcome back, {user.name}!</p>
             </div>
             <Button
               variant="outline"
@@ -199,15 +199,14 @@ export default function AdminDashboard() {
               className="flex items-center gap-2"
             >
               <RefreshCw className={`h-4 w-4 ${refreshing ? 'animate-spin' : ''}`} />
-              Refresh
             </Button>
           </div>
 
           {/* Stats Cards */}
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
+          <div className="grid grid-cols-2 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
             <Card className="p-6">
               <div className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium">Total Orders</CardTitle>
+                <CardTitle className="text-sm lg:text-base font-medium">Total Orders</CardTitle>
                 <ShoppingBag className="h-4 w-4 text-muted-foreground" />
               </div>
               <div>
@@ -218,7 +217,7 @@ export default function AdminDashboard() {
 
             <Card className="p-6">
               <div className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium">Total Users</CardTitle>
+                <CardTitle className="text-sm lg:text-base font-medium">Total Users</CardTitle>
                 <Users className="h-4 w-4 text-muted-foreground" />
               </div>
               <div>
@@ -229,7 +228,7 @@ export default function AdminDashboard() {
 
             <Card className="p-6">
               <div className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium">Active Products</CardTitle>
+                <CardTitle className="text-sm lg:text-base font-medium">Active Products</CardTitle>
                 <ShoppingBag className="h-4 w-4 text-muted-foreground" />
               </div>
               <div>
@@ -242,8 +241,8 @@ export default function AdminDashboard() {
           {/* Recent Activity */}
           <Card className="p-6">
             <div>
-              <CardTitle className="mb-2">Recent Activity</CardTitle>
-              <CardDescription className="mb-4">Latest actions in the system</CardDescription>
+              <CardTitle className="mb-2 text-sm lg:text-base">Recent Activity</CardTitle>
+              <CardDescription className="mb-4 text-xs lg:text-sm">Latest actions in the system</CardDescription>
             </div>
             <div className="space-y-4">
               {dashboardData?.recentActivity.map((activity) => {
@@ -255,13 +254,13 @@ export default function AdminDashboard() {
                     default: return 'bg-gray-500'
                   }
                 }
-                
+
                 const getTimeAgo = (timestamp: string) => {
                   const now = new Date()
                   const activityTime = new Date(timestamp)
                   const diffMs = now.getTime() - activityTime.getTime()
                   const diffMins = Math.floor(diffMs / 60000)
-                  
+
                   if (diffMins < 60) {
                     return `${diffMins} min ago`
                   } else if (diffMins < 1440) {
@@ -270,34 +269,27 @@ export default function AdminDashboard() {
                     return `${Math.floor(diffMins / 1440)} day${Math.floor(diffMins / 1440) > 1 ? 's' : ''} ago`
                   }
                 }
-                
+
                 return (
                   <div key={activity.id} className="flex items-center space-x-4">
                     <div className={`w-2 h-2 ${getActivityColor(activity.type)} rounded-full`}></div>
                     <div className="flex-1">
-                      <p className="text-sm font-medium">{activity.title}</p>
-                      <p className="text-xs text-gray-500">{activity.description}</p>
+                      <p className="text-sm lg:text-base font-medium">{activity.title}</p>
+                      <p className="text-xs lg:text-sm text-gray-500">{activity.description}</p>
                     </div>
-                    <span className="text-xs text-gray-500">{getTimeAgo(activity.timestamp)}</span>
+                    <span className="text-xs lg:text-sm text-gray-500">{getTimeAgo(activity.timestamp)}</span>
                   </div>
                 )
               }) || (
-                <div className="text-center text-gray-500 py-4">
-                  No recent activity
-                </div>
-              )}
+                  <div className="text-center text-gray-500 py-4">
+                    No recent activity
+                  </div>
+                )}
             </div>
           </Card>
         </main>
       </div>
 
-      {/* Mobile sidebar overlay */}
-      {sidebarOpen && (
-        <div
-          className="fixed inset-0 bg-[rgba(0,0,0,0.3)] z-40 lg:hidden"
-          onClick={() => setSidebarOpen(false)}
-        ></div>
-      )}
     </div>
   )
 }

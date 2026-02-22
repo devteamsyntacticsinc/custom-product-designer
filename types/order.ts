@@ -5,10 +5,12 @@ export interface OrderWithCustomer {
     id: string;
     name: string;
     email: string;
+    contact_number: string;
   } | {
     id: string;
     name: string;
     email: string;
+    contact_number: string;
   }[] | null;
   brand_type?: {
     id: string;
