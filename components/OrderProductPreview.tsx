@@ -14,6 +14,40 @@ interface OrderProductPreviewProps {
   order: OrderWithCustomer;
 }
 
+interface DesignAreaProps {
+  placement: string;
+  label: string;
+  customClass: string;
+  imageUrl?: string;
+  onDownload: (url: string, filename: string) => void;
+  orderId: string;
+}
+
+const DesignArea = ({ placement, label, customClass, imageUrl, onDownload, orderId }: DesignAreaProps) => {
+  return (
+    <div
+      className={`absolute ${customClass} border-2 border-dashed border-gray-400 rounded flex items-center justify-center transform -translate-x-1/2 -translate-y-1/2 overflow-hidden bg-white/50 z-10 transition-all duration-200 ${imageUrl ? 'cursor-pointer hover:border-primary hover:bg-white group' : ''}`}
+      onClick={() => imageUrl && onDownload(imageUrl, `${orderId}_${placement.replace(/\s+/g, '_')}.png`)}
+      title={imageUrl ? `Click to download ${label}` : ''}
+    >
+      {imageUrl ? (
+        <>
+          <ExternalImage
+            src={imageUrl}
+            alt={label}
+            className="w-full h-full object-contain"
+          />
+          <div className="absolute inset-0 bg-black/20 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity">
+            <Download className="text-white w-4 h-4" />
+          </div>
+        </>
+      ) : (
+        <span className="text-gray-400 text-[8px] sm:text-xs md:text-sm text-center px-1">{label}</span>
+      )}
+    </div>
+  );
+};
+
 export default function OrderProductPreview({ order }: OrderProductPreviewProps) {
   const productImages = order.product_images || [];
 
@@ -45,33 +79,6 @@ export default function OrderProductPreview({ order }: OrderProductPreviewProps)
       // Fallback: open in new tab
       window.open(url, '_blank');
     }
-  };
-
-  const DesignArea = ({ placement, label, customClass }: { placement: string; label: string; customClass: string }) => {
-    const imageUrl = imagesByPlacement[placement];
-
-    return (
-      <div
-        className={`absolute ${customClass} border-2 border-dashed border-gray-400 rounded flex items-center justify-center transform -translate-x-1/2 -translate-y-1/2 overflow-hidden bg-white/50 z-10 transition-all duration-200 ${imageUrl ? 'cursor-pointer hover:border-primary hover:bg-white group' : ''}`}
-        onClick={() => imageUrl && handleDownload(imageUrl, `${order.id}_${placement.replace(/\s+/g, '_')}.png`)}
-        title={imageUrl ? `Click to download ${label}` : ''}
-      >
-        {imageUrl ? (
-          <>
-            <ExternalImage
-              src={imageUrl}
-              alt={label}
-              className="w-full h-full object-contain"
-            />
-            <div className="absolute inset-0 bg-black/20 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity">
-              <Download className="text-white w-4 h-4" />
-            </div>
-          </>
-        ) : (
-          <span className="text-gray-400 text-[8px] sm:text-xs md:text-sm text-center px-1">{label}</span>
-        )}
-      </div>
-    );
   };
 
   return (
@@ -125,12 +132,18 @@ export default function OrderProductPreview({ order }: OrderProductPreviewProps)
             placement="Front - Top Left"
             label="Front Top Left"
             customClass="top-[30%] left-[63%] w-[10%] h-[10%]"
+            imageUrl={imagesByPlacement["Front - Top Left"]}
+            onDownload={handleDownload}
+            orderId={order.id}
           />
 
           <DesignArea
             placement="Front - Center"
             label="Front Center"
             customClass="top-[62%] left-[50%] w-[30%] h-[35%]"
+            imageUrl={imagesByPlacement["Front - Center"]}
+            onDownload={handleDownload}
+            orderId={order.id}
           />
         </div>
 
@@ -147,12 +160,18 @@ export default function OrderProductPreview({ order }: OrderProductPreviewProps)
             placement="Back - Top"
             label="Back Top"
             customClass="top-[35%] left-[50%] w-[10%] h-[10%]"
+            imageUrl={imagesByPlacement["Back - Top"]}
+            onDownload={handleDownload}
+            orderId={order.id}
           />
 
           <DesignArea
             placement="Back - Bottom"
             label="Back Bottom"
             customClass="top-[80%] left-[50%] w-[38%] h-[8%]"
+            imageUrl={imagesByPlacement["Back - Bottom"]}
+            onDownload={handleDownload}
+            orderId={order.id}
           />
         </div>
       </div>
