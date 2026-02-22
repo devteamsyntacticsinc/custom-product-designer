@@ -5,9 +5,9 @@ import { useRouter } from 'next/navigation'
 import { Button } from '@/components/ui/button'
 import { Card, CardDescription, CardTitle } from '@/components/ui/card'
 import { User } from '@/types/login'
-import { 
+import {
   Menu,
-  Users, 
+  Users,
   ShoppingBag,
   RefreshCw
 } from 'lucide-react'
@@ -110,7 +110,7 @@ export default function AdminDashboard() {
     document.cookie = 'user_name=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;'
     document.cookie = 'user_email=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;'
     document.cookie = 'user_role=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;'
-    
+
     router.push('/login')
   }
 
@@ -120,11 +120,11 @@ export default function AdminDashboard() {
         <AdminSidebar
           user={null}
           sidebarOpen={false}
-          setSidebarOpen={() => {}}
-          onLogout={() => {}}
-          onNavigate={() => {}}
+          setSidebarOpen={() => { }}
+          onLogout={() => { }}
+          onNavigate={() => { }}
           isCollapsed={false}
-          onToggleCollapse={() => {}}
+          onToggleCollapse={() => { }}
           currentPath="/admin"
         />
         <div className="flex-1 lg:ml-64">
@@ -166,24 +166,24 @@ export default function AdminDashboard() {
         onToggleCollapse={() => setIsCollapsed(!isCollapsed)}
         currentPath={currentPath}
       />
-      
+
       {/* Mobile Header */}
-      <header className="bg-white shadow-sm border-b lg:hidden fixed top-0 left-0 right-0 z-40">
-        <div className="flex items-center justify-between h-16 px-4">
+      <header className="bg-white shadow-sm border-b lg:hidden fixed top-0 left-0 right-0 z-40 px-4">
+        <div className="relative flex items-center justify-center h-16">
           <Button
             variant="ghost"
             size="sm"
             onClick={() => setSidebarOpen(true)}
+            className="absolute left-0"
           >
             <Menu className="h-4 w-4" />
           </Button>
-          <h1 className="text-lg font-semibold">Dashboard</h1>
-          <div></div>
+          <h1 className="text-lg font-bold tracking-tight text-gray-900">Print Pro</h1>
         </div>
       </header>
 
       {/* Main Content */}
-      <div className={`flex-1 transition-all duration-300 ${isCollapsed ? 'lg:ml-16' : 'lg:ml-64'} lg:pt-0 pt-16`}>        
+      <div className={`flex-1 transition-all duration-300 ${isCollapsed ? 'lg:ml-16' : 'lg:ml-64'} lg:pt-0 pt-16`}>
         {/* Dashboard Content */}
         <main className="p-6">
           <div className="mb-8 flex items-center justify-between">
@@ -255,13 +255,13 @@ export default function AdminDashboard() {
                     default: return 'bg-gray-500'
                   }
                 }
-                
+
                 const getTimeAgo = (timestamp: string) => {
                   const now = new Date()
                   const activityTime = new Date(timestamp)
                   const diffMs = now.getTime() - activityTime.getTime()
                   const diffMins = Math.floor(diffMs / 60000)
-                  
+
                   if (diffMins < 60) {
                     return `${diffMins} min ago`
                   } else if (diffMins < 1440) {
@@ -270,7 +270,7 @@ export default function AdminDashboard() {
                     return `${Math.floor(diffMins / 1440)} day${Math.floor(diffMins / 1440) > 1 ? 's' : ''} ago`
                   }
                 }
-                
+
                 return (
                   <div key={activity.id} className="flex items-center space-x-4">
                     <div className={`w-2 h-2 ${getActivityColor(activity.type)} rounded-full`}></div>
@@ -282,22 +282,15 @@ export default function AdminDashboard() {
                   </div>
                 )
               }) || (
-                <div className="text-center text-gray-500 py-4">
-                  No recent activity
-                </div>
-              )}
+                  <div className="text-center text-gray-500 py-4">
+                    No recent activity
+                  </div>
+                )}
             </div>
           </Card>
         </main>
       </div>
 
-      {/* Mobile sidebar overlay */}
-      {sidebarOpen && (
-        <div
-          className="fixed inset-0 bg-[rgba(0,0,0,0.3)] z-40 lg:hidden"
-          onClick={() => setSidebarOpen(false)}
-        ></div>
-      )}
     </div>
   )
 }

@@ -1,5 +1,8 @@
 import Image from "next/image";
 import { OrderWithCustomer } from "@/types/order";
+import { Download } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import React from "react";
 
 // Custom component for external URLs that bypasses Next.js Image requirements for some cases
 const ExternalImage = ({ src, alt, className }: { src: string; alt: string; className: string }) => (
@@ -25,89 +28,132 @@ export default function OrderProductPreview({ order }: OrderProductPreviewProps)
   const brandName = brandType?.brands?.name || 'Unknown Brand';
   const productTypeName = brandType?.product_type?.name || 'Unknown Product Type';
 
+  const handleDownload = async (url: string, filename: string) => {
+    try {
+      const response = await fetch(url);
+      const blob = await response.blob();
+      const blobUrl = window.URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = blobUrl;
+      link.download = filename;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      window.URL.revokeObjectURL(blobUrl);
+    } catch (error) {
+      console.error('Download failed:', error);
+      // Fallback: open in new tab
+      window.open(url, '_blank');
+    }
+  };
+
+  const DesignArea = ({ placement, label, customClass }: { placement: string; label: string; customClass: string }) => {
+    const imageUrl = imagesByPlacement[placement];
+
+    return (
+      <div
+        className={`absolute ${customClass} border-2 border-dashed border-gray-400 rounded flex items-center justify-center transform -translate-x-1/2 -translate-y-1/2 overflow-hidden bg-white/50 z-10 transition-all duration-200 ${imageUrl ? 'cursor-pointer hover:border-primary hover:bg-white group' : ''}`}
+        onClick={() => imageUrl && handleDownload(imageUrl, `${order.id}_${placement.replace(/\s+/g, '_')}.png`)}
+        title={imageUrl ? `Click to download ${label}` : ''}
+      >
+        {imageUrl ? (
+          <>
+            <ExternalImage
+              src={imageUrl}
+              alt={label}
+              className="w-full h-full object-contain"
+            />
+            <div className="absolute inset-0 bg-black/20 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity">
+              <Download className="text-white w-4 h-4" />
+            </div>
+          </>
+        ) : (
+          <span className="text-gray-400 text-[8px] sm:text-xs md:text-sm text-center px-1">{label}</span>
+        )}
+      </div>
+    );
+  };
+
   return (
     <div className="space-y-4">
-      {/* Product Info */}
-      <div className="flex items-center gap-4 text-sm text-gray-600">
-        <span className="font-medium">{brandName}</span>
-        <span>•</span>
-        <span className="font-medium">{productTypeName}</span>
+      {/* Product Info & Actions */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 p-4 bg-white border border-gray-100 rounded-xl shadow-sm">
+        <div className="flex items-center gap-4 text-sm text-gray-600">
+          <div className="flex flex-col">
+            <span className="font-semibold text-gray-900 text-base">{brandName}</span>
+            <span className="text-xs text-gray-500">{productTypeName}</span>
+          </div>
+          <div className="h-8 w-px bg-gray-200 hidden sm:block" />
+          <p className="text-xs text-gray-400 max-w-[200px]">
+            Tip: Click specific design areas on the mockup to download individual files.
+          </p>
+        </div>
+
+        {productImages.length > 0 && (
+          <Button
+            variant="outline"
+            size="sm"
+            className="flex items-center gap-2 hover:bg-gray-50 transition-colors cursor-pointer"
+            onClick={(e: React.MouseEvent) => {
+              e.preventDefault();
+              productImages.forEach((img, index) => {
+                setTimeout(() => {
+                  handleDownload(img.url, `${order.id}_${img.place.replace(/\s+/g, '_')}.png`);
+                }, index * 500); // Stagger downloads to prevent browser blocking
+              });
+            }}
+          >
+            <Download className="h-4 w-4" />
+            Download All Designs ({productImages.length})
+          </Button>
+        )}
       </div>
 
       {/* T-shirt Mockup */}
-      <div className="flex flex-col lg:flex-row w-full relative justify-center items-start">
+      <div className="flex flex-col lg:flex-row w-full relative justify-center items-start gap-4">
 
-        <div className="relative w-fit flex items-center justify-center">
+        <div className="relative w-fit flex items-center justify-center bg-gray-50 rounded-lg p-2 border border-gray-100">
           <Image
             src="/image/Front Shirt.png"
-            alt="T-Shirt Mockup"
+            alt="Front View"
             width={500}
             height={500}
             className="object-contain"
           />
 
-          {/* Front Design Area - Top Left */}
-          <div className="absolute top-[35%] left-[63%] w-[10%] h-[10%] border-2 border-dashed border-gray-400 rounded flex items-center justify-center transform -translate-x-1/2 -translate-y-1/2 overflow-hidden bg-white/50 z-10">
-            {imagesByPlacement["Front - Top Left"] ? (
-              <ExternalImage
-                src={imagesByPlacement["Front - Top Left"]}
-                alt="Front Top Left Design"
-                className="w-full h-full object-contain"
-              />
-            ) : (
-              <span className="text-gray-400 text-[8px] sm:text-xs md:text-sm">Front Top Left</span>
-            )}
-          </div>
+          <DesignArea
+            placement="Front - Top Left"
+            label="Front Top Left"
+            customClass="top-[35%] left-[63%] w-[10%] h-[10%]"
+          />
 
-          {/* Front Design Area - Center Large */}
-          <div className="absolute top-[58%] left-[50%] w-[30%] h-[35%] border-2 border-dashed border-gray-400 rounded flex items-center justify-center transform -translate-x-1/2 -translate-y-1/2 overflow-hidden bg-white/50 z-10">
-            {imagesByPlacement["Front - Center"] ? (
-              <ExternalImage
-                src={imagesByPlacement["Front - Center"]}
-                alt="Front Center Design"
-                className="w-full h-full object-contain"
-              />
-            ) : (
-              <span className="text-gray-400 text-xs">Front Center</span>
-            )}
-          </div>
+          <DesignArea
+            placement="Front - Center"
+            label="Front Center"
+            customClass="top-[58%] left-[50%] w-[30%] h-[35%]"
+          />
         </div>
 
-
-        <div className="relative w-fit flex items-center justify-center">
+        <div className="relative w-fit flex items-center justify-center bg-gray-50 rounded-lg p-2 border border-gray-100">
           <Image
             src="/image/Back Shirt.png"
-            alt="T-Shirt Mockup"
+            alt="Back View"
             width={500}
             height={500}
             className="object-contain"
           />
 
-          {/* Back Design Area - Top Center */}
-          <div className="absolute top-[35%] left-[50%] w-[10%] h-[10%] border-2 border-dashed border-gray-400 rounded flex items-center justify-center transform -translate-x-1/2 -translate-y-1/2 overflow-hidden bg-white/50 z-10">
-            {imagesByPlacement["Back - Top"] ? (
-              <ExternalImage
-                src={imagesByPlacement["Back - Top"]}
-                alt="Back Top Design"
-                className="w-full h-full object-contain"
-              />
-            ) : (
-              <span className="text-gray-400 text-xs">Back Top</span>
-            )}
-          </div>
+          <DesignArea
+            placement="Back - Top"
+            label="Back Top"
+            customClass="top-[35%] left-[50%] w-[10%] h-[10%]"
+          />
 
-          {/* Back Design Area - Bottom Center */}
-          <div className="absolute top-[70%] left-[50%] w-[38%] h-[8%] border-2 border-dashed border-gray-400 rounded flex items-center justify-center transform -translate-x-1/2 -translate-y-1/2 overflow-hidden bg-white/50 z-10">
-            {imagesByPlacement["Back - Bottom"] ? (
-              <ExternalImage
-                src={imagesByPlacement["Back - Bottom"]}
-                alt="Back Bottom Design"
-                className="w-full h-full object-contain"
-              />
-            ) : (
-              <span className="text-gray-400 text-xs">Back Bottom</span>
-            )}
-          </div>
+          <DesignArea
+            placement="Back - Bottom"
+            label="Back Bottom"
+            customClass="top-[70%] left-[50%] w-[38%] h-[8%]"
+          />
         </div>
       </div>
     </div >
