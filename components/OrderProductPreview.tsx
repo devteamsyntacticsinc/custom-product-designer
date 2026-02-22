@@ -110,36 +110,36 @@ export default function OrderProductPreview({ order }: OrderProductPreviewProps)
       </div>
 
       {/* T-shirt Mockup */}
-      <div className="flex flex-col lg:flex-row w-full relative justify-center items-start gap-4">
+      <div className="flex flex-col lg:flex-row w-full relative justify-center items-start">
 
-        <div className="relative w-fit flex items-center justify-center bg-gray-50 rounded-lg p-2 border border-gray-100">
+        <div className="relative w-fit flex items-center justify-center rounded-lg">
           <Image
-            src="/image/Front Shirt.png"
+            src="/image/front.png"
             alt="Front View"
-            width={500}
-            height={500}
+            width={350}
+            height={350}
             className="object-contain"
           />
 
           <DesignArea
             placement="Front - Top Left"
             label="Front Top Left"
-            customClass="top-[35%] left-[63%] w-[10%] h-[10%]"
+            customClass="top-[30%] left-[63%] w-[10%] h-[10%]"
           />
 
           <DesignArea
             placement="Front - Center"
             label="Front Center"
-            customClass="top-[58%] left-[50%] w-[30%] h-[35%]"
+            customClass="top-[62%] left-[50%] w-[30%] h-[35%]"
           />
         </div>
 
-        <div className="relative w-fit flex items-center justify-center bg-gray-50 rounded-lg p-2 border border-gray-100">
+        <div className="relative w-fit flex items-center justify-center rounded-lg p-2">
           <Image
-            src="/image/Back Shirt.png"
+            src="/image/back.png"
             alt="Back View"
-            width={500}
-            height={500}
+            width={350}
+            height={350}
             className="object-contain"
           />
 
@@ -152,7 +152,7 @@ export default function OrderProductPreview({ order }: OrderProductPreviewProps)
           <DesignArea
             placement="Back - Bottom"
             label="Back Bottom"
-            customClass="top-[70%] left-[50%] w-[38%] h-[8%]"
+            customClass="top-[80%] left-[50%] w-[38%] h-[8%]"
           />
         </div>
       </div>
