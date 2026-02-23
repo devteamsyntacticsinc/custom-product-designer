@@ -316,7 +316,10 @@ export class ProductService {
   static async updateBrandWithTypes(
     brand_id: number,
     type_ids: number[],
+    name?: string,
+    is_Active?: boolean,
   ): Promise<Brand> {
+    let brandRes;
     try {
       // First, get existing brand-type associations for this brand
       const { data: existingAssociations, error: fetchError } = await supabase
@@ -364,6 +367,13 @@ export class ProductService {
         if (insertError) {
           throw insertError;
         }
+      }
+      if (name || is_Active) {
+        brandRes = await this.updateBrand(brand_id, name, is_Active);
+      }
+
+      if (!brandRes) {
+        throw new Error("Failed to update brand");
       }
 
       // Return updated brand

@@ -199,6 +199,7 @@ export default function BrandsTab() {
               <TableRow className="text-xs sm:text-sm">
                 <TableHead className="w-[60px]">ID</TableHead>
                 <TableHead>Name</TableHead>
+                <TableHead>Product Type</TableHead>
                 <TableHead>Status</TableHead>
                 <TableHead className="text-right">Actions</TableHead>
               </TableRow>
@@ -247,6 +248,22 @@ export default function BrandsTab() {
                     </TableCell>
                     <TableCell className="font-medium text-xs lg:text-sm">
                       {brand.name}
+                    </TableCell>
+                    <TableCell>
+                      {brand.type_id ? (
+                        brand.brand_type.map(({ type_id }) => {
+                          const type = productTypes.find(
+                            (type) => type.id === type_id,
+                          );
+                          return (
+                            <Badge key={type_id} className="mr-2">
+                              {type?.name}
+                            </Badge>
+                          );
+                        })
+                      ) : (
+                        <Badge variant="outline">No type assigned</Badge>
+                      )}
                     </TableCell>
                     <TableCell>
                       <Badge
@@ -424,12 +441,24 @@ function BrandSheet({
               {active ? "Active" : "Inactive"}
             </Label>
           </div>
+          {name.length === 0 && (
+            <p className="text-red-500 text-sm italic">
+              *Brand Name is required before saving.
+            </p>
+          )}
+          {selectedTypeIds.length === 0 && (
+            <p className="text-red-500 text-sm italic">
+              *Product Type is required before saving.
+            </p>
+          )}
         </div>
 
         <SheetFooter>
           <Button
             onClick={handleSubmit}
-            disabled={isLoading || (!isEdit && selectedTypeIds.length === 0)}
+            disabled={
+              isLoading || selectedTypeIds.length === 0 || name.length === 0
+            }
           >
             {isLoading
               ? isEdit

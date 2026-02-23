@@ -107,14 +107,13 @@ export async function PUT(request: Request) {
       );
     }
 
-    let result;
-    if (type_ids && Array.isArray(type_ids)) {
-      // Update brand with multiple types
-      result = await ProductService.updateBrandWithTypes(id, type_ids);
-    } else {
-      // Update brand info only (backward compatibility)
-      result = await ProductService.updateBrand(id, name, is_Active);
-    }
+    // Update brand with multiple types
+    const result = await ProductService.updateBrandWithTypes(
+      id,
+      type_ids,
+      name,
+      is_Active,
+    );
 
     return NextResponse.json(result);
   } catch (error) {
