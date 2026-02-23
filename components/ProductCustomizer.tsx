@@ -22,10 +22,13 @@ import { CardTitle } from "@/components/ui/card";
 export default function ProductCustomizer() {
   const { assets, setAssets } = useAssets();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
-  const [currentStep, setCurrentStep] = useState<'customize' | 'contact'>('customize');
+  const [currentStep, setCurrentStep] = useState<"customize" | "contact">(
+    "customize",
+  );
   const [productType, setProductType] = useState("");
   const [brand, setBrand] = useState("");
   const [color, setColor] = useState("");
+  const [selectedProductType, setSelectedProductType] = useState<ProductType | null>(null);
   const [sizeSelection, setSizeSelection] = useState<
     {
       size: number;
@@ -47,11 +50,11 @@ export default function ProductCustomizer() {
   const [colors, setColors] = useState<Color[]>([]);
 
   const handleNext = () => {
-    setCurrentStep('contact');
+    setCurrentStep("contact");
   };
 
   const handleBack = () => {
-    setCurrentStep('customize');
+    setCurrentStep("customize");
   };
 
   const handleContactSubmit = async (contactData: {
@@ -60,15 +63,17 @@ export default function ProductCustomizer() {
     contactNumber: string;
     address: string;
   }) => {
-    console.log('Contact data submitted:', contactData);
+    console.log("Contact data submitted:", contactData);
 
     try {
       // Get the display names for the selected IDs
-      const selectedBrand = brands.find(b => String(b.id) === brand);
+      const selectedBrand = brands.find((b) => String(b.id) === brand);
       const brandName = selectedBrand?.name || brand;
-      const selectedColor = colors.find(c => String(c.id) === color);
+      const selectedColor = colors.find((c) => String(c.id) === color);
       const colorName = selectedColor?.value || color;
-      const selectedProductType = productTypes.find(pt => pt.id === productType);
+      const selectedProductType = productTypes.find(
+        (pt) => pt.id === Number(productType),
+      );
       const productTypeName = selectedProductType?.name || productType;
 
       // Create FormData to handle file uploads
@@ -88,7 +93,7 @@ export default function ProductCustomizer() {
         contactInformation: contactData,
       };
 
-      formData.append('orderData', JSON.stringify(orderData));
+      formData.append("orderData", JSON.stringify(orderData));
 
       // Add files to FormData
       Object.entries(assets).forEach(([key, file]) => {
@@ -97,24 +102,23 @@ export default function ProductCustomizer() {
         }
       });
 
-      const response = await fetch('/api/orders', {
-        method: 'POST',
+      const response = await fetch("/api/orders", {
+        method: "POST",
         body: formData, // Don't set Content-Type header, let browser set it with boundary
       });
 
       if (!response.ok) {
-        throw new Error('Failed to submit order');
+        throw new Error("Failed to submit order");
       }
 
       const result = await response.json();
-      console.log('Order submitted successfully:', result);
+      console.log("Order submitted successfully:", result);
 
       // Reset form after successful submission
       handleReset();
-      setCurrentStep('customize');
-
+      setCurrentStep("customize");
     } catch (error) {
-      console.error('Error submitting order:', error);
+      console.error("Error submitting order:", error);
       throw error; // Re-throw to let toast handle it
     }
   };
@@ -123,6 +127,7 @@ export default function ProductCustomizer() {
     setProductType("");
     setBrand("");
     setColor("");
+    setSelectedProductType(null);
     setSizeSelection([]);
     setAssets({
       "front-top-left": null,
@@ -131,7 +136,6 @@ export default function ProductCustomizer() {
       "back-bottom": null,
     });
   };
-
 
   useEffect(() => {
     const fetchProductTypes = async () => {
@@ -185,15 +189,17 @@ export default function ProductCustomizer() {
   }, []);
 
   // Render Contact Information step
-  if (currentStep === 'contact') {
+  if (currentStep === "contact") {
     // Get the actual brand name from the brands array
-    const selectedBrand = brands.find(b => String(b.id) === brand);
+    const selectedBrand = brands.find((b) => String(b.id) === brand);
     const brandName = selectedBrand?.name || brand;
     // Get the actual color name
-    const selectedColor = colors.find(c => String(c.id) === color);
+    const selectedColor = colors.find((c) => String(c.id) === color);
     const colorName = selectedColor?.value || color;
     // Get the actual product type name
-    const selectedProductType = productTypes.find(pt => pt.id === productType);
+    const selectedProductType = productTypes.find(
+      (pt) => pt.id === Number(productType),
+    );
     const productTypeName = selectedProductType?.name || productType;
 
     return (
@@ -217,7 +223,7 @@ export default function ProductCustomizer() {
         <div className={`
           fixed inset-y-0 left-0 z-50 w-80 bg-white shadow-lg p-6 overflow-y-auto scrollbar-hide flex flex-col h-full
           transform transition-transform duration-300 ease-in-out
-          ${isMobileMenuOpen ? 'translate-x-0' : '-translate-x-full'}
+          ${isMobileMenuOpen ? "translate-x-0" : "-translate-x-full"}
           lg:relative lg:translate-x-0 lg:flex lg:z-0
         `}>
           <div className="lg:hidden flex items-center justify-between mb-6">
@@ -247,7 +253,7 @@ export default function ProductCustomizer() {
     );
   }
 
-  // Render Product Customizer step 
+  // Render Product Customizer step
   // Show skeleton while initial product types are loading
   if (loadingProductTypes) {
     return (
@@ -290,7 +296,7 @@ export default function ProductCustomizer() {
       <div className={`
         fixed inset-y-0 left-0 z-50 w-80 bg-white shadow-lg p-6 overflow-y-auto scrollbar-hide flex flex-col h-full
         transform transition-transform duration-300 ease-in-out
-        ${isMobileMenuOpen ? 'translate-x-0' : '-translate-x-full'}
+        ${isMobileMenuOpen ? "translate-x-0" : "-translate-x-full"}
         lg:relative lg:translate-x-0 lg:flex lg:z-0
       `}>
         <div className="lg:hidden flex items-center justify-between mb-6">
@@ -319,7 +325,14 @@ export default function ProductCustomizer() {
           </Label>
           <Select
             value={productType}
-            onValueChange={setProductType}
+            onValueChange={(value) => {
+              setProductType(value);
+              const selected = productTypes.find(pt => pt.id.toString() === value);
+              setSelectedProductType(selected || null);
+              // Reset brand and color when product type changes
+              setBrand("");
+              setColor("");
+            }}
             disabled={loadingProductTypes}
           >
             <SelectTrigger id="product-type">
@@ -342,7 +355,7 @@ export default function ProductCustomizer() {
               ) : (
                 Array.isArray(productTypes) &&
                 productTypes.map((type) => (
-                  <SelectItem key={type.id} value={type.id}>
+                  <SelectItem key={type.id} value={type.id.toString()}>
                     {type.name}
                   </SelectItem>
                 ))
@@ -352,21 +365,23 @@ export default function ProductCustomizer() {
         </div>
 
         {/* Brand */}
-        <div className="mb-6">
+        <div className={`mb-6 ${selectedProductType?.is_onlyType ? 'opacity-50 pointer-events-none' : ''}`}>
           <Label
             htmlFor="brand"
             className="text-sm font-medium text-gray-700 mb-2 block"
           >
-            Brand
+            Brand {selectedProductType?.is_onlyType && '(Disabled)'}
           </Label>
           <Select
             value={brand}
             onValueChange={setBrand}
-            disabled={loadingBrands || brands.length === 0}
+            disabled={loadingBrands || brands.length === 0 || selectedProductType?.is_onlyType}
           >
             <SelectTrigger id="brand">
               <SelectValue
-                placeholder={loadingBrands ? "Loading brands..." : "Select brand"}
+                placeholder={
+                  loadingBrands ? "Loading brands..." : "Select brand"
+                }
               />
             </SelectTrigger>
             <SelectContent>
@@ -393,21 +408,23 @@ export default function ProductCustomizer() {
         </div>
 
         {/* Select Color */}
-        <div className="mb-6">
+        <div className={`mb-6 ${selectedProductType?.is_onlyType ? 'opacity-50 pointer-events-none' : ''}`}>
           <Label
             htmlFor="color"
             className="text-sm font-medium text-gray-700 mb-2 block"
           >
-            Select color
+            Select color {selectedProductType?.is_onlyType && '(Disabled)'}
           </Label>
           <Select
             value={color}
             onValueChange={setColor}
-            disabled={loadingColors || colors.length === 0}
+            disabled={loadingColors || colors.length === 0 || selectedProductType?.is_onlyType}
           >
             <SelectTrigger id="color">
               <SelectValue
-                placeholder={loadingColors ? "Loading colors..." : "Select color"}
+                placeholder={
+                  loadingColors ? "Loading colors..." : "Select color"
+                }
               />
             </SelectTrigger>
             <SelectContent>
@@ -459,7 +476,10 @@ export default function ProductCustomizer() {
           <Button variant="outline" className="flex-1" onClick={handleReset}>
             Reset
           </Button>
-          <Button className="flex-1 bg-gray-800 hover:bg-gray-900" onClick={handleNext}>
+          <Button
+            className="flex-1 bg-gray-800 hover:bg-gray-900"
+            onClick={handleNext}
+          >
             Next
           </Button>
         </div>

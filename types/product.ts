@@ -16,24 +16,29 @@ export interface Product {
   product_type?: {
     id: string;
     name: string;
+    is_onlyType?: boolean;
   } | null;
+  is_onlyType?: boolean;
 }
 
 export interface Brand {
-  id: string;
+  id: number;
   name: string;
-  type_id?: string;
+  is_Active?: boolean;
+  type_id?: number;
 }
 
 export interface Color {
-  id: string;
+  id: number;
   value: string;
   is_Active: boolean;
 }
 
 export interface ProductType {
-  id: string;
+  id: number;
   name: string;
+  is_Active?: boolean;
+  is_onlyType?: boolean;
 }
 
 export interface Size {
@@ -110,4 +115,71 @@ export interface BrandGroup {
   sizes: Set<string>;
   brandTypeRef: SizeProduct["brand_type"];
   sizeId: number;
+}
+
+export interface BrandType {
+  id: number;
+  brand_id: number;
+  type_id: number;
+  brand_name?: string;
+  product_type_name?: string;
+}
+
+export interface BrandTypeWithDetails {
+  id: number;
+  brand_id: number;
+  type_id: number;
+  brands: {
+    name: string;
+  };
+  product_type: {
+    name: string;
+    is_onlyType: boolean;
+  };
+}
+
+export interface ColorBrandTypeWithDetails {
+  id: number;
+  brandT_id: number;
+  color_id: number;
+  brand_type: {
+    brand_id: number;
+    brands: {
+      name: string;
+    };
+    product_type: {
+      name: string;
+    };
+  };
+  colors: {
+    value: string;
+  };
+}
+
+export interface ColorProduct {
+  id: number;
+  colors: { value: string };
+  brandT_id: number;
+  color_id: number;
+  brand_type: {
+    id: number;
+    brands: { name: string };
+    product_type: { name: string };
+  };
+}
+
+export interface BrandGroup {
+  brandTypeId: number;
+  brandName: string;
+  sizes: Set<string>;
+  brandTypeRef: SizeProduct["brand_type"];
+  sizeId: number;
+}
+
+export interface ColorBrandGroup {
+  brandTypeId: number;
+  brandName: string;
+  colors: Set<string>;
+  brandTypeRef: ColorProduct["brand_type"];
+  colorId: number;
 }
