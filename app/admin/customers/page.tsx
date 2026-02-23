@@ -1,76 +1,32 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, usePathname } from "next/navigation";
+import { useSession, signOut } from "next-auth/react";
 import { Button } from "@/components/ui/button";
-import { User } from "@/types/login";
 import { RefreshCw, Menu } from "lucide-react";
 import AdminSidebar from '../../components/AdminSidebar'
 import CustomerPagePreview from '../../../components/CustomerPagePreview'
 
 export default function CustomersPage() {
-    const [user, setUser] = useState<User | null>(null);
+    const { data: session, status } = useSession();
     const [sidebarOpen, setSidebarOpen] = useState(false);
     const [isCollapsed, setIsCollapsed] = useState(false);
     const [refreshing, setRefreshing] = useState(false);
     const router = useRouter();
-    const currentPath =
-        typeof window !== "undefined"
-            ? window.location.pathname
-            : "/admin/customers";
-
+    const currentPath = usePathname();
 
     useEffect(() => {
-        const checkAuth = () => {
-            const userRole = document.cookie
-                .split("; ")
-                .find((row) => row.startsWith("user_role="))
-                ?.split("=")[1];
-
-            const userName = document.cookie
-                .split("; ")
-                .find((row) => row.startsWith("user_name="))
-                ?.split("=")[1];
-
-            const userEmail = document.cookie
-                .split("; ")
-                .find((row) => row.startsWith("user_email="))
-                ?.split("=")[1];
-
-            const userId = document.cookie
-                .split("; ")
-                .find((row) => row.startsWith("user_id="))
-                ?.split("=")[1];
-
-            if (userRole !== "admin") {
-                router.push("/login");
-                return;
-            }
-
-            if (userName && userEmail && userId) {
-                setUser({
-                    id: userId,
-                    name: userName,
-                    email: userEmail,
-                    role: userRole,
-                });
-            }
-        };
-
-        checkAuth();
-    }, [router]);
+        if (status === 'loading') return;
+        
+        if (!session || session.user?.role !== 'admin') {
+            router.push("/login");
+            return;
+        }
+    }, [session, status, router]);
 
     const handleLogout = async () => {
-        // Clear cookies by setting them to expire
-        document.cookie =
-            "user_id=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;";
-        document.cookie =
-            "user_name=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;";
-        document.cookie =
-            "user_email=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;";
-        document.cookie =
-            "user_role=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;";
-
+        await signOut({ redirect: false });
         router.push("/login");
     };
 
@@ -82,7 +38,7 @@ export default function CustomersPage() {
         setTimeout(() => setRefreshing(false), 1000);
     };
 
-    if (!user) {
+    if (status === 'loading' || !session) {
         return (
             <div className="min-h-screen bg-gray-50 flex">
                 <AdminSidebar
@@ -110,7 +66,12 @@ export default function CustomersPage() {
     return (
         <div className="min-h-screen bg-gray-50 flex">
             <AdminSidebar
-                user={user}
+                user={{
+                    id: session.user.id,
+                    name: session.user.name || '',
+                    email: session.user.email || '',
+                    role: session.user.role || 'user'
+                }}
                 sidebarOpen={sidebarOpen}
                 setSidebarOpen={setSidebarOpen}
                 onLogout={handleLogout}

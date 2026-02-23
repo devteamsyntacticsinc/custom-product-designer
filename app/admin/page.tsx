@@ -1,10 +1,10 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { useRouter } from 'next/navigation'
+import { useRouter, usePathname } from 'next/navigation'
+import { useSession, signOut } from 'next-auth/react'
 import { Button } from '@/components/ui/button'
 import { Card, CardDescription, CardTitle } from '@/components/ui/card'
-import { User } from '@/types/login'
 import {
   Menu,
   Users,
@@ -15,10 +15,10 @@ import AdminSidebar from '../components/AdminSidebar'
 import AdminDashboardSkeleton from '../components/AdminDashboardSkeleton'
 
 export default function AdminDashboard() {
-  const [user, setUser] = useState<User | null>(null)
+  const { data: session, status } = useSession()
   const [sidebarOpen, setSidebarOpen] = useState(false)
   const [isCollapsed, setIsCollapsed] = useState(false)
-  const currentPath = typeof window !== 'undefined' ? window.location.pathname : '/admin'
+  const currentPath = usePathname()
   const [dashboardData, setDashboardData] = useState<{
     stats: {
       totalOrders: number
@@ -64,57 +64,22 @@ export default function AdminDashboard() {
 
   useEffect(() => {
     // Check if user is authenticated and is admin
-    const checkAuth = () => {
-      const userRole = document.cookie
-        .split('; ')
-        .find(row => row.startsWith('user_role='))
-        ?.split('=')[1]
-
-      const userName = document.cookie
-        .split('; ')
-        .find(row => row.startsWith('user_name='))
-        ?.split('=')[1]
-
-      const userEmail = document.cookie
-        .split('; ')
-        .find(row => row.startsWith('user_email='))
-        ?.split('=')[1]
-
-      const userId = document.cookie
-        .split('; ')
-        .find(row => row.startsWith('user_id='))
-        ?.split('=')[1]
-
-      if (userRole !== 'admin') {
-        router.push('/login')
-        return
-      }
-
-      if (userName && userEmail && userId) {
-        setUser({
-          id: userId,
-          name: userName,
-          email: userEmail,
-          role: userRole
-        })
-      }
+    if (status === 'loading') return // Still loading session
+    
+    if (!session || session.user?.role !== 'admin') {
+      router.push('/login')
+      return
     }
 
-    checkAuth()
     fetchDashboardData()
-  }, [router])
+  }, [session, status, router])
 
   const handleLogout = async () => {
-    // Clear cookies by setting them to expire
-    document.cookie = 'user_id=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;'
-    document.cookie = 'user_name=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;'
-    document.cookie = 'user_email=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;'
-    document.cookie = 'user_role=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;'
-
+    await signOut({ redirect: false })
     router.push('/login')
   }
 
-  if (!user) {
+  if (status === 'loading' || !session) {
     return (
       <div className="min-h-screen bg-gray-50 flex">
         <AdminSidebar
@@ -138,7 +103,12 @@ export default function AdminDashboard() {
     return (
       <div className="min-h-screen bg-gray-50 flex">
         <AdminSidebar
-          user={user}
+          user={{
+            id: session.user.id,
+            name: session.user.name || '',
+            email: session.user.email || '',
+            role: session.user.role || 'user'
+          }}
           sidebarOpen={sidebarOpen}
           setSidebarOpen={setSidebarOpen}
           onLogout={handleLogout}
@@ -157,7 +127,12 @@ export default function AdminDashboard() {
   return (
     <div className="min-h-screen bg-gray-50 flex">
       <AdminSidebar
-        user={user}
+        user={{
+          id: session.user.id,
+          name: session.user.name || '',
+          email: session.user.email || '',
+          role: session.user.role || 'user'
+        }}
         sidebarOpen={sidebarOpen}
         setSidebarOpen={setSidebarOpen}
         onLogout={handleLogout}
@@ -189,7 +164,7 @@ export default function AdminDashboard() {
           <div className="mb-8 flex items-center justify-between">
             <div>
               <h1 className="text-xl lg:text-2xl font-bold text-gray-900">Dashboard</h1>
-              <p className="text-gray-600 text-sm lg:text-base">Welcome back, {user.name}!</p>
+              <p className="text-gray-600 text-sm lg:text-base">Welcome back, {session.user?.name}!</p>
             </div>
             <Button
               variant="outline"
@@ -242,7 +217,7 @@ export default function AdminDashboard() {
           <Card className="p-6">
             <div>
               <CardTitle className="mb-2 text-sm lg:text-base">Recent Activity</CardTitle>
-              <CardDescription className="mb-4 text-xs lg:text-sm">Latest actions in the system</CardDescription>
+              <CardDescription className="mb-4 text-xs lg:text-sm">Latest actions in system</CardDescription>
             </div>
             <div className="space-y-4">
               {dashboardData?.recentActivity.map((activity) => {
