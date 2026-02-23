@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import axios, { AxiosError } from "axios";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -32,7 +33,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { Edit, Trash2, Plus } from "lucide-react";
-import { Brand } from "@/types/product";
+import { Brand, ProductType } from "@/types/product";
 import {
   Dialog,
   DialogClose,
@@ -43,95 +44,129 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
+import { Checkbox } from "@/components/ui/checkbox";
 import { useToast } from "@/contexts/ToastContext";
 
+interface BrandExtended extends Brand {
+  brand_type: {
+    type_id: 1;
+  }[];
+}
+
 export default function BrandsTab() {
-  const [brands, setBrands] = useState<(Brand & { is_Active: boolean })[]>([]);
+  const [brands, setBrands] = useState<BrandExtended[]>([]);
+  const [productTypes, setProductTypes] = useState<ProductType[]>([]);
   const [isFetchingBrands, setIsFetchingBrands] = useState(false);
   const [isMutating, setIsMutating] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const { addToast } = useToast();
 
-  const fetchBrands = async () => {
+  const fetchData = async () => {
     try {
       setError(null);
       setIsFetchingBrands(true);
 
-      // Add cache-busting timestamp to prevent stale data
-      const timestamp = Date.now();
-      const response = await fetch(`/api/brands?t=${timestamp}`, {
-        cache: "no-store", // Prevent browser caching
-        headers: {
-          "Cache-Control": "no-cache",
-          Pragma: "no-cache",
-        },
-      });
+      // Fetch brands
+      const brands = await axios.get(`/api/brands`);
 
-      if (!response.ok) {
+      if (!brands.data) {
         throw new Error("Failed to fetch brands");
       }
+      setBrands(brands.data);
 
-      const brands = await response.json();
-      setBrands(brands);
+      // Fetch product types
+      const productTypes = await axios.get(`/api/product-types`);
+      if (!productTypes.data) {
+        throw new Error("Failed to fetch product types");
+      }
+      setProductTypes(productTypes.data);
     } catch (error) {
-      console.log(error);
+      const axiosError = error as AxiosError<{
+        error?: string;
+        message?: string;
+      }>;
+
+      const message =
+        axiosError.response?.data?.error ||
+        axiosError.response?.data?.message ||
+        axiosError.message ||
+        "Failed to fetch data";
+
+      console.error(message);
+      addToast("error", message);
       setError(error instanceof Error ? error.message : "Something went wrong");
     } finally {
       setIsFetchingBrands(false);
     }
   };
 
-  useEffect(() => {
-    fetchBrands();
-  }, []);
+  const handleSubmitBrand = async (
+    payload: Brand & { is_Active: boolean; type_ids?: number[] },
+  ) => {
+    const { type_ids, id: brand_id, name, is_Active } = payload;
 
-  const handleSubmitBrand = async (payload: Brand & { is_Active: boolean }) => {
     setIsMutating(true);
     try {
-      if (payload.id) {
-        // UPDATE
-        const res = await fetch(`/api/brands`, {
-          method: "PUT",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({ ...payload, id: payload.id.toString() }),
-        });
+      if (brand_id) {
+        // UPDATE - Update brand info and types if provided
+        const updateData: any = {
+          id: brand_id,
+        };
+
+        if (name !== undefined) updateData.name = name;
+        if (is_Active !== undefined) updateData.is_Active = is_Active;
+        if (type_ids !== undefined) updateData.type_ids = type_ids;
+
+        const res = await axios.put(`/api/brands`, updateData);
 
         // Check HTTP status
-        if (!res.ok) {
-          const errorData = await res.json();
+        if (res.status !== 200) {
+          const errorData = res.data;
           throw new Error(errorData?.error || "Failed to update brand");
         }
         addToast("success", "Brand updated successfully");
       } else {
-        // SAVE
-        const res = await fetch("/api/brands", {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify(payload),
+        // SAVE - Create with multiple types
+        if (!type_ids || type_ids.length === 0) {
+          throw new Error("At least one product type must be selected");
+        }
+
+        const res = await axios.post("/api/brands", {
+          name,
+          is_Active,
+          type_ids,
         });
+
         // Check HTTP status
-        if (!res.ok) {
-          const errorData = await res.json();
+        if (res.status !== 201) {
+          const errorData = res.data;
           throw new Error(errorData?.error || "Failed to save brand");
         }
         addToast("success", "Brand saved successfully");
       }
 
-      await fetchBrands();
+      await fetchData();
     } catch (error) {
-      console.error(error);
-      addToast(
-        "error",
-        error instanceof Error ? error.message : "Failed to save brand",
-      );
+      const axiosError = error as AxiosError<{
+        error?: string;
+        message?: string;
+      }>;
+
+      const message =
+        axiosError.response?.data?.error ||
+        axiosError.response?.data?.message ||
+        axiosError.message ||
+        "Failed to save brand";
+
+      addToast("error", message);
     } finally {
       setIsMutating(false);
     }
   };
+
+  useEffect(() => {
+    fetchData();
+  }, []);
 
   return (
     <Card className="overflow-hidden">
@@ -146,8 +181,12 @@ export default function BrandsTab() {
           mode="create"
           isLoading={isMutating}
           onSubmit={handleSubmitBrand}
+          productTypes={productTypes}
         >
-          <Button size="sm" className="w-full sm:w-auto text-xs sm:text-sm h-8 sm:h-10">
+          <Button
+            size="sm"
+            className="w-full sm:w-auto text-xs sm:text-sm h-8 sm:h-10"
+          >
             <Plus className="h-4 w-4 mr-2" />
             Add Brand
           </Button>
@@ -160,6 +199,7 @@ export default function BrandsTab() {
               <TableRow className="text-xs sm:text-sm">
                 <TableHead className="w-[60px]">ID</TableHead>
                 <TableHead>Name</TableHead>
+                <TableHead>Product Type</TableHead>
                 <TableHead>Status</TableHead>
                 <TableHead className="text-right">Actions</TableHead>
               </TableRow>
@@ -193,17 +233,43 @@ export default function BrandsTab() {
                 </TableRow>
               ) : brands.length === 0 ? (
                 <TableRow>
-                  <TableCell colSpan={4} className="text-center py-8 text-gray-500">
+                  <TableCell
+                    colSpan={4}
+                    className="text-center py-8 text-gray-500"
+                  >
                     No brands found
                   </TableCell>
                 </TableRow>
               ) : (
                 brands.map((brand) => (
                   <TableRow key={brand.id}>
-                    <TableCell className="text-xs lg:text-sm text-gray-500">#{brand.id}</TableCell>
-                    <TableCell className="font-medium text-xs lg:text-sm">{brand.name}</TableCell>
+                    <TableCell className="text-xs lg:text-sm text-gray-500">
+                      #{brand.id}
+                    </TableCell>
+                    <TableCell className="font-medium text-xs lg:text-sm">
+                      {brand.name}
+                    </TableCell>
                     <TableCell>
-                      <Badge variant={brand.is_Active ? "default" : "secondary"} className="text-[10px] px-2 py-0">
+                      {brand.type_id ? (
+                        brand.brand_type.map(({ type_id }) => {
+                          const type = productTypes.find(
+                            (type) => type.id === type_id,
+                          );
+                          return (
+                            <Badge key={type_id} className="mr-2">
+                              {type?.name}
+                            </Badge>
+                          );
+                        })
+                      ) : (
+                        <Badge variant="outline">No type assigned</Badge>
+                      )}
+                    </TableCell>
+                    <TableCell>
+                      <Badge
+                        variant={brand.is_Active ? "default" : "secondary"}
+                        className="text-[10px] px-2 py-0"
+                      >
                         {brand.is_Active ? "Active" : "Inactive"}
                       </Badge>
                     </TableCell>
@@ -214,8 +280,14 @@ export default function BrandsTab() {
                           isLoading={isMutating}
                           initialData={brand}
                           onSubmit={handleSubmitBrand}
+                          productTypes={productTypes}
                         >
-                          <Button variant="ghost" size="icon" className="h-8 w-8" disabled={isMutating}>
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="h-8 w-8"
+                            disabled={isMutating}
+                          >
                             <Edit className="h-3.5 w-3.5" />
                           </Button>
                         </BrandSheet>
@@ -223,9 +295,14 @@ export default function BrandsTab() {
                           isLoading={isMutating}
                           setIsLoading={setIsMutating}
                           brand={brand}
-                          fetchBrands={fetchBrands}
+                          fetchBrands={fetchData}
                         >
-                          <Button variant="ghost" size="icon" className="h-8 w-8 text-destructive" disabled={isMutating}>
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="h-8 w-8 text-destructive"
+                            disabled={isMutating}
+                          >
                             <Trash2 className="h-3.5 w-3.5" />
                           </Button>
                         </DeleteDialog>
@@ -248,14 +325,19 @@ function BrandSheet({
   initialData,
   onSubmit,
   isLoading,
+  productTypes,
 }: {
   children: React.ReactNode;
   mode: "create" | "edit";
-  initialData?: Brand & { is_Active: boolean };
-  onSubmit: (data: Brand & { is_Active: boolean }) => Promise<void>;
+  initialData?: BrandExtended;
+  onSubmit: (
+    data: Brand & { is_Active: boolean; type_ids?: number[] },
+  ) => Promise<void>;
   isLoading: boolean;
+  productTypes: ProductType[];
 }) {
   const [name, setName] = useState("");
+  const [selectedTypeIds, setSelectedTypeIds] = useState<number[]>([]);
   const [open, onOpenChange] = useState(false);
   const [active, setActive] = useState(true);
 
@@ -265,20 +347,26 @@ function BrandSheet({
     if (nextOpen) {
       setName(initialData?.name ?? "");
       setActive(initialData?.is_Active ?? true);
+      setSelectedTypeIds(
+        initialData?.brand_type?.map((bt) => bt.type_id) ?? [],
+      );
     } else {
       setName("");
       setActive(true);
+      setSelectedTypeIds([]);
     }
   };
 
   const handleSubmit = async () => {
     try {
       await onSubmit({
-        id: initialData?.id ?? "",
+        id: initialData?.id ?? 0,
         name,
         is_Active: active,
-      });
+        type_ids: selectedTypeIds,
+      } as any);
       setName("");
+      setSelectedTypeIds([]);
       onOpenChange(false);
     } catch (error) {
       console.error(error);
@@ -293,7 +381,9 @@ function BrandSheet({
 
       <SheetContent className="w-full sm:max-w-md">
         <SheetHeader>
-          <SheetTitle className="text-lg lg:text-xl">{isEdit ? "Edit Brand" : "Add New Brand"}</SheetTitle>
+          <SheetTitle className="text-lg lg:text-xl">
+            {isEdit ? "Edit Brand" : "Add New Brand"}
+          </SheetTitle>
           <SheetDescription className="text-xs lg:text-sm">
             {isEdit
               ? "Update the selected brand."
@@ -303,7 +393,9 @@ function BrandSheet({
 
         <div className="py-6 space-y-4">
           <div className="space-y-2">
-            <Label htmlFor="brand-name" className="text-xs lg:text-sm">Brand Name</Label>
+            <Label htmlFor="brand-name" className="text-xs lg:text-sm">
+              Brand Name
+            </Label>
             <Input
               id="brand-name"
               value={name}
@@ -313,21 +405,68 @@ function BrandSheet({
             />
           </div>
 
+          <div className="space-y-2">
+            <Label htmlFor="product-type">Product Types</Label>
+            <div className="space-y-2 max-h-32 overflow-y-auto border rounded-md p-2">
+              {productTypes.map((type) => (
+                <div key={type.id} className="flex items-center space-x-2">
+                  <Checkbox
+                    id={`product-type-${type.id}`}
+                    checked={selectedTypeIds.includes(type.id)}
+                    onCheckedChange={(checked) => {
+                      if (checked) {
+                        setSelectedTypeIds([...selectedTypeIds, type.id]);
+                      } else {
+                        setSelectedTypeIds(
+                          selectedTypeIds.filter((id) => id !== type.id),
+                        );
+                      }
+                    }}
+                    disabled={false}
+                  />
+                  <Label
+                    htmlFor={`product-type-${type.id}`}
+                    className="text-sm"
+                  >
+                    {type.name}
+                  </Label>
+                </div>
+              ))}
+            </div>
+          </div>
+
           <div className="flex items-center space-x-2">
             <Switch checked={active} onCheckedChange={setActive} />
-            <Label className="text-xs lg:text-sm">{active ? "Active" : "Inactive"}</Label>
+            <Label className="text-xs lg:text-sm">
+              {active ? "Active" : "Inactive"}
+            </Label>
           </div>
+          {name.length === 0 && (
+            <p className="text-red-500 text-sm italic">
+              *Brand Name is required before saving.
+            </p>
+          )}
+          {selectedTypeIds.length === 0 && (
+            <p className="text-red-500 text-sm italic">
+              *Product Type is required before saving.
+            </p>
+          )}
         </div>
 
         <SheetFooter>
-          <Button onClick={handleSubmit} disabled={isLoading} className="text-xs lg:text-sm h-8 lg:h-10">
+          <Button
+            onClick={handleSubmit}
+            disabled={
+              isLoading || selectedTypeIds.length === 0 || name.length === 0
+            }
+          >
             {isLoading
               ? isEdit
                 ? "Updating..."
-                : "Saving..."
+                : `Saving${selectedTypeIds.length > 1 ? ` ${selectedTypeIds.length} types` : ""}...`
               : isEdit
                 ? "Update Brand"
-                : "Save Brand"}
+                : `Save Brand${selectedTypeIds.length > 1 ? ` & ${selectedTypeIds.length} types` : ""}`}
           </Button>
         </SheetFooter>
       </SheetContent>
@@ -345,7 +484,7 @@ function DeleteDialog({
   children: React.ReactNode;
   isLoading: boolean;
   setIsLoading: (value: boolean) => void;
-  brand: Brand & { is_Active: boolean };
+  brand: BrandExtended;
   fetchBrands: () => Promise<void>;
 }) {
   const { addToast } = useToast();
@@ -356,23 +495,29 @@ function DeleteDialog({
 
     setIsLoading(true);
     try {
-      const res = await fetch(`/api/brands?id=${brand.id}`, {
-        method: "DELETE",
-      });
+      const res = await axios.delete(`/api/brands?id=${brand.id}`);
 
-      if (!res.ok) {
-        const errorData = await res.json();
+      if (res.status !== 200) {
+        const errorData = res.data;
         throw new Error(errorData?.error || "Failed to delete brand");
       }
       await fetchBrands();
       addToast("success", "Brand deleted successfully");
       setOpen(false);
     } catch (error) {
-      console.error(error);
-      addToast(
-        "error",
-        error instanceof Error ? error.message : "Failed to delete brand",
-      );
+      const axiosError = error as AxiosError<{
+        error?: string;
+        message?: string;
+      }>;
+
+      const message =
+        axiosError.response?.data?.error ||
+        axiosError.response?.data?.message ||
+        axiosError.message ||
+        "Failed to delete brand";
+
+      console.error(message);
+      addToast("error", message);
       // Close dialog on error as well
       setOpen(false);
     } finally {

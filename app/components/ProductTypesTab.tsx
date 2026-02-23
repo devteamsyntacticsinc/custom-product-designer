@@ -46,7 +46,9 @@ import {
 import { useToast } from "@/contexts/ToastContext";
 
 export default function ProductTypesTab() {
-  const [productTypes, setProductTypes] = useState<(ProductType & { is_Active: boolean })[]>([]);
+  const [productTypes, setProductTypes] = useState<
+    (ProductType & { is_Active: boolean })[]
+  >([]);
   const [isFetchingProductTypes, setIsFetchingProductTypes] = useState(false);
   const [isMutating, setIsMutating] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -85,7 +87,9 @@ export default function ProductTypesTab() {
     fetchProductTypes();
   }, []);
 
-  const handleSubmitProductType = async (payload: ProductType & { is_Active: boolean }) => {
+  const handleSubmitProductType = async (
+    payload: ProductType & { is_Active: boolean },
+  ) => {
     setIsMutating(true);
     try {
       if (payload.id) {
@@ -147,7 +151,10 @@ export default function ProductTypesTab() {
           isLoading={isMutating}
           onSubmit={handleSubmitProductType}
         >
-          <Button size="sm" className="w-full sm:w-auto text-xs sm:text-sm h-8 sm:h-10">
+          <Button
+            size="sm"
+            className="w-full sm:w-auto text-xs sm:text-sm h-8 sm:h-10"
+          >
             <Plus className="h-4 w-4 mr-2 text-xs sm:text-sm" />
             Add Product Type
           </Button>
@@ -158,16 +165,27 @@ export default function ProductTypesTab() {
           <Table>
             <TableHeader>
               <TableRow className="h-10 sm:h-12">
-                <TableHead className="w-[50px] sm:w-[60px] px-2 sm:px-4 text-xs sm:text-sm">ID</TableHead>
-                <TableHead className="px-2 sm:px-4 text-xs sm:text-sm">Name</TableHead>
-                <TableHead className="px-2 sm:px-4 text-xs sm:text-sm">Status</TableHead>
-                <TableHead className="text-right px-2 sm:px-4 text-xs sm:text-sm">Actions</TableHead>
+                <TableHead className="w-[50px] sm:w-[60px] px-2 sm:px-4 text-xs sm:text-sm">
+                  ID
+                </TableHead>
+                <TableHead className="px-2 sm:px-4 text-xs sm:text-sm">
+                  Name
+                </TableHead>
+                <TableHead className="px-2 sm:px-4 text-xs sm:text-sm">
+                  Status
+                </TableHead>
+                <TableHead className="text-right px-2 sm:px-4 text-xs sm:text-sm">
+                  Actions
+                </TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
               {isFetchingProductTypes ? (
                 Array.from({ length: 5 }).map((_, index) => (
-                  <TableRow key={`product-types-loading-${index}`} className="h-10 sm:h-12">
+                  <TableRow
+                    key={`product-types-loading-${index}`}
+                    className="h-10 sm:h-12"
+                  >
                     <TableCell className="px-2 sm:px-4">
                       <Skeleton className="h-3 w-4 sm:h-4 sm:w-6" />
                     </TableCell>
@@ -193,17 +211,29 @@ export default function ProductTypesTab() {
                 </TableRow>
               ) : productTypes.length === 0 ? (
                 <TableRow>
-                  <TableCell colSpan={4} className="text-center py-8 text-gray-400 text-xs sm:text-sm">
+                  <TableCell
+                    colSpan={4}
+                    className="text-center py-8 text-gray-400 text-xs sm:text-sm"
+                  >
                     No product types found
                   </TableCell>
                 </TableRow>
               ) : (
                 productTypes.map((productType) => (
                   <TableRow key={productType.id} className="h-10 sm:h-12">
-                    <TableCell className="text-xs sm:text-sm text-gray-500 px-2 sm:px-4">#{productType.id}</TableCell>
-                    <TableCell className="font-medium text-[11px] sm:text-sm px-2 sm:px-4">{productType.name}</TableCell>
+                    <TableCell className="text-xs sm:text-sm text-gray-500 px-2 sm:px-4">
+                      #{productType.id}
+                    </TableCell>
+                    <TableCell className="font-medium text-[11px] sm:text-sm px-2 sm:px-4">
+                      {productType.name}
+                    </TableCell>
                     <TableCell className="px-2 sm:px-4">
-                      <Badge variant={productType.is_Active ? "default" : "secondary"} className="text-[9px] sm:text-[10px] px-1.5 sm:px-2 py-0">
+                      <Badge
+                        variant={
+                          productType.is_Active ? "default" : "secondary"
+                        }
+                        className="text-[9px] sm:text-[10px] px-1.5 sm:px-2 py-0"
+                      >
                         {productType.is_Active ? "Active" : "Inactive"}
                       </Badge>
                     </TableCell>
@@ -215,7 +245,12 @@ export default function ProductTypesTab() {
                           initialData={productType}
                           onSubmit={handleSubmitProductType}
                         >
-                          <Button variant="ghost" size="icon" className="h-7 w-7 sm:h-8 sm:w-8" disabled={isMutating}>
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="h-7 w-7 sm:h-8 sm:w-8"
+                            disabled={isMutating}
+                          >
                             <Edit className="h-3 w-3 sm:h-3.5 sm:w-3.5" />
                           </Button>
                         </ProductTypeSheet>
@@ -225,7 +260,12 @@ export default function ProductTypesTab() {
                           productType={productType}
                           fetchProductTypes={fetchProductTypes}
                         >
-                          <Button variant="ghost" size="icon" className="h-7 w-7 sm:h-8 sm:w-8 text-destructive" disabled={isMutating}>
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="h-7 w-7 sm:h-8 sm:w-8 text-destructive"
+                            disabled={isMutating}
+                          >
                             <Trash2 className="h-3 w-3 sm:h-3.5 sm:w-3.5" />
                           </Button>
                         </DeleteDialog>
@@ -274,7 +314,7 @@ function ProductTypeSheet({
   const handleSubmit = async () => {
     try {
       await onSubmit({
-        id: initialData?.id ?? "",
+        id: initialData?.id ?? 0,
         name,
         is_Active: active,
       });
@@ -293,7 +333,9 @@ function ProductTypeSheet({
 
       <SheetContent className="w-full sm:max-w-md">
         <SheetHeader>
-          <SheetTitle className="text-lg sm:text-xl">{isEdit ? "Edit Product Type" : "Add New Product Type"}</SheetTitle>
+          <SheetTitle className="text-lg sm:text-xl">
+            {isEdit ? "Edit Product Type" : "Add New Product Type"}
+          </SheetTitle>
           <SheetDescription className="text-xs sm:text-sm">
             {isEdit
               ? "Update the selected product type."
@@ -303,7 +345,9 @@ function ProductTypeSheet({
 
         <div className="py-6 space-y-4">
           <div className="space-y-2">
-            <Label htmlFor="product-type-name" className="text-sm">Product Type Name</Label>
+            <Label htmlFor="product-type-name" className="text-sm">
+              Product Type Name
+            </Label>
             <Input
               id="product-type-name"
               value={name}
@@ -314,13 +358,23 @@ function ProductTypeSheet({
           </div>
 
           <div className="flex items-center space-x-2">
-            <Switch checked={active} onCheckedChange={setActive} id="product-type-active" />
-            <Label htmlFor="product-type-active" className="text-sm">{active ? "Active" : "Inactive"}</Label>
+            <Switch
+              checked={active}
+              onCheckedChange={setActive}
+              id="product-type-active"
+            />
+            <Label htmlFor="product-type-active" className="text-sm">
+              {active ? "Active" : "Inactive"}
+            </Label>
           </div>
         </div>
 
         <SheetFooter className="mt-6 sm:mt-0">
-          <Button onClick={handleSubmit} disabled={isLoading} className="w-full sm:w-auto">
+          <Button
+            onClick={handleSubmit}
+            disabled={isLoading}
+            className="w-full sm:w-auto"
+          >
             {isLoading
               ? isEdit
                 ? "Updating..."
@@ -371,7 +425,9 @@ function DeleteDialog({
       console.error(error);
       addToast(
         "error",
-        error instanceof Error ? error.message : "Failed to delete product type",
+        error instanceof Error
+          ? error.message
+          : "Failed to delete product type",
       );
       // Close dialog on error as well
       setOpen(false);

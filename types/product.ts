@@ -20,20 +20,22 @@ export interface Product {
 }
 
 export interface Brand {
-  id: string;
+  id: number;
   name: string;
-  type_id?: string;
+  is_Active?: boolean;
+  type_id?: number;
 }
 
 export interface Color {
-  id: string;
+  id: number;
   value: string;
   is_Active: boolean;
 }
 
 export interface ProductType {
-  id: string;
+  id: number;
   name: string;
+  is_Active?: boolean;
 }
 
 export interface Size {
@@ -110,4 +112,12 @@ export interface BrandGroup {
   sizes: Set<string>;
   brandTypeRef: SizeProduct["brand_type"];
   sizeId: number;
+}
+
+export interface BrandType {
+  id: number;
+  brand_id: number;
+  type_id: number;
+  brand_name?: string;
+  product_type_name?: string;
 }
