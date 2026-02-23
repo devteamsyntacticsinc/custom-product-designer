@@ -1,5 +1,5 @@
 import { supabase } from "@/lib/supabase"
-import { CustomerWithOrders } from "@/types/customer"
+import { Customer, CustomerWithOrders } from "@/types/customer"
 
 export class CustomerService {
     static async getCustomers(): Promise<CustomerWithOrders[]> {
@@ -23,7 +23,7 @@ export class CustomerService {
             return (data || []).map(customer => ({
                 ...customer,
                 orders: Array(customer.orders?.[0]?.count || 0).fill({})
-            })) as any[];
+            })) as CustomerWithOrders[];
         } catch (error) {
             console.error("Error in getCustomers:", error);
             return [];

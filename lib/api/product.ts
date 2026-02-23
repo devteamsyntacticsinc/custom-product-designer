@@ -620,6 +620,7 @@ export class ProductService {
   static async createProductType(
     name: string,
     is_Active: boolean = true,
+    is_onlyType: boolean = false,
   ): Promise<ProductType> {
     try {
       // Check if product type already exists (case-insensitive)
@@ -637,9 +638,9 @@ export class ProductService {
         throw new Error("Product type with this name already exists");
       }
 
-      const { data, error } = await supabase
+      const { data: productType, error } = await supabase
         .from("product_type")
-        .insert([{ name, is_Active }])
+        .insert([{ name, is_Active, is_onlyType }])
         .select()
         .single();
 
@@ -647,11 +648,26 @@ export class ProductService {
         throw error;
       }
 
-      if (!data) {
+      if (!productType) {
         throw new Error("Failed to create product type");
       }
 
-      return data;
+      if (productType.is_onlyType) {
+        const { error: brandError } = await supabase
+          .from("brand_type")
+          .insert([
+            {
+              brand_id: null,
+              type_id: productType.id
+            }
+          ]);
+
+        if (brandError) {
+          console.error("Error inserting into brand_type:", brandError);
+        }
+      }
+
+      return productType;
     } catch (error) {
       console.error("Error creating product type:", error);
       throw error;
@@ -662,9 +678,10 @@ export class ProductService {
     id: string,
     name?: string,
     is_Active?: boolean,
+    is_onlyType?: boolean,
   ): Promise<ProductType> {
     try {
-      const updateData: { name?: string; is_Active?: boolean } = {};
+      const updateData: { name?: string; is_Active?: boolean; is_onlyType?: boolean } = {};
       if (name !== undefined) {
         // Check if product type name already exists (excluding current product type, case-insensitive)
         const { data: existingProductType, error: checkError } = await supabase
@@ -685,8 +702,9 @@ export class ProductService {
         updateData.name = name;
       }
       if (is_Active !== undefined) updateData.is_Active = is_Active;
+      if (is_onlyType !== undefined) updateData.is_onlyType = is_onlyType;
 
-      const { data, error } = await supabase
+      const { data: productType, error } = await supabase
         .from("product_type")
         .update(updateData)
         .eq("id", id)
@@ -697,11 +715,33 @@ export class ProductService {
         throw error;
       }
 
-      if (!data) {
+      if (!productType) {
         throw new Error("Product type not found");
       }
 
-      return data;
+      if (productType.is_onlyType) {
+        // Check if already exists
+        const { data: existing } = await supabase
+          .from("brand_type")
+          .select("id")
+          .eq("type_id", id)
+          .maybeSingle();
+
+        if (!existing) {
+          const { error: insertError } = await supabase
+            .from("brand_type")
+            .insert([
+              {
+                brand_id: null,
+                type_id: id
+              }
+            ]);
+
+          if (insertError) throw insertError;
+        }
+      }
+
+      return productType;
     } catch (error) {
       console.error("Error updating product type:", error);
       throw error;

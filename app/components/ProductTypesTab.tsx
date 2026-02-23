@@ -47,7 +47,7 @@ import { useToast } from "@/contexts/ToastContext";
 
 export default function ProductTypesTab() {
   const [productTypes, setProductTypes] = useState<
-    (ProductType & { is_Active: boolean })[]
+    (ProductType & { is_Active: boolean; is_onlyType: boolean })[]
   >([]);
   const [isFetchingProductTypes, setIsFetchingProductTypes] = useState(false);
   const [isMutating, setIsMutating] = useState(false);
@@ -88,7 +88,7 @@ export default function ProductTypesTab() {
   }, []);
 
   const handleSubmitProductType = async (
-    payload: ProductType & { is_Active: boolean },
+    payload: ProductType & { is_Active: boolean; is_onlyType: boolean },
   ) => {
     setIsMutating(true);
     try {
@@ -174,6 +174,9 @@ export default function ProductTypesTab() {
                 <TableHead className="px-2 sm:px-4 text-xs sm:text-sm">
                   Status
                 </TableHead>
+                <TableHead className="px-2 sm:px-4 text-xs sm:text-sm">
+                  Only Type
+                </TableHead>
                 <TableHead className="text-right px-2 sm:px-4 text-xs sm:text-sm">
                   Actions
                 </TableHead>
@@ -191,6 +194,9 @@ export default function ProductTypesTab() {
                     </TableCell>
                     <TableCell className="px-2 sm:px-4">
                       <Skeleton className="h-3 w-16 sm:h-4 sm:w-20" />
+                    </TableCell>
+                    <TableCell className="px-2 sm:px-4">
+                      <Skeleton className="h-5 w-12 sm:h-6 sm:w-16" />
                     </TableCell>
                     <TableCell className="px-2 sm:px-4">
                       <Skeleton className="h-5 w-12 sm:h-6 sm:w-16" />
@@ -235,6 +241,16 @@ export default function ProductTypesTab() {
                         className="text-[9px] sm:text-[10px] px-1.5 sm:px-2 py-0"
                       >
                         {productType.is_Active ? "Active" : "Inactive"}
+                      </Badge>
+                    </TableCell>
+                    <TableCell className="px-2 sm:px-4">
+                      <Badge
+                        variant={
+                          productType.is_onlyType ? "default" : "secondary"
+                        }
+                        className="text-[9px] sm:text-[10px] px-1.5 sm:px-2 py-0"
+                      >
+                        {productType.is_onlyType ? "True" : "False"}
                       </Badge>
                     </TableCell>
                     <TableCell className="text-right px-2 sm:px-4">
@@ -291,13 +307,14 @@ function ProductTypeSheet({
 }: {
   children: React.ReactNode;
   mode: "create" | "edit";
-  initialData?: ProductType & { is_Active: boolean };
-  onSubmit: (data: ProductType & { is_Active: boolean }) => Promise<void>;
+  initialData?: ProductType & { is_Active: boolean; is_onlyType: boolean };
+  onSubmit: (data: ProductType & { is_Active: boolean; is_onlyType: boolean }) => Promise<void>;
   isLoading: boolean;
 }) {
   const [name, setName] = useState("");
   const [open, onOpenChange] = useState(false);
   const [active, setActive] = useState(true);
+  const [onlyType, setOnlyType] = useState(false);
 
   const handleOpenChange = (nextOpen: boolean) => {
     onOpenChange(nextOpen);
@@ -305,9 +322,11 @@ function ProductTypeSheet({
     if (nextOpen) {
       setName(initialData?.name ?? "");
       setActive(initialData?.is_Active ?? true);
+      setOnlyType(initialData?.is_onlyType ?? false);
     } else {
       setName("");
       setActive(true);
+      setOnlyType(false);
     }
   };
 
@@ -317,6 +336,7 @@ function ProductTypeSheet({
         id: initialData?.id ?? 0,
         name,
         is_Active: active,
+        is_onlyType: onlyType,
       });
       setName("");
       onOpenChange(false);
@@ -355,6 +375,22 @@ function ProductTypeSheet({
               placeholder="Enter product type name"
               className="text-sm"
             />
+          </div>
+
+          <div className="flex flex-col">
+            <Label htmlFor="product-type-name" className="text-sm">
+              Is only Type
+            </Label>
+            <div className="flex content-center space-x-2 mt-2">
+              <Switch
+                checked={onlyType}
+                onCheckedChange={setOnlyType}
+                id="product-type-onlyType"
+              />
+              <Label htmlFor="product-type-onlyType" className="text-sm">
+                {onlyType ? "True" : "False"}
+              </Label>
+            </div>
           </div>
 
           <div className="flex items-center space-x-2">
@@ -399,7 +435,7 @@ function DeleteDialog({
   children: React.ReactNode;
   isLoading: boolean;
   setIsLoading: (value: boolean) => void;
-  productType: ProductType & { is_Active: boolean };
+  productType: ProductType & { is_Active: boolean; is_onlyType: boolean };
   fetchProductTypes: () => Promise<void>;
 }) {
   const { addToast } = useToast();
