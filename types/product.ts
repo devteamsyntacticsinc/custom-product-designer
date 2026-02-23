@@ -130,14 +130,55 @@ export interface BrandTypeWithDetails {
   brand_id: number;
   type_id: number;
   brands: {
-    id: number;
     name: string;
-    is_Active: boolean;
   };
   product_type: {
-    id: number;
     name: string;
-    is_Active: boolean;
-    is_onlyType?: boolean;
   };
+}
+
+export interface ColorBrandTypeWithDetails {
+  id: number;
+  brandT_id: number;
+  color_id: number;
+  brand_type: {
+    brand_id: number;
+    brands: {
+      name: string;
+    };
+    product_type: {
+      name: string;
+    };
+  };
+  colors: {
+    value: string;
+  };
+}
+
+export interface ColorProduct {
+  id: number;
+  colors: { value: string };
+  brandT_id: number;
+  color_id: number;
+  brand_type: {
+    id: number;
+    brands: { name: string };
+    product_type: { name: string };
+  };
+}
+
+export interface BrandGroup {
+  brandTypeId: number;
+  brandName: string;
+  sizes: Set<string>;
+  brandTypeRef: SizeProduct["brand_type"];
+  sizeId: number;
+}
+
+export interface ColorBrandGroup {
+  brandTypeId: number;
+  brandName: string;
+  colors: Set<string>;
+  brandTypeRef: ColorProduct["brand_type"];
+  colorId: number;
 }

@@ -252,7 +252,7 @@ export default function ProductsPage() {
             {/* Colors Tab */}
             <TabsContent value="colors" className="space-y-6">
               <ColorsTab setRefetchColor={setRefetchColor} />
-              <ProductBrandColorTable refetchSize={refetchColor} />
+              <ProductBrandColorTable refetchColor={refetchColor} />
             </TabsContent>
             {/* Sizes Tab */}
             <TabsContent value="sizes" className="space-y-6">
