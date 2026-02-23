@@ -134,6 +134,7 @@ export interface BrandTypeWithDetails {
   };
   product_type: {
     name: string;
+    is_onlyType: boolean;
   };
 }
 
