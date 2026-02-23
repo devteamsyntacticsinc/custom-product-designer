@@ -79,7 +79,11 @@ export default function BrandsTab() {
       if (!productTypes.data) {
         throw new Error("Failed to fetch product types");
       }
-      setProductTypes(productTypes.data);
+      // Get only the is_onlyType that is false
+      const newProductType = productTypes.data.filter(
+        (item: ProductType) => item.is_onlyType === false,
+      );
+      setProductTypes(newProductType);
     } catch (error) {
       const axiosError = error as AxiosError<{
         error?: string;
@@ -405,9 +409,9 @@ function BrandSheet({
             />
           </div>
 
-          <div className="space-y-2">
+          <div className="space-y-2 mb-6">
             <Label htmlFor="product-type">Product Types</Label>
-            <div className="space-y-2 max-h-32 overflow-y-auto border rounded-md p-2">
+            <div className="space-y-4 max-h-32 my-4">
               {productTypes.map((type) => (
                 <div key={type.id} className="flex items-center space-x-2">
                   <Checkbox
@@ -422,11 +426,12 @@ function BrandSheet({
                         );
                       }
                     }}
+                    className="size-6"
                     disabled={false}
                   />
                   <Label
                     htmlFor={`product-type-${type.id}`}
-                    className="text-sm"
+                    className="text-base font-medium"
                   >
                     {type.name}
                   </Label>

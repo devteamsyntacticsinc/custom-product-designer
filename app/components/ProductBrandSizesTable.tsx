@@ -203,7 +203,9 @@ export default function ProductBrandSizesTable({
     // First, build complete structure from ALL brand-types relationships
     brandTypes.forEach((brandType) => {
       const productTypeName = brandType.product_type.name;
-      const brandName = brandType.brands.name;
+      const brandName = brandType.brands?.name
+        ? brandType.brands.name
+        : "Not provided";
 
       if (!map.has(productTypeName)) {
         map.set(productTypeName, { productTypeName, brandTypes: new Map() });
