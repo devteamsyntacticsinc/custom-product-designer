@@ -197,19 +197,21 @@ export default function ProductBrandSizesTable({
       string,
       {
         productTypeName: string;
-        brandTypes: Map<number, BrandGroup>;
+        brandTypes: Map<number, BrandGroup & { hasBrandName: boolean }>;
       }
     >();
-
-    console.log(brandTypes);
 
     // First, build complete structure from ALL brand-types relationships
     brandTypes.forEach((brandType) => {
       const productTypeName = brandType.product_type.name;
-      const brandName = brandType.brands?.name ? brandType.brands.name : "";
+      const brandName = brandType.brands?.name ?? null;
+      const hasBrandName = brandName !== null;
 
       if (!map.has(productTypeName)) {
-        map.set(productTypeName, { productTypeName, brandTypes: new Map() });
+        map.set(productTypeName, {
+          productTypeName,
+          brandTypes: new Map(),
+        });
       }
 
       const productGroup = map.get(productTypeName)!;
@@ -218,20 +220,22 @@ export default function ProductBrandSizesTable({
         productGroup.brandTypes.set(brandType.id, {
           brandTypeId: brandType.id,
           brandName,
-          sizes: new Set(), // Start empty — sizes will be populated below
+          sizes: new Set<string>(), // Start empty — sizes will be populated below
           brandTypeRef: {
             id: brandType.id,
-            brands: { name: brandName },
+            brands: brandName ? { name: brandName } : { name: "" },
             product_type: { name: productTypeName },
           },
-          sizeId: 0, // Will be set when sizes are added
+          sizeId: 0,
+          hasBrandName, // ✅ stored early
         });
       }
     });
 
     // Then, populate sizes from existing size products
     sizeProducts.forEach((item) => {
-      const productTypeName = item.brand_type?.product_type?.name || "Unknown";
+      const productTypeName = item.brand_type?.product_type?.name ?? "Unknown";
+
       const productGroup = map.get(productTypeName);
       if (!productGroup) return;
 
@@ -250,7 +254,7 @@ export default function ProductBrandSizesTable({
       .map((group) => ({
         productTypeName: group.productTypeName,
         brands: Array.from(group.brandTypes.values()).sort((a, b) =>
-          a.brandName.localeCompare(b.brandName),
+          (a.brandName ?? "").localeCompare(b.brandName ?? ""),
         ),
       }));
   }, [brandTypes, sizeProducts]);
@@ -583,7 +587,9 @@ export default function ProductBrandSizesTable({
                     <Table className="w-full min-w-max border-collapse">
                       <TableHeader className="border-b border-border">
                         <TableRow className="hover:bg-transparent h-10 sm:h-12">
-                          {productTypeGroup.productTypeName !== "Mug" && (
+                          {productTypeGroup.brands.some(
+                            (brand) => brand.hasBrandName,
+                          ) && (
                             <TableHead className="text-muted-foreground sticky left-0 bg-background z-30 px-2 sm:px-4 border-r min-w-[110px] sm:min-w-[180px] shadow-[2px_0_5px_-2px_rgba(0,0,0,0.05)] text-[10px] sm:text-xs">
                               Brand Name
                             </TableHead>
@@ -617,7 +623,9 @@ export default function ProductBrandSizesTable({
                             key={`${brand.brandTypeId}-${brand.brandName}`}
                             className="border-border hover:bg-secondary/30 transition-colors group h-10 sm:h-12"
                           >
-                            {productTypeGroup.productTypeName !== "Mug" && (
+                            {productTypeGroup.brands.some(
+                              (brand) => brand.hasBrandName,
+                            ) && (
                               <TableCell className="text-foreground font-medium sticky left-0 bg-background z-20 px-2 sm:px-4 border-r whitespace-nowrap min-w-[110px] sm:min-w-[180px] shadow-[2px_0_5px_-2px_rgba(0,0,0,0.05)] group-hover:bg-[#f4f4f5] dark:group-hover:bg-[#18181b] transition-colors text-[11px] sm:text-sm">
                                 {brand.brandName}
                               </TableCell>
