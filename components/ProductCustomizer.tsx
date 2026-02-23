@@ -28,6 +28,7 @@ export default function ProductCustomizer() {
   const [productType, setProductType] = useState("");
   const [brand, setBrand] = useState("");
   const [color, setColor] = useState("");
+  const [selectedProductType, setSelectedProductType] = useState<ProductType | null>(null);
   const [sizeSelection, setSizeSelection] = useState<
     {
       size: number;
@@ -126,6 +127,7 @@ export default function ProductCustomizer() {
     setProductType("");
     setBrand("");
     setColor("");
+    setSelectedProductType(null);
     setSizeSelection([]);
     setAssets({
       "front-top-left": null,
@@ -323,7 +325,14 @@ export default function ProductCustomizer() {
           </Label>
           <Select
             value={productType}
-            onValueChange={setProductType}
+            onValueChange={(value) => {
+              setProductType(value);
+              const selected = productTypes.find(pt => pt.id.toString() === value);
+              setSelectedProductType(selected || null);
+              // Reset brand and color when product type changes
+              setBrand("");
+              setColor("");
+            }}
             disabled={loadingProductTypes}
           >
             <SelectTrigger id="product-type">
@@ -356,17 +365,17 @@ export default function ProductCustomizer() {
         </div>
 
         {/* Brand */}
-        <div className="mb-6">
+        <div className={`mb-6 ${selectedProductType?.is_onlyType ? 'opacity-50 pointer-events-none' : ''}`}>
           <Label
             htmlFor="brand"
             className="text-sm font-medium text-gray-700 mb-2 block"
           >
-            Brand
+            Brand {selectedProductType?.is_onlyType && '(Disabled)'}
           </Label>
           <Select
             value={brand}
             onValueChange={setBrand}
-            disabled={loadingBrands || brands.length === 0}
+            disabled={loadingBrands || brands.length === 0 || selectedProductType?.is_onlyType}
           >
             <SelectTrigger id="brand">
               <SelectValue
@@ -399,17 +408,17 @@ export default function ProductCustomizer() {
         </div>
 
         {/* Select Color */}
-        <div className="mb-6">
+        <div className={`mb-6 ${selectedProductType?.is_onlyType ? 'opacity-50 pointer-events-none' : ''}`}>
           <Label
             htmlFor="color"
             className="text-sm font-medium text-gray-700 mb-2 block"
           >
-            Select color
+            Select color {selectedProductType?.is_onlyType && '(Disabled)'}
           </Label>
           <Select
             value={color}
             onValueChange={setColor}
-            disabled={loadingColors || colors.length === 0}
+            disabled={loadingColors || colors.length === 0 || selectedProductType?.is_onlyType}
           >
             <SelectTrigger id="color">
               <SelectValue

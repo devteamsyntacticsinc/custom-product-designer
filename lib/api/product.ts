@@ -18,7 +18,23 @@ export class ProductService {
           brandT_id,
           sizes (
             id,
-            value
+            value,
+            brand_type (
+              id,
+              brand_id,
+              type_id,
+              brands (
+                id,
+                name,
+                is_Active
+              ),
+              product_type (
+                id,
+                name,
+                is_Active,
+                is_onlyType
+              )
+            )
           ),
           brand_type (
             id,
@@ -28,7 +44,8 @@ export class ProductService {
             ),
             product_type (
               id,
-              name
+              name,
+              is_onlyType
             )
           )
         `);
@@ -49,6 +66,7 @@ export class ProductService {
           brand: item.brand_type?.[0]?.brands?.[0],
           color: null,
           product_type: item.brand_type?.[0]?.product_type?.[0],
+          is_onlyType: item.brand_type?.[0]?.product_type?.[0]?.is_onlyType,
         })) as unknown as Product[]) || []
       );
     } catch (error) {
@@ -69,7 +87,23 @@ export class ProductService {
           brandT_id,
           sizes (
             id,
-            value
+            value,
+            brand_type (
+              id,
+              brand_id,
+              type_id,
+              brands (
+                id,
+                name,
+                is_Active
+              ),
+              product_type (
+                id,
+                name,
+                is_Active,
+                is_onlyType
+              )
+            )
           ),
           brand_type (
             id,
@@ -79,7 +113,8 @@ export class ProductService {
             ),
             product_type (
               id,
-              name
+              name,
+              is_onlyType
             )
           )
         `,
@@ -103,6 +138,7 @@ export class ProductService {
           brand: data.brand_type?.[0]?.brands?.[0],
           color: null,
           product_type: data.brand_type?.[0]?.product_type?.[0],
+          is_onlyType: data.brand_type?.[0]?.product_type?.[0]?.is_onlyType,
         } as unknown as Product;
       }
 
@@ -127,6 +163,12 @@ export class ProductService {
               id,
               name,
               is_Active
+            ),
+            product_type (
+              id,
+              name,
+              is_Active,
+              is_onlyType
             )
           `,
           )
@@ -549,7 +591,7 @@ export class ProductService {
     try {
       const { data, error } = await supabase
         .from("product_type")
-        .select("id, name, is_Active")
+        .select("id, name, is_onlyType, is_Active")
         .order("name");
 
       if (error) {

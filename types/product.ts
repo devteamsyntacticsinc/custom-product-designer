@@ -16,7 +16,9 @@ export interface Product {
   product_type?: {
     id: string;
     name: string;
+    is_onlyType?: boolean;
   } | null;
+  is_onlyType?: boolean;
 }
 
 export interface Brand {
@@ -36,6 +38,7 @@ export interface ProductType {
   id: number;
   name: string;
   is_Active?: boolean;
+  is_onlyType?: boolean;
 }
 
 export interface Size {
@@ -135,6 +138,7 @@ export interface BrandTypeWithDetails {
     id: number;
     name: string;
     is_Active: boolean;
+    is_onlyType?: boolean;
   };
 }
 
