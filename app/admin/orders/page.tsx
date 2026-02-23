@@ -1,11 +1,11 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { useRouter } from 'next/navigation'
+import { useRouter, usePathname } from 'next/navigation'
+import { useSession, signOut } from 'next-auth/react'
 import { Button } from '@/components/ui/button'
 import { Card } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
-import { User } from '@/types/login'
 import { OrderWithCustomer } from '@/types/order'
 import {
   Menu,
@@ -20,14 +20,14 @@ import OrdersPageSkeleton from '../../../components/OrdersPageSkeleton'
 import OrderProductPreview from '../../../components/OrderProductPreview'
 
 export default function OrdersPage() {
-  const [user, setUser] = useState<User | null>(null)
+  const { data: session, status } = useSession()
   const [sidebarOpen, setSidebarOpen] = useState(false)
   const [isCollapsed, setIsCollapsed] = useState(false)
   const [orders, setOrders] = useState<OrderWithCustomer[]>([])
   const [loading, setLoading] = useState(true)
   const [refreshing, setRefreshing] = useState(false)
   const router = useRouter()
-  const currentPath = typeof window !== 'undefined' ? window.location.pathname : '/admin/orders'
+  const currentPath = usePathname()
 
   const fetchOrders = async () => {
     try {
@@ -51,53 +51,18 @@ export default function OrdersPage() {
 
   useEffect(() => {
     // Check if user is authenticated and is admin
-    const checkAuth = () => {
-      const userRole = document.cookie
-        .split('; ')
-        .find(row => row.startsWith('user_role='))
-        ?.split('=')[1]
-
-      const userName = document.cookie
-        .split('; ')
-        .find(row => row.startsWith('user_name='))
-        ?.split('=')[1]
-
-      const userEmail = document.cookie
-        .split('; ')
-        .find(row => row.startsWith('user_email='))
-        ?.split('=')[1]
-
-      const userId = document.cookie
-        .split('; ')
-        .find(row => row.startsWith('user_id='))
-        ?.split('=')[1]
-
-      if (userRole !== 'admin') {
-        router.push('/login')
-        return
-      }
-
-      if (userName && userEmail && userId) {
-        setUser({
-          id: userId,
-          name: userName,
-          email: userEmail,
-          role: userRole
-        })
-      }
+    if (status === 'loading') return // Still loading session
+    
+    if (!session || session.user?.role !== 'admin') {
+      router.push('/login')
+      return
     }
 
-    checkAuth()
     fetchOrders()
-  }, [router])
+  }, [session, status, router])
 
   const handleLogout = async () => {
-    // Clear cookies by setting them to expire
-    document.cookie = 'user_id=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;'
-    document.cookie = 'user_name=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;'
-    document.cookie = 'user_email=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;'
-    document.cookie = 'user_role=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;'
-
+    await signOut({ redirect: false })
     router.push('/login')
   }
 
@@ -126,7 +91,7 @@ export default function OrdersPage() {
     return order.product_sizes?.reduce((total, size) => total + (size.quantity || 0), 0) || 0
   }
 
-  if (!user) {
+  if (status === 'loading' || !session) {
     return (
       <div className="min-h-screen bg-gray-50 flex">
         <AdminSidebar
@@ -150,7 +115,12 @@ export default function OrdersPage() {
     return (
       <div className="min-h-screen bg-gray-50 flex">
         <AdminSidebar
-          user={user}
+          user={{
+            id: session.user.id,
+            name: session.user.name || '',
+            email: session.user.email || '',
+            role: session.user.role || 'user'
+          }}
           sidebarOpen={sidebarOpen}
           setSidebarOpen={setSidebarOpen}
           onLogout={handleLogout}
@@ -169,7 +139,12 @@ export default function OrdersPage() {
   return (
     <div className="min-h-screen bg-gray-50 flex">
       <AdminSidebar
-        user={user}
+        user={{
+          id: session.user.id,
+          name: session.user.name || '',
+          email: session.user.email || '',
+          role: session.user.role || 'user'
+        }}
         sidebarOpen={sidebarOpen}
         setSidebarOpen={setSidebarOpen}
         onLogout={handleLogout}

@@ -2,6 +2,7 @@
 
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
+import { signIn } from 'next-auth/react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
@@ -22,25 +23,24 @@ export default function LoginPage() {
     setError('')
 
     try {
-      const response = await fetch('/api/login', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ email, password }),
+      const result = await signIn('credentials', {
+        email,
+        password,
+        redirect: false
       })
 
-      const data = await response.json()
-
-      if (data.success) {
-        // Redirect based on role
-        if (data.user.role === 'admin') {
+      if (result?.error) {
+        setError('Invalid email or password')
+      } else if (result?.ok) {
+        // Get session to check user role
+        const response = await fetch('/api/auth/session')
+        const session = await response.json()
+        
+        if (session?.user?.role === 'admin') {
           router.push('/admin')
         } else {
           router.push('/')
         }
-      } else {
-        setError(data.error || 'Login failed')
       }
     } catch (error) {
       console.error('Login page error:', error)
