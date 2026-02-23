@@ -1,4 +1,4 @@
-'use client'
+"use client";
 
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
@@ -11,16 +11,16 @@ import {
   LogOut,
   X,
   ChevronLeft,
-  ChevronRight
-} from 'lucide-react'
+  ChevronRight,
+} from "lucide-react";
 
 const sidebarItems = [
-  { icon: LayoutDashboard, label: 'Dashboard', href: '/admin' },
-  { icon: ShoppingBag, label: 'Orders', href: '/admin/orders' },
-  { icon: Users, label: 'Customers', href: '/admin/customers' },
-  { icon: Package, label: 'Products', href: '/admin/products' },
-  { icon: Settings, label: 'Settings', href: '/admin/settings' },
-]
+  { icon: LayoutDashboard, label: "Dashboard", href: "/admin" },
+  { icon: ShoppingBag, label: "Orders", href: "/admin/orders" },
+  { icon: Users, label: "Customers", href: "/admin/customers" },
+  { icon: Package, label: "Products", href: "/admin/products" },
+  { icon: Settings, label: "Settings", href: "/admin/settings" },
+];
 
 interface AdminSidebarProps {
   user: {
@@ -46,18 +46,22 @@ export default function AdminSidebar({
   onNavigate,
   isCollapsed = false,
   onToggleCollapse,
-  currentPath = ''
+  currentPath = "",
 }: AdminSidebarProps) {
   return (
     <>
       {/* Mobile Overlay */}
       <div
-        className={`fixed inset-0 bg-black/60 transition-opacity duration-300 lg:hidden ${sidebarOpen ? 'opacity-100' : 'opacity-0 pointer-events-none'} z-60`}
+        className={`fixed inset-0 bg-black/60 transition-opacity duration-300 lg:hidden z-40 ${sidebarOpen ? "opacity-100" : "opacity-0 pointer-events-none"}`}
         onClick={() => setSidebarOpen(false)}
       />
-      <div className={`${sidebarOpen ? 'translate-x-0' : '-translate-x-full'} fixed inset-y-0 left-0 z-70 ${isCollapsed ? 'w-16' : 'w-64'} bg-white shadow-lg transform transition-all duration-300 ease-in-out lg:translate-x-0 lg:fixed lg:inset-0 lg:top-0 lg:left-0`}>
+      <div
+        className={`${sidebarOpen ? "translate-x-0" : "-translate-x-full"} fixed inset-y-0 left-0 z-40 ${isCollapsed ? "w-16" : "w-64"} bg-white shadow-lg transform transition-all duration-300 ease-in-out lg:translate-x-0 lg:fixed lg:inset-0 lg:top-0 lg:left-0`}
+      >
         <div className="flex items-center justify-between h-16 px-6 border-b">
-          {!isCollapsed && <h1 className="text-xl font-bold text-gray-900">Print Pro Admin</h1>}
+          {!isCollapsed && (
+            <h1 className="text-xl font-bold text-gray-900">Print Pro Admin</h1>
+          )}
           <div className="flex items-center gap-2">
             <Button
               variant="ghost"
@@ -65,7 +69,11 @@ export default function AdminSidebar({
               onClick={onToggleCollapse}
               className="hidden lg:flex"
             >
-              {isCollapsed ? <ChevronRight className="h-4 w-4" /> : <ChevronLeft className="h-4 w-4" />}
+              {isCollapsed ? (
+                <ChevronRight className="h-4 w-4" />
+              ) : (
+                <ChevronLeft className="h-4 w-4" />
+              )}
             </Button>
             <Button
               variant="ghost"
@@ -79,7 +87,7 @@ export default function AdminSidebar({
         </div>
 
         <nav className="mt-6">
-          <div className={`${isCollapsed ? 'px-2' : 'px-4'} space-y-2`}>
+          <div className={`${isCollapsed ? "px-2" : "px-4"} space-y-2`}>
             {sidebarItems.map((item) => {
               const isActive = currentPath === item.href || 
                 (item.href !== '/admin' && currentPath.startsWith(item.href))
@@ -87,14 +95,16 @@ export default function AdminSidebar({
                 <Button
                   key={item.label}
                   variant={isActive ? "secondary" : "ghost"}
-                  className={`w-full cursor-pointer ${isCollapsed ? 'justify-center' : 'justify-start'} ${isActive ? 'bg-gray-100 text-gray-900' : ''}`}
+                  className={`w-full cursor-pointer ${isCollapsed ? "justify-center" : "justify-start"} ${isActive ? "bg-gray-100 text-gray-900" : ""}`}
                   onClick={() => onNavigate(item.href)}
                   title={isCollapsed ? item.label : undefined}
                 >
-                  <item.icon className={`${isCollapsed ? '' : 'mr-3'} h-4 w-4`} />
+                  <item.icon
+                    className={`${isCollapsed ? "" : "mr-3"} h-4 w-4`}
+                  />
                   {!isCollapsed && item.label}
                 </Button>
-              )
+              );
             })}
           </div>
         </nav>
@@ -104,20 +114,22 @@ export default function AdminSidebar({
             <div className="mb-4">
               <p className="text-sm font-medium text-gray-900">{user.name}</p>
               <p className="text-xs text-gray-500">{user.email}</p>
-              <Badge variant="secondary" className="mt-1">Admin</Badge>
+              <Badge variant="secondary" className="mt-1">
+                Admin
+              </Badge>
             </div>
           )}
           <Button
             variant="outline"
-            className={`w-full ${isCollapsed ? 'justify-center' : ''}`}
+            className={`w-full ${isCollapsed ? "justify-center" : ""}`}
             onClick={onLogout}
-            title={isCollapsed ? 'Logout' : undefined}
+            title={isCollapsed ? "Logout" : undefined}
           >
-            <LogOut className={`${isCollapsed ? '' : 'mr-2'} h-4 w-4`} />
-            {!isCollapsed && 'Logout'}
+            <LogOut className={`${isCollapsed ? "" : "mr-2"} h-4 w-4`} />
+            {!isCollapsed && "Logout"}
           </Button>
         </div>
       </div>
     </>
-  )
+  );
 }
