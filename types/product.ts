@@ -121,3 +121,19 @@ export interface BrandType {
   brand_name?: string;
   product_type_name?: string;
 }
+
+export interface BrandTypeWithDetails {
+  id: number;
+  brand_id: number;
+  type_id: number;
+  brands: {
+    id: number;
+    name: string;
+    is_Active: boolean;
+  };
+  product_type: {
+    id: number;
+    name: string;
+    is_Active: boolean;
+  };
+}
