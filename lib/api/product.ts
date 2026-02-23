@@ -1030,9 +1030,8 @@ export class ProductService {
       const { data, error } = await supabase
         .from("size_product")
         .select(
-          "id, size_id, brandT_id, sizes!inner(value), brand_type!inner(id, brands!inner(name), product_type!inner(*))",
-        )
-        .eq("brand_type.product_type.is_onlyType", false);
+          "id, size_id, brandT_id, sizes!inner(value), brand_type(id, brands(name), product_type!inner(*))",
+        );
 
       if (error) throw error;
       return data || [];
@@ -1222,7 +1221,6 @@ export class ProductService {
         `,
         )
         .order("id")
-        .eq("product_type.is_onlyType", false)
         .overrideTypes<BrandTypeWithDetails[]>();
 
       if (error) {

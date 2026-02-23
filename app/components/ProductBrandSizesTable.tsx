@@ -142,6 +142,7 @@ export default function ProductBrandSizesTable({
         setOriginalState(data);
 
         const brandTypesData = await fetchBrandTypes();
+
         setBrandTypes(brandTypesData);
 
         // Fetch sizes and set them
@@ -200,12 +201,12 @@ export default function ProductBrandSizesTable({
       }
     >();
 
+    console.log(brandTypes);
+
     // First, build complete structure from ALL brand-types relationships
     brandTypes.forEach((brandType) => {
       const productTypeName = brandType.product_type.name;
-      const brandName = brandType.brands?.name
-        ? brandType.brands.name
-        : "Not provided";
+      const brandName = brandType.brands?.name ? brandType.brands.name : "";
 
       if (!map.has(productTypeName)) {
         map.set(productTypeName, { productTypeName, brandTypes: new Map() });
@@ -283,9 +284,9 @@ export default function ProductBrandSizesTable({
     // Use the brandTypeRef from the brand group, or find it from existing data
     const brandTypeRef =
       brand.brandTypeRef ||
-      sizeProducts.find((item) => item.brand_type.id === brand.brandTypeId)
+      sizeProducts.find((item) => item.brand_type?.id === brand.brandTypeId)
         ?.brand_type ||
-      originalState.find((item) => item.brand_type.id === brand.brandTypeId)
+      originalState.find((item) => item.brand_type?.id === brand.brandTypeId)
         ?.brand_type;
 
     if (!brandTypeRef) return;
@@ -298,7 +299,10 @@ export default function ProductBrandSizesTable({
         sizes.forEach(({ id: sizeId, value }) => {
           const exists = newProducts.some(
             (item) =>
-              item.brand_type.id === brand.brandTypeId &&
+              // Handle both cases: items with valid brand_type.id and items with brandT_id: null
+              (item.brand_type?.id === brand.brandTypeId ||
+                (item.brandT_id === null &&
+                  item.brand_type?.id === brand.brandTypeId)) &&
               item.sizes.value === value,
           );
 
@@ -318,7 +322,13 @@ export default function ProductBrandSizesTable({
       } else {
         // Remove all sizes for this brand
         newProducts = newProducts.filter(
-          (item) => item.brand_type.id !== brand.brandTypeId,
+          (item) =>
+            // Handle both cases: items with valid brand_type.id and items with brandT_id: null
+            !(
+              item.brand_type?.id === brand.brandTypeId ||
+              (item.brandT_id === null &&
+                item.brand_type?.id === brand.brandTypeId)
+            ),
         );
       }
 
@@ -336,13 +346,12 @@ export default function ProductBrandSizesTable({
     brandName: string,
     size: string,
     sizeId: number,
+    isMug: boolean,
   ) => {
     setSizeProducts((prev) => {
       const existingIndex = prev.findIndex(
         (item) =>
-          item.brand_type.id === brandTypeId &&
-          (item.brand_type.brands?.name || "Unknown") === brandName &&
-          item.sizes.value === size,
+          item.brand_type?.id === brandTypeId && item.sizes.value === size,
       );
 
       let newProducts;
@@ -356,8 +365,9 @@ export default function ProductBrandSizesTable({
 
         const brandTypeRef =
           brandGroup?.brandTypeRef ||
-          prev.find((item) => item.brand_type.id === brandTypeId)?.brand_type ||
-          originalState.find((item) => item.brand_type.id === brandTypeId)
+          prev.find((item) => item.brand_type?.id === brandTypeId)
+            ?.brand_type ||
+          originalState.find((item) => item.brand_type?.id === brandTypeId)
             ?.brand_type;
 
         if (!brandTypeRef) return prev;
@@ -573,9 +583,11 @@ export default function ProductBrandSizesTable({
                     <Table className="w-full min-w-max border-collapse">
                       <TableHeader className="border-b border-border">
                         <TableRow className="hover:bg-transparent h-10 sm:h-12">
-                          <TableHead className="text-muted-foreground sticky left-0 bg-background z-30 px-2 sm:px-4 border-r min-w-[110px] sm:min-w-[180px] shadow-[2px_0_5px_-2px_rgba(0,0,0,0.05)] text-[10px] sm:text-xs">
-                            Brand Name
-                          </TableHead>
+                          {productTypeGroup.productTypeName !== "Mug" && (
+                            <TableHead className="text-muted-foreground sticky left-0 bg-background z-30 px-2 sm:px-4 border-r min-w-[110px] sm:min-w-[180px] shadow-[2px_0_5px_-2px_rgba(0,0,0,0.05)] text-[10px] sm:text-xs">
+                              Brand Name
+                            </TableHead>
+                          )}
                           <TableHead className="text-muted-foreground text-center min-w-[50px] sm:min-w-24 px-2 sm:px-4 text-[10px] sm:text-xs">
                             ALL
                           </TableHead>
@@ -605,9 +617,11 @@ export default function ProductBrandSizesTable({
                             key={`${brand.brandTypeId}-${brand.brandName}`}
                             className="border-border hover:bg-secondary/30 transition-colors group h-10 sm:h-12"
                           >
-                            <TableCell className="text-foreground font-medium sticky left-0 bg-background z-20 px-2 sm:px-4 border-r whitespace-nowrap min-w-[110px] sm:min-w-[180px] shadow-[2px_0_5px_-2px_rgba(0,0,0,0.05)] group-hover:bg-[#f4f4f5] dark:group-hover:bg-[#18181b] transition-colors text-[11px] sm:text-sm">
-                              {brand.brandName}
-                            </TableCell>
+                            {productTypeGroup.productTypeName !== "Mug" && (
+                              <TableCell className="text-foreground font-medium sticky left-0 bg-background z-20 px-2 sm:px-4 border-r whitespace-nowrap min-w-[110px] sm:min-w-[180px] shadow-[2px_0_5px_-2px_rgba(0,0,0,0.05)] group-hover:bg-[#f4f4f5] dark:group-hover:bg-[#18181b] transition-colors text-[11px] sm:text-sm">
+                                {brand.brandName}
+                              </TableCell>
+                            )}
                             <TableCell className="text-center px-2 sm:px-4">
                               <Checkbox
                                 checked={isAllChecked(brand)}
@@ -629,7 +643,9 @@ export default function ProductBrandSizesTable({
                                       brand.brandTypeId,
                                       brand.brandName,
                                       value,
-                                      id, // Use the correct size_id from mapping
+                                      id,
+                                      productTypeGroup.productTypeName ===
+                                        "Mug",
                                     )
                                   }
                                   className="cursor-pointer size-4 sm:size-6"

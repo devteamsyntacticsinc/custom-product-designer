@@ -124,7 +124,11 @@ export default function ProductBrandColorTable({
         setOriginalState(data);
 
         const brandTypesData = await fetchBrandTypes();
-        setBrandTypes(brandTypesData);
+        const filteredBrandTypes = brandTypesData.filter(
+          (brandType: BrandTypeWithDetails) =>
+            brandType.product_type.is_onlyType === false,
+        );
+        setBrandTypes(filteredBrandTypes);
 
         // Fetch colors and set them
         const colorsData = await fetchColors();
