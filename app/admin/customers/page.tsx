@@ -7,7 +7,6 @@ import { User } from "@/types/login";
 import { RefreshCw, Menu } from "lucide-react";
 import AdminSidebar from '../../components/AdminSidebar'
 import CustomerPagePreview from '../../../components/CustomerPagePreview'
-import CustomerPageSkeleton from '../../../components/CustomerPageSkeleton'
 
 export default function CustomersPage() {
     const [user, setUser] = useState<User | null>(null);

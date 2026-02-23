@@ -1,3 +1,10 @@
+export interface Customer {
+    id: string;
+    name: string;
+    email: string;
+    contact_number: string;
+}
+
 export interface CustomerWithOrders {
     id: string;
     name: string;
