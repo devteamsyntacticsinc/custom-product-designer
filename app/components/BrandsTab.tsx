@@ -51,6 +51,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { Checkbox } from "@/components/ui/checkbox";
 import { useToast } from "@/contexts/ToastContext";
 
 const fetchBrands = async () => {
@@ -122,19 +123,23 @@ export default function BrandsTab() {
   }, []);
 
   const handleSubmitBrand = async (
-    payload: Brand & { is_Active: boolean; type_id?: number },
+    payload: Brand & { is_Active: boolean; type_ids?: number[] },
   ) => {
-    const { type_id, id: brand_id, name, is_Active } = payload;
+    const { type_ids, id: brand_id, name, is_Active } = payload;
 
     setIsMutating(true);
     try {
       if (brand_id) {
-        // UPDATE
-        const res = await axios.put(`/api/brands`, {
+        // UPDATE - Update brand info and types if provided
+        const updateData: any = {
           id: brand_id,
-          name,
-          is_Active,
-        });
+        };
+
+        if (name !== undefined) updateData.name = name;
+        if (is_Active !== undefined) updateData.is_Active = is_Active;
+        if (type_ids !== undefined) updateData.type_ids = type_ids;
+
+        const res = await axios.put(`/api/brands`, updateData);
 
         // Check HTTP status
         if (res.status !== 200) {
@@ -143,15 +148,15 @@ export default function BrandsTab() {
         }
         addToast("success", "Brand updated successfully");
       } else {
-        // SAVE - Use atomic operation
-        if (!type_id) {
-          throw new Error("Product type is required when creating a brand");
+        // SAVE - Create with multiple types
+        if (!type_ids || type_ids.length === 0) {
+          throw new Error("At least one product type must be selected");
         }
 
         const res = await axios.post("/api/brands", {
           name,
           is_Active,
-          type_id,
+          type_ids,
         });
 
         // Check HTTP status
@@ -276,6 +281,7 @@ export default function BrandsTab() {
                           isLoading={isMutating}
                           initialData={brand}
                           onSubmit={handleSubmitBrand}
+                          productTypes={productTypes}
                         >
                           <Button
                             variant="ghost"
@@ -326,13 +332,13 @@ function BrandSheet({
   mode: "create" | "edit";
   initialData?: BrandExtended;
   onSubmit: (
-    data: Brand & { is_Active: boolean; type_id?: number },
+    data: Brand & { is_Active: boolean; type_ids?: number[] },
   ) => Promise<void>;
   isLoading: boolean;
   productTypes: ProductType[];
 }) {
   const [name, setName] = useState("");
-  const [selectedTypeId, setSelectedTypeId] = useState<number | undefined>();
+  const [selectedTypeIds, setSelectedTypeIds] = useState<number[]>([]);
   const [open, onOpenChange] = useState(false);
   const [active, setActive] = useState(true);
 
@@ -342,11 +348,13 @@ function BrandSheet({
     if (nextOpen) {
       setName(initialData?.name ?? "");
       setActive(initialData?.is_Active ?? true);
-      setSelectedTypeId(initialData?.type_id);
+      setSelectedTypeIds(
+        initialData?.brand_type?.map((bt) => bt.type_id) ?? [],
+      );
     } else {
       setName("");
       setActive(true);
-      setSelectedTypeId(undefined);
+      setSelectedTypeIds([]);
     }
   };
 
@@ -356,10 +364,10 @@ function BrandSheet({
         id: initialData?.id ?? 0,
         name,
         is_Active: active,
-        type_id: selectedTypeId,
-      });
+        type_ids: selectedTypeIds,
+      } as any);
       setName("");
-      setSelectedTypeId(undefined);
+      setSelectedTypeIds([]);
       onOpenChange(false);
     } catch (error) {
       console.error(error);
@@ -399,25 +407,33 @@ function BrandSheet({
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="product-type">Product Type</Label>
-            <Select
-              value={selectedTypeId?.toString()}
-              onValueChange={(value: string) =>
-                setSelectedTypeId(Number(value))
-              }
-              disabled={isEdit}
-            >
-              <SelectTrigger>
-                <SelectValue placeholder="Select a product type" />
-              </SelectTrigger>
-              <SelectContent>
-                {productTypes.map((type) => (
-                  <SelectItem key={type.id} value={type.id.toString()}>
+            <Label htmlFor="product-type">Product Types</Label>
+            <div className="space-y-2 max-h-32 overflow-y-auto border rounded-md p-2">
+              {productTypes.map((type) => (
+                <div key={type.id} className="flex items-center space-x-2">
+                  <Checkbox
+                    id={`product-type-${type.id}`}
+                    checked={selectedTypeIds.includes(type.id)}
+                    onCheckedChange={(checked) => {
+                      if (checked) {
+                        setSelectedTypeIds([...selectedTypeIds, type.id]);
+                      } else {
+                        setSelectedTypeIds(
+                          selectedTypeIds.filter((id) => id !== type.id),
+                        );
+                      }
+                    }}
+                    disabled={false}
+                  />
+                  <Label
+                    htmlFor={`product-type-${type.id}`}
+                    className="text-sm"
+                  >
                     {type.name}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+                  </Label>
+                </div>
+              ))}
+            </div>
           </div>
 
           <div className="flex items-center space-x-2">
@@ -431,15 +447,15 @@ function BrandSheet({
         <SheetFooter>
           <Button
             onClick={handleSubmit}
-            disabled={isLoading || (!isEdit && !selectedTypeId)}
+            disabled={isLoading || (!isEdit && selectedTypeIds.length === 0)}
           >
             {isLoading
               ? isEdit
                 ? "Updating..."
-                : "Saving..."
+                : `Saving${selectedTypeIds.length > 1 ? ` ${selectedTypeIds.length} types` : ""}...`
               : isEdit
                 ? "Update Brand"
-                : "Save Brand"}
+                : `Save Brand${selectedTypeIds.length > 1 ? ` & ${selectedTypeIds.length} types` : ""}`}
           </Button>
         </SheetFooter>
       </SheetContent>

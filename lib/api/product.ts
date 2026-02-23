@@ -240,6 +240,29 @@ export class ProductService {
     }
   }
 
+  static async createBrandWithMultipleTypes(
+    name: string,
+    type_ids: number[],
+    is_Active: boolean = true,
+  ): Promise<{ brand: Brand; brandTypes: BrandType[] }> {
+    try {
+      // Create the brand first
+      const brand = await this.createBrand(name, is_Active);
+
+      // Then create all brand-type associations
+      const brandTypes: BrandType[] = [];
+      for (const type_id of type_ids) {
+        const brandType = await this.createBrandType(brand.id, type_id);
+        brandTypes.push(brandType);
+      }
+
+      return { brand, brandTypes };
+    } catch (error) {
+      console.error("Error creating brand with multiple types:", error);
+      throw error;
+    }
+  }
+
   static async updateBrand(
     id: number,
     name?: string,
@@ -286,6 +309,77 @@ export class ProductService {
       return data;
     } catch (error) {
       console.error("Error updating brand:", error);
+      throw error;
+    }
+  }
+
+  static async updateBrandWithTypes(
+    brand_id: number,
+    type_ids: number[],
+  ): Promise<Brand> {
+    try {
+      // First, get existing brand-type associations for this brand
+      const { data: existingAssociations, error: fetchError } = await supabase
+        .from("brand_type")
+        .select("type_id")
+        .eq("brand_id", brand_id);
+
+      if (fetchError) {
+        throw fetchError;
+      }
+
+      const existingTypeIds =
+        existingAssociations?.map((bt) => bt.type_id) || [];
+
+      // Remove associations that are no longer needed
+      const toRemove = existingTypeIds.filter((id) => !type_ids.includes(id));
+
+      // Add new associations
+      const toAdd = type_ids.filter((id) => !existingTypeIds.includes(id));
+
+      // Delete removed associations
+      if (toRemove.length > 0) {
+        const { error: deleteError } = await supabase
+          .from("brand_type")
+          .delete()
+          .eq("brand_id", brand_id)
+          .in("type_id", toRemove);
+
+        if (deleteError) {
+          throw deleteError;
+        }
+      }
+
+      // Add new associations
+      if (toAdd.length > 0) {
+        const newAssociations = toAdd.map((type_id) => ({
+          brand_id,
+          type_id,
+        }));
+
+        const { error: insertError } = await supabase
+          .from("brand_type")
+          .insert(newAssociations);
+
+        if (insertError) {
+          throw insertError;
+        }
+      }
+
+      // Return updated brand
+      const { data: brand, error: brandError } = await supabase
+        .from("brands")
+        .select("*")
+        .eq("id", brand_id)
+        .single();
+
+      if (brandError || !brand) {
+        throw new Error("Failed to update brand");
+      }
+
+      return brand;
+    } catch (error) {
+      console.error("Error updating brand with types:", error);
       throw error;
     }
   }

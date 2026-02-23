@@ -31,7 +31,7 @@ export async function GET(request: Request) {
 export async function POST(request: Request) {
   try {
     const body = await request.json();
-    const { name, is_Active, type_id } = body;
+    const { name, is_Active, type_ids, type_id } = body;
 
     if (!name || typeof name !== "string" || name.trim() === "") {
       return NextResponse.json(
@@ -41,14 +41,21 @@ export async function POST(request: Request) {
     }
 
     let result;
-    if (type_id !== undefined) {
-      // Create brand with type association
-      if (typeof type_id !== "number") {
+    if (type_ids && Array.isArray(type_ids)) {
+      // Create brand with multiple types
+      if (type_ids.length === 0) {
         return NextResponse.json(
-          { error: "Type ID must be a number" },
+          { error: "At least one product type must be selected" },
           { status: 400 },
         );
       }
+      result = await ProductService.createBrandWithMultipleTypes(
+        name.trim(),
+        type_ids,
+        is_Active !== undefined ? is_Active : true,
+      );
+    } else if (type_id !== undefined) {
+      // Create brand with single type (backward compatibility)
       result = await ProductService.createBrandWithType(
         name.trim(),
         type_id,
@@ -84,7 +91,7 @@ export async function POST(request: Request) {
 export async function PUT(request: Request) {
   try {
     const body = await request.json();
-    const { id, name, is_Active } = body;
+    const { id, name, is_Active, type_ids } = body;
 
     if (!id || typeof id !== "number") {
       return NextResponse.json(
@@ -93,22 +100,23 @@ export async function PUT(request: Request) {
       );
     }
 
-    if (!name && is_Active === undefined) {
+    if (!name && !type_ids) {
       return NextResponse.json(
-        {
-          error:
-            "At least one field (name or is_Active) must be provided for update",
-        },
+        { error: "At least name or type_ids must be provided for update" },
         { status: 400 },
       );
     }
 
-    const brand = await ProductService.updateBrand(
-      id,
-      name ? name.trim() : undefined,
-      is_Active,
-    );
-    return NextResponse.json(brand);
+    let result;
+    if (type_ids && Array.isArray(type_ids)) {
+      // Update brand with multiple types
+      result = await ProductService.updateBrandWithTypes(id, type_ids);
+    } else {
+      // Update brand info only (backward compatibility)
+      result = await ProductService.updateBrand(id, name, is_Active);
+    }
+
+    return NextResponse.json(result);
   } catch (error) {
     console.error("API Error:", error);
     if (error instanceof Error && error.message === "Brand not found") {
