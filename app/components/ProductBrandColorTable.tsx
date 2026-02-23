@@ -110,7 +110,7 @@ const fetchSizes = async () => {
   }
 };
 
-export default function ProductBrandSizesTable({
+export default function ProductBrandColorTable({
   refetchSize,
 }: {
   refetchSize: number;

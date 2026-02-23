@@ -6,13 +6,18 @@ import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { User } from "@/types/login";
 import { RefreshCw, Menu, MoreHorizontal } from "lucide-react";
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
 import AdminSidebar from "@/app/components/AdminSidebar";
 import ProductTypesTab from "@/app/components/ProductTypesTab";
 import BrandsTab from "@/app/components/BrandsTab";
 import ColorsTab from "@/app/components/ColorsTab";
 import SizesTab from "@/app/components/SizesTab";
 import ProductBrandSizesTable from "@/app/components/ProductBrandSizesTable";
+import ProductBrandColorTable from "@/app/components/ProductBrandColorTable";
 
 export default function ProductsPage() {
   const [user, setUser] = useState<User | null>(null);
@@ -26,6 +31,7 @@ export default function ProductsPage() {
       : "/admin/products";
 
   const [refetchSize, setRefetchSize] = useState<number>(Date.now());
+  const [refetchColor, setRefetchColor] = useState<number>(Date.now());
   const [activeTab, setActiveTab] = useState("product-types");
   const isMoreActive = ["sizes"].includes(activeTab);
 
@@ -94,11 +100,11 @@ export default function ProductsPage() {
         <AdminSidebar
           user={null}
           sidebarOpen={false}
-          setSidebarOpen={() => { }}
-          onLogout={() => { }}
-          onNavigate={() => { }}
+          setSidebarOpen={() => {}}
+          onLogout={() => {}}
+          onNavigate={() => {}}
           isCollapsed={false}
-          onToggleCollapse={() => { }}
+          onToggleCollapse={() => {}}
           currentPath="/admin/products"
         />
         <div className="flex-1 lg:ml-64">
@@ -136,7 +142,9 @@ export default function ProductsPage() {
           >
             <Menu className="h-4 w-4" />
           </Button>
-          <h1 className="text-lg font-bold tracking-tight text-gray-900">Print Pro</h1>
+          <h1 className="text-lg font-bold tracking-tight text-gray-900">
+            Print Pro
+          </h1>
         </div>
       </header>
 
@@ -147,7 +155,9 @@ export default function ProductsPage() {
           {/* Header */}
           <div className="flex flex-row items-center justify-between gap-4 mb-6 sm:mb-8">
             <div>
-              <h1 className="text-xl sm:text-3xl font-bold text-gray-900">Products</h1>
+              <h1 className="text-xl sm:text-3xl font-bold text-gray-900">
+                Products
+              </h1>
               <p className="text-xs lg:text-base text-gray-600 mt-1 sm:mt-2">
                 Manage product types, brands, and colors
               </p>
@@ -167,7 +177,11 @@ export default function ProductsPage() {
           </div>
 
           {/* Tabs */}
-          <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
+          <Tabs
+            value={activeTab}
+            onValueChange={setActiveTab}
+            className="space-y-6"
+          >
             <TabsList className="w-full flex h-9 p-1 bg-gray-100 rounded-lg lg:grid lg:grid-cols-4 lg:h-10">
               {/* First 3 tabs: Always visible */}
               <TabsTrigger
@@ -204,12 +218,15 @@ export default function ProductsPage() {
                     <Button
                       variant="ghost"
                       size="sm"
-                      className={`h-8 w-8 p-0 rounded-md transition-colors ${isMoreActive ? 'bg-white shadow-sm text-gray-900 border border-gray-200' : 'text-gray-500 hover:bg-gray-200'}`}
+                      className={`h-8 w-8 p-0 rounded-md transition-colors ${isMoreActive ? "bg-white shadow-sm text-gray-900 border border-gray-200" : "text-gray-500 hover:bg-gray-200"}`}
                     >
                       <MoreHorizontal className="h-4 w-4" />
                     </Button>
                   </PopoverTrigger>
-                  <PopoverContent className="w-40 p-1 flex flex-col gap-1" align="end">
+                  <PopoverContent
+                    className="w-40 p-1 flex flex-col gap-1"
+                    align="end"
+                  >
                     <TabsTrigger
                       value="sizes"
                       className="w-full justify-start text-xs sm:text-sm px-2 py-1.5 data-[state=active]:bg-gray-100"
@@ -233,8 +250,9 @@ export default function ProductsPage() {
             </TabsContent>
 
             {/* Colors Tab */}
-            <TabsContent value="colors">
-              <ColorsTab />
+            <TabsContent value="colors" className="space-y-6">
+              <ColorsTab setRefetchColor={setRefetchColor} />
+              <ProductBrandColorTable refetchSize={refetchColor} />
             </TabsContent>
             {/* Sizes Tab */}
             <TabsContent value="sizes" className="space-y-6">
