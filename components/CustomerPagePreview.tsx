@@ -20,10 +20,11 @@ import { CustomerWithOrders } from "@/types/customer";
 import { Badge } from "@/components/ui/badge";
 import OrderProductPreview from "./OrderProductPreview";
 import CustomerPageSkeleton from "./CustomerPageSkeleton";
+import OrderHistorySkeleton from "./OrderHistorySkeleton";
 import { CustomerService } from "@/lib/api/customer";
 
 export default function CustomersTab() {
-    const [customers, setCustomers] = useState<CustomerWithOrders[]>([]);
+    const [customers, setCustomers] = useState<(CustomerWithOrders & { isLoadingOrders?: boolean; ordersLoaded?: boolean })[]>([]);
     const [isFetchingCustomers, setIsFetchingCustomers] = useState(false);
     const [error, setError] = useState<string | null>(null);
     const [expandedRows, setExpandedRows] = useState<Set<string>>(new Set());
@@ -32,13 +33,34 @@ export default function CustomersTab() {
         try {
             setError(null);
             setIsFetchingCustomers(true);
-            const data = await CustomerService.getCustomersWithOrders();
+            const data = await CustomerService.getCustomers();
             setCustomers(data || []);
         } catch (error) {
             console.error("Fetch error:", error);
             setError(error instanceof Error ? error.message : "Something went wrong");
         } finally {
             setIsFetchingCustomers(false);
+        }
+    };
+
+    const fetchCustomerOrders = async (customerId: string) => {
+        const customer = customers.find(c => c.id === customerId);
+        if (!customer || customer.ordersLoaded || customer.isLoadingOrders) return;
+
+        setCustomers(prev => prev.map(c =>
+            c.id === customerId ? { ...c, isLoadingOrders: true } : c
+        ));
+
+        try {
+            const orders = await CustomerService.getCustomerOrders(customerId);
+            setCustomers(prev => prev.map(c =>
+                c.id === customerId ? { ...c, orders, isLoadingOrders: false, ordersLoaded: true } : c
+            ));
+        } catch (error) {
+            console.error("Error fetching customer orders:", error);
+            setCustomers(prev => prev.map(c =>
+                c.id === customerId ? { ...c, isLoadingOrders: false } : c
+            ));
         }
     };
 
@@ -52,6 +74,7 @@ export default function CustomersTab() {
             newExpandedRows.delete(id);
         } else {
             newExpandedRows.add(id);
+            fetchCustomerOrders(id);
         }
         setExpandedRows(newExpandedRows);
     };
@@ -120,7 +143,9 @@ export default function CustomersTab() {
                                                             <Package className="h-4 w-4" />
                                                             Order History
                                                         </h4>
-                                                        {!customer.orders || customer.orders.length === 0 ? (
+                                                        {customer.isLoadingOrders ? (
+                                                            <OrderHistorySkeleton />
+                                                        ) : !customer.orders || customer.orders.length === 0 || !customer.orders[0].id ? (
                                                             <p className="text-sm text-gray-500 pl-6">No order records found.</p>
                                                         ) : (
                                                             <div className="grid gap-6">
