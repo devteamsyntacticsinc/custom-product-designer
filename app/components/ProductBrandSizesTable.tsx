@@ -21,10 +21,16 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { cn } from "@/lib/utils";
-import { BrandGroup, Size, SizeProduct } from "@/types/product";
+import {
+  Brand,
+  BrandGroup,
+  ProductType,
+  Size,
+  SizeProduct,
+  BrandTypeWithDetails,
+} from "@/types/product";
 import axios, { AxiosError } from "axios";
 import { useToast } from "@/contexts/ToastContext";
 import {
@@ -75,6 +81,48 @@ const fetchSizeProducts = async () => {
   }
 };
 
+const fetchProductTypes = async () => {
+  try {
+    const response = await axios.get("/api/product-types");
+    if (!response.data) {
+      throw new Error("Failed to fetch product types");
+    }
+    const data = response.data;
+    return data;
+  } catch (error) {
+    console.error("Error fetching product types:", error);
+    return [];
+  }
+};
+
+const fetchBrandTypes = async () => {
+  try {
+    const response = await axios.get("/api/brand-types");
+    if (!response.data) {
+      throw new Error("Failed to fetch brand types");
+    }
+    const data = response.data;
+    return data;
+  } catch (error) {
+    console.error("Error fetching brand types:", error);
+    return [];
+  }
+};
+
+const fetchBrands = async () => {
+  try {
+    const response = await axios.get("/api/brands");
+    if (!response.data) {
+      throw new Error("Failed to fetch brands");
+    }
+    const data = response.data;
+    return data;
+  } catch (error) {
+    console.error("Error fetching brands:", error);
+    return [];
+  }
+};
+
 // Fetch sizes from API
 const fetchSizes = async () => {
   try {
@@ -96,6 +144,9 @@ export default function ProductBrandSizesTable({
   refetchSize: number;
 }) {
   const [sizeProducts, setSizeProducts] = useState<SizeProduct[]>([]);
+  const [productTypes, setProductTypes] = useState<ProductType[]>([]);
+  const [brands, setBrands] = useState<Brand[]>([]);
+  const [brandTypes, setBrandTypes] = useState<BrandTypeWithDetails[]>([]);
   const [sizes, setSizes] = useState<Size[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
@@ -119,6 +170,15 @@ export default function ProductBrandSizesTable({
         const data = await fetchSizeProducts();
         setSizeProducts(data);
         setOriginalState(data);
+
+        const productTypesData = await fetchProductTypes();
+        setProductTypes(productTypesData);
+
+        const brandsData = await fetchBrands();
+        setBrands(brandsData);
+
+        const brandTypesData = await fetchBrandTypes();
+        setBrandTypes(brandTypesData);
 
         // Fetch sizes and set them
         const sizesData = await fetchSizes();
@@ -175,10 +235,11 @@ export default function ProductBrandSizesTable({
         brandTypes: Map<number, BrandGroup>;
       }
     >();
-    // ✅ First, seed ALL brands from originalState so they always appear
-    originalState.forEach((item) => {
-      const productTypeName = item.brand_type?.product_type?.name || "Unknown";
-      const brandName = item.brand_type?.brands?.name || "Unknown";
+
+    // First, build complete structure from ALL brand-types relationships
+    brandTypes.forEach((brandType) => {
+      const productTypeName = brandType.product_type.name;
+      const brandName = brandType.brands.name;
 
       if (!map.has(productTypeName)) {
         map.set(productTypeName, { productTypeName, brandTypes: new Map() });
@@ -186,18 +247,22 @@ export default function ProductBrandSizesTable({
 
       const productGroup = map.get(productTypeName)!;
 
-      if (!productGroup.brandTypes.has(item.brand_type.id)) {
-        productGroup.brandTypes.set(item.brand_type.id, {
-          brandTypeId: item.brand_type.id,
+      if (!productGroup.brandTypes.has(brandType.id)) {
+        productGroup.brandTypes.set(brandType.id, {
+          brandTypeId: brandType.id,
           brandName,
-          sizes: new Set(), // Start empty — sizes will be added below
-          brandTypeRef: item.brand_type,
-          sizeId: item.size_id,
+          sizes: new Set(), // Start empty — sizes will be populated below
+          brandTypeRef: {
+            id: brandType.id,
+            brands: { name: brandName },
+            product_type: { name: productTypeName },
+          },
+          sizeId: 0, // Will be set when sizes are added
         });
       }
     });
 
-    // ✅ Then, populate only the currently checked sizes from sizeProducts
+    // Then, populate sizes from existing size products
     sizeProducts.forEach((item) => {
       const productTypeName = item.brand_type?.product_type?.name || "Unknown";
       const productGroup = map.get(productTypeName);
@@ -209,13 +274,19 @@ export default function ProductBrandSizesTable({
       brandTypeGroup.sizes.add(item.sizes.value);
     });
 
-    return Array.from(map.values()).map((group) => ({
-      productTypeName: group.productTypeName,
-      brands: Array.from(group.brandTypes.values()).sort((a, b) =>
-        a.brandName.localeCompare(b.brandName),
-      ),
-    }));
-  }, [sizeProducts, originalState]);
+    return Array.from(map.values())
+      .sort((a, b) =>
+        b.productTypeName.localeCompare(a.productTypeName, undefined, {
+          sensitivity: "base",
+        }),
+      )
+      .map((group) => ({
+        productTypeName: group.productTypeName,
+        brands: Array.from(group.brandTypes.values()).sort((a, b) =>
+          a.brandName.localeCompare(b.brandName),
+        ),
+      }));
+  }, [brandTypes, sizeProducts]);
 
   // Handles the expansion of each product type using a button
   const toggleTypeExpanded = (
@@ -243,11 +314,13 @@ export default function ProductBrandSizesTable({
 
   // Handles the "ALL" checkbox functionality
   const handleAllToggle = (brand: BrandGroup, isChecked: boolean) => {
+    // Use the brandTypeRef from the brand group, or find it from existing data
     const brandTypeRef =
+      brand.brandTypeRef ||
       sizeProducts.find((item) => item.brand_type.id === brand.brandTypeId)
-        ?.brand_type ??
+        ?.brand_type ||
       originalState.find((item) => item.brand_type.id === brand.brandTypeId)
-        ?.brand_type; // ✅ fallback
+        ?.brand_type;
 
     if (!brandTypeRef) return;
 
@@ -310,10 +383,16 @@ export default function ProductBrandSizesTable({
       if (existingIndex !== -1) {
         newProducts = prev.filter((_, idx) => idx !== existingIndex);
       } else {
+        // Find brand type reference from current brand groups or existing data
+        const brandGroup = groupedByProductType
+          .flatMap((group) => group.brands)
+          .find((brand) => brand.brandTypeId === brandTypeId);
+
         const brandTypeRef =
-          prev.find((item) => item.brand_type.id === brandTypeId)?.brand_type ??
+          brandGroup?.brandTypeRef ||
+          prev.find((item) => item.brand_type.id === brandTypeId)?.brand_type ||
           originalState.find((item) => item.brand_type.id === brandTypeId)
-            ?.brand_type; // ✅ fallback
+            ?.brand_type;
 
         if (!brandTypeRef) return prev;
 
@@ -395,7 +474,10 @@ export default function ProductBrandSizesTable({
 
   return (
     <Card
-      className={cn("relative py-4 sm:py-6 max-w-full overflow-hidden", hasChanges && "pb-[120px] sm:pb-[105px]")}
+      className={cn(
+        "relative py-4 sm:py-6 max-w-full overflow-hidden",
+        hasChanges && "pb-[120px] sm:pb-[105px]",
+      )}
     >
       <CardHeader className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
         <div>
@@ -438,154 +520,164 @@ export default function ProductBrandSizesTable({
       <CardContent className="space-y-6">
         {isLoading
           ? // Skeleton Loader
-          Array.from({ length: 3 }).map((_, index) => (
-            <div key={index} className="space-y-4">
-              <div className="flex items-center gap-3 pb-4 border-b border-border">
-                <div className="w-10 h-10 bg-muted animate-pulse rounded-md" />
-                <div className="h-6 w-32 bg-muted animate-pulse rounded-md" />
-                <div className="h-5 w-16 bg-muted animate-pulse rounded-md ml-auto" />
-              </div>
-              <div className="w-full overflow-x-auto border rounded-md">
-                <Table className="w-full min-w-max border-collapse">
-                  <TableHeader className="border-b border-border">
-                    <TableRow className="hover:bg-transparent">
-                      <TableHead className="text-muted-foreground sticky left-0 bg-background z-20 px-4 border-r min-w-[140px] sm:min-w-[180px]">
-                        Brand Name
-                      </TableHead>
-                      <TableHead className="text-muted-foreground text-center min-w-[70px] sm:min-w-24">
-                        ALL
-                      </TableHead>
-                      {Array.from({ length: 6 }).map((_, index) => (
-                        <TableHead
-                          key={index}
-                          className="text-muted-foreground text-center min-w-[70px] sm:min-w-24"
-                        >
-                          <Skeleton className="h-5 w-12 mx-auto" />
-                        </TableHead>
-                      ))}
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {Array.from({ length: 4 }).map((_, brandIndex) => (
-                      <TableRow
-                        key={brandIndex}
-                        className="border-border hover:bg-secondary/30 transition-colors"
-                      >
-                        <TableCell className="text-foreground font-medium sticky left-0 bg-background z-10 px-4 border-r min-w-[140px] sm:min-w-[180px]">
-                          <Skeleton className="h-5 w-24" />
-                        </TableCell>
-                        <TableCell className="text-center">
-                          <Skeleton className="size-5 sm:size-7 mx-auto" />
-                        </TableCell>
-                        {Array.from({ length: 6 }).map((_, size) => (
-                          <TableCell key={size} className="text-center">
-                            <Skeleton className="size-5 sm:size-7 mx-auto" />
-                          </TableCell>
-                        ))}
-                      </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
-              </div>
-            </div>
-          ))
-          : groupedByProductType.map((productTypeGroup) => (
-            <div key={productTypeGroup.productTypeName} className="space-y-4">
-              <div className="flex items-center gap-3 pb-4 border-b border-border">
-                <Button
-                  onClick={() =>
-                    toggleTypeExpanded(productTypeGroup.productTypeName)
-                  }
-                  variant="ghost"
-                  className="cursor-pointer gap-2 pl-1 h-8 sm:h-10"
-                >
-                  {expandedTypes.has(productTypeGroup.productTypeName) ? (
-                    <ChevronDown className="size-4 sm:size-5" />
-                  ) : (
-                    <ChevronRight className="size-4 sm:size-5" />
-                  )}
-                  <h2 className="text-lg sm:text-xl font-semibold text-foreground">
-                    {productTypeGroup.productTypeName}
-                  </h2>
-                </Button>
-                <span className="text-[10px] sm:text-sm text-muted-foreground ml-auto">
-                  {productTypeGroup.brands.length} brand
-                  {productTypeGroup.brands.length !== 1 ? "s" : ""}
-                </span>
-              </div>
-              <div className="w-full overflow-x-auto scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-transparent border rounded-md">
-                {expandedTypes.has(productTypeGroup.productTypeName) && (
+            Array.from({ length: 3 }).map((_, index) => (
+              <div key={index} className="space-y-4">
+                <div className="flex items-center gap-3 pb-4 border-b border-border">
+                  <div className="w-10 h-10 bg-muted animate-pulse rounded-md" />
+                  <div className="h-6 w-32 bg-muted animate-pulse rounded-md" />
+                  <div className="h-5 w-16 bg-muted animate-pulse rounded-md ml-auto" />
+                </div>
+                <div className="w-full overflow-x-auto border rounded-md">
                   <Table className="w-full min-w-max border-collapse">
                     <TableHeader className="border-b border-border">
-                      <TableRow className="hover:bg-transparent h-10 sm:h-12">
-                        <TableHead className="text-muted-foreground sticky left-0 bg-background z-30 px-2 sm:px-4 border-r min-w-[110px] sm:min-w-[180px] shadow-[2px_0_5px_-2px_rgba(0,0,0,0.05)] text-[10px] sm:text-xs">
+                      <TableRow className="hover:bg-transparent">
+                        <TableHead className="text-muted-foreground sticky left-0 bg-background z-20 px-4 border-r min-w-[140px] sm:min-w-[180px]">
                           Brand Name
                         </TableHead>
-                        <TableHead className="text-muted-foreground text-center min-w-[50px] sm:min-w-24 px-2 sm:px-4 text-[10px] sm:text-xs">
+                        <TableHead className="text-muted-foreground text-center min-w-[70px] sm:min-w-24">
                           ALL
                         </TableHead>
-                        {sizes
-                          .sort(
-                            (a, b) =>
-                              getSizeOrder(a.value) - getSizeOrder(b.value),
-                          )
-                          .map(({ id, value }) => (
-                            <Tooltip key={id}>
-                              <TooltipTrigger asChild>
-                                <TableHead
-                                  key={id}
-                                  className="text-muted-foreground text-center min-w-[60px] sm:min-w-24 px-2 sm:px-4 text-[10px] sm:text-xs"
-                                >
-                                  {value}
-                                </TableHead>
-                              </TooltipTrigger>
-                              <TooltipContent>{value}</TooltipContent>
-                            </Tooltip>
-                          ))}
+                        {Array.from({ length: 6 }).map((_, index) => (
+                          <TableHead
+                            key={index}
+                            className="text-muted-foreground text-center min-w-[70px] sm:min-w-24"
+                          >
+                            <Skeleton className="h-5 w-12 mx-auto" />
+                          </TableHead>
+                        ))}
                       </TableRow>
                     </TableHeader>
                     <TableBody>
-                      {productTypeGroup.brands.map((brand) => (
+                      {Array.from({ length: 4 }).map((_, brandIndex) => (
                         <TableRow
-                          key={`${brand.brandTypeId}-${brand.brandName}`}
-                          className="border-border hover:bg-secondary/30 transition-colors group h-10 sm:h-12"
+                          key={brandIndex}
+                          className="border-border hover:bg-secondary/30 transition-colors"
                         >
-                          <TableCell className="text-foreground font-medium sticky left-0 bg-background z-20 px-2 sm:px-4 border-r whitespace-nowrap min-w-[110px] sm:min-w-[180px] shadow-[2px_0_5px_-2px_rgba(0,0,0,0.05)] group-hover:bg-[#f4f4f5] dark:group-hover:bg-[#18181b] transition-colors text-[11px] sm:text-sm">
-                            {brand.brandName}
+                          <TableCell className="text-foreground font-medium sticky left-0 bg-background z-10 px-4 border-r min-w-[140px] sm:min-w-[180px]">
+                            <Skeleton className="h-5 w-24" />
                           </TableCell>
-                          <TableCell className="text-center px-2 sm:px-4">
-                            <Checkbox
-                              checked={isAllChecked(brand)}
-                              onCheckedChange={(checked) =>
-                                handleAllToggle(brand, checked as boolean)
-                              }
-                              className="cursor-pointer size-4 sm:size-6"
-                            />
+                          <TableCell className="text-center">
+                            <Skeleton className="size-5 sm:size-7 mx-auto" />
                           </TableCell>
-                          {sizes.map(({ id, value }) => (
-                            <TableCell key={id} className="text-center px-2 sm:px-4">
-                              <Checkbox
-                                checked={brand.sizes.has(value)}
-                                onCheckedChange={() =>
-                                  handleSizeChange(
-                                    brand.brandTypeId,
-                                    brand.brandName,
-                                    value,
-                                    id, // Use the correct size_id from mapping
-                                  )
-                                }
-                                className="cursor-pointer size-4 sm:size-6"
-                              />
+                          {Array.from({ length: 6 }).map((_, size) => (
+                            <TableCell key={size} className="text-center">
+                              <Skeleton className="size-5 sm:size-7 mx-auto" />
                             </TableCell>
                           ))}
                         </TableRow>
                       ))}
                     </TableBody>
                   </Table>
-                )}
+                </div>
               </div>
-            </div>
-          ))}
+            ))
+          : groupedByProductType.map((productTypeGroup) => (
+              <div key={productTypeGroup.productTypeName} className="space-y-4">
+                <div className="flex items-center gap-3 pb-4 border-b border-border">
+                  <Button
+                    onClick={() =>
+                      toggleTypeExpanded(productTypeGroup.productTypeName)
+                    }
+                    variant="ghost"
+                    className="cursor-pointer gap-2 pl-1 h-8 sm:h-10"
+                  >
+                    {expandedTypes.has(productTypeGroup.productTypeName) ? (
+                      <ChevronDown className="size-4 sm:size-5" />
+                    ) : (
+                      <ChevronRight className="size-4 sm:size-5" />
+                    )}
+                    <h2 className="text-lg sm:text-xl font-semibold text-foreground">
+                      {productTypeGroup.productTypeName}
+                    </h2>
+                  </Button>
+                  <span className="text-[10px] sm:text-sm text-muted-foreground ml-auto">
+                    {productTypeGroup.brands.length} brand
+                    {productTypeGroup.brands.length !== 1 ? "s" : ""}
+                  </span>
+                </div>
+                <div
+                  className={cn(
+                    "w-full overflow-x-auto scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-transparent rounded-md",
+                    expandedTypes.has(productTypeGroup.productTypeName)
+                      ? "border"
+                      : "",
+                  )}
+                >
+                  {expandedTypes.has(productTypeGroup.productTypeName) && (
+                    <Table className="w-full min-w-max border-collapse">
+                      <TableHeader className="border-b border-border">
+                        <TableRow className="hover:bg-transparent h-10 sm:h-12">
+                          <TableHead className="text-muted-foreground sticky left-0 bg-background z-30 px-2 sm:px-4 border-r min-w-[110px] sm:min-w-[180px] shadow-[2px_0_5px_-2px_rgba(0,0,0,0.05)] text-[10px] sm:text-xs">
+                            Brand Name
+                          </TableHead>
+                          <TableHead className="text-muted-foreground text-center min-w-[50px] sm:min-w-24 px-2 sm:px-4 text-[10px] sm:text-xs">
+                            ALL
+                          </TableHead>
+                          {sizes
+                            .sort(
+                              (a, b) =>
+                                getSizeOrder(a.value) - getSizeOrder(b.value),
+                            )
+                            .map(({ id, value }) => (
+                              <Tooltip key={id}>
+                                <TooltipTrigger asChild>
+                                  <TableHead
+                                    key={id}
+                                    className="text-muted-foreground text-center min-w-[60px] sm:min-w-24 px-2 sm:px-4 text-[10px] sm:text-xs"
+                                  >
+                                    {value}
+                                  </TableHead>
+                                </TooltipTrigger>
+                                <TooltipContent>{value}</TooltipContent>
+                              </Tooltip>
+                            ))}
+                        </TableRow>
+                      </TableHeader>
+                      <TableBody>
+                        {productTypeGroup.brands.map((brand) => (
+                          <TableRow
+                            key={`${brand.brandTypeId}-${brand.brandName}`}
+                            className="border-border hover:bg-secondary/30 transition-colors group h-10 sm:h-12"
+                          >
+                            <TableCell className="text-foreground font-medium sticky left-0 bg-background z-20 px-2 sm:px-4 border-r whitespace-nowrap min-w-[110px] sm:min-w-[180px] shadow-[2px_0_5px_-2px_rgba(0,0,0,0.05)] group-hover:bg-[#f4f4f5] dark:group-hover:bg-[#18181b] transition-colors text-[11px] sm:text-sm">
+                              {brand.brandName}
+                            </TableCell>
+                            <TableCell className="text-center px-2 sm:px-4">
+                              <Checkbox
+                                checked={isAllChecked(brand)}
+                                onCheckedChange={(checked) =>
+                                  handleAllToggle(brand, checked as boolean)
+                                }
+                                className="cursor-pointer size-4 sm:size-6"
+                              />
+                            </TableCell>
+                            {sizes.map(({ id, value }) => (
+                              <TableCell
+                                key={id}
+                                className="text-center px-2 sm:px-4"
+                              >
+                                <Checkbox
+                                  checked={brand.sizes.has(value)}
+                                  onCheckedChange={() =>
+                                    handleSizeChange(
+                                      brand.brandTypeId,
+                                      brand.brandName,
+                                      value,
+                                      id, // Use the correct size_id from mapping
+                                    )
+                                  }
+                                  className="cursor-pointer size-4 sm:size-6"
+                                />
+                              </TableCell>
+                            ))}
+                          </TableRow>
+                        ))}
+                      </TableBody>
+                    </Table>
+                  )}
+                </div>
+              </div>
+            ))}
       </CardContent>
 
       {hasChanges && (
@@ -608,7 +700,11 @@ export default function ProductBrandSizesTable({
                 Discard
               </Button>
               <SaveChangesDialog onSubmit={handleSave} isSaving={isSaving}>
-                <Button size="sm" disabled={isSaving} className="flex-1 sm:flex-none cursor-pointer">
+                <Button
+                  size="sm"
+                  disabled={isSaving}
+                  className="flex-1 sm:flex-none cursor-pointer"
+                >
                   {isSaving ? "Saving..." : "Save Changes"}
                 </Button>
               </SaveChangesDialog>
