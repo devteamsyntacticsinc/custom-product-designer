@@ -44,32 +44,8 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 import { Checkbox } from "@/components/ui/checkbox";
 import { useToast } from "@/contexts/ToastContext";
-
-const fetchBrands = async () => {
-  const response = await axios.get(`/api/brands`);
-
-  if (!response.data) {
-    throw new Error("Failed to fetch brands");
-  }
-  return response.data;
-};
-
-const fetchProductTypes = async () => {
-  const response = await axios.get(`/api/product-types`);
-  if (!response.data) {
-    throw new Error("Failed to fetch product types");
-  }
-  return response.data;
-};
 
 interface BrandExtended extends Brand {
   brand_type: {
@@ -85,42 +61,44 @@ export default function BrandsTab() {
   const [error, setError] = useState<string | null>(null);
   const { addToast } = useToast();
 
-  useEffect(() => {
-    const fetchData = async () => {
-      try {
-        setError(null);
-        setIsFetchingBrands(true);
+  const fetchData = async () => {
+    try {
+      setError(null);
+      setIsFetchingBrands(true);
 
-        // Fetch brands
-        const brands = await fetchBrands();
-        setBrands(brands);
+      // Fetch brands
+      const brands = await axios.get(`/api/brands`);
 
-        // Fetch product types
-        const productTypes = await fetchProductTypes();
-        setProductTypes(productTypes);
-      } catch (error) {
-        const axiosError = error as AxiosError<{
-          error?: string;
-          message?: string;
-        }>;
-
-        const message =
-          axiosError.response?.data?.error ||
-          axiosError.response?.data?.message ||
-          axiosError.message ||
-          "Failed to fetch data";
-
-        console.error(message);
-        addToast("error", message);
-        setError(
-          error instanceof Error ? error.message : "Something went wrong",
-        );
-      } finally {
-        setIsFetchingBrands(false);
+      if (!brands.data) {
+        throw new Error("Failed to fetch brands");
       }
-    };
-    fetchData();
-  }, []);
+      setBrands(brands.data);
+
+      // Fetch product types
+      const productTypes = await axios.get(`/api/product-types`);
+      if (!productTypes.data) {
+        throw new Error("Failed to fetch product types");
+      }
+      setProductTypes(productTypes.data);
+    } catch (error) {
+      const axiosError = error as AxiosError<{
+        error?: string;
+        message?: string;
+      }>;
+
+      const message =
+        axiosError.response?.data?.error ||
+        axiosError.response?.data?.message ||
+        axiosError.message ||
+        "Failed to fetch data";
+
+      console.error(message);
+      addToast("error", message);
+      setError(error instanceof Error ? error.message : "Something went wrong");
+    } finally {
+      setIsFetchingBrands(false);
+    }
+  };
 
   const handleSubmitBrand = async (
     payload: Brand & { is_Active: boolean; type_ids?: number[] },
@@ -167,7 +145,7 @@ export default function BrandsTab() {
         addToast("success", "Brand saved successfully");
       }
 
-      await fetchBrands();
+      await fetchData();
     } catch (error) {
       const axiosError = error as AxiosError<{
         error?: string;
@@ -185,6 +163,10 @@ export default function BrandsTab() {
       setIsMutating(false);
     }
   };
+
+  useEffect(() => {
+    fetchData();
+  }, []);
 
   return (
     <Card className="overflow-hidden">
@@ -296,7 +278,7 @@ export default function BrandsTab() {
                           isLoading={isMutating}
                           setIsLoading={setIsMutating}
                           brand={brand}
-                          fetchBrands={fetchBrands}
+                          fetchBrands={fetchData}
                         >
                           <Button
                             variant="ghost"
