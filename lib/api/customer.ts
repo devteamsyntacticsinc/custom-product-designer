@@ -1,5 +1,5 @@
 import { supabase } from "@/lib/supabase"
-import { Customer, CustomerWithOrders } from "@/types/customer"
+import { CustomerWithOrders } from "@/types/customer"
 
 export class CustomerService {
     static async getCustomers(): Promise<CustomerWithOrders[]> {
