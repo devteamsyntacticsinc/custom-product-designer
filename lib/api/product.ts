@@ -7,6 +7,7 @@ import {
   Size,
   BrandType,
   ColorBrandTypeWithDetails,
+  BrandTypeWithDetails,
 } from "@/types/product";
 
 export class ProductService {
@@ -1218,7 +1219,8 @@ export class ProductService {
           )
         `,
         )
-        .order("id");
+        .order("id")
+        .overrideTypes<BrandTypeWithDetails[]>();
 
       if (error) {
         throw error;
@@ -1227,8 +1229,8 @@ export class ProductService {
       return (
         data?.map((item) => ({
           ...item,
-          brand_name: item.brands?.[0]?.name,
-          product_type_name: item.product_type?.[0]?.name,
+          brand_name: item.brands?.name,
+          product_type_name: item.product_type?.name,
         })) || []
       );
     } catch (error) {
@@ -1393,8 +1395,12 @@ export class ProductService {
           brandT_id, 
           color_id,
           brand_type (
+            id,
             brand_id,
             brands!inner (
+              name
+            ),
+            product_type!inner (
               name
             )
           ),
@@ -1558,13 +1564,104 @@ export class ProductService {
 
   static async deleteColorBrandType(id: number): Promise<void> {
     try {
-      const { error } = await supabase.from("color_products").delete().eq("id", id);
+      const { error } = await supabase
+        .from("color_products")
+        .delete()
+        .eq("id", id);
 
       if (error) {
         throw error;
       }
     } catch (error) {
       console.error("Error deleting color brand type:", error);
+      throw error;
+    }
+  }
+
+  static async batchCreateColorProducts(
+    items: { brandT_id: number; color_id: number }[],
+  ) {
+    try {
+      if (items.length === 0) return [];
+
+      // Validate all brand_types exist
+      const brandTypeIds = [...new Set(items.map((item) => item.brandT_id))];
+      const { data: existingBrandTypes, error: brandTypeError } = await supabase
+        .from("brand_type")
+        .select("id")
+        .in("id", brandTypeIds);
+
+      if (brandTypeError) throw brandTypeError;
+      if (
+        !existingBrandTypes ||
+        existingBrandTypes.length !== brandTypeIds.length
+      ) {
+        throw new Error("One or more brand types not found");
+      }
+
+      // Validate all colors exist
+      const colorIds = [...new Set(items.map((item) => item.color_id))];
+      const { data: existingColors, error: colorError } = await supabase
+        .from("colors")
+        .select("id")
+        .in("id", colorIds);
+
+      if (colorError) throw colorError;
+      if (!existingColors || existingColors.length !== colorIds.length) {
+        throw new Error("One or more colors not found");
+      }
+
+      // Filter out existing combinations
+      const { data: existing, error: existingError } = await supabase
+        .from("color_products")
+        .select("brandT_id, color_id")
+        .or(
+          items
+            .map(
+              (item) =>
+                `brandT_id.eq.${item.brandT_id},color_id.eq.${item.color_id}`,
+            )
+            .join(","),
+        );
+
+      if (existingError) throw existingError;
+
+      const existingSet = new Set(
+        (existing || []).map((item) => `${item.brandT_id}-${item.color_id}`),
+      );
+
+      const newItems = items.filter(
+        (item) => !existingSet.has(`${item.brandT_id}-${item.color_id}`),
+      );
+
+      if (newItems.length === 0) return [];
+
+      const { data, error } = await supabase
+        .from("color_products")
+        .insert(newItems)
+        .select();
+
+      if (error) throw error;
+      return data || [];
+    } catch (error) {
+      console.error("Error batch creating color products:", error);
+      throw error;
+    }
+  }
+
+  static async batchDeleteColorProducts(ids: number[]) {
+    try {
+      if (ids.length === 0) return { deleted: 0 };
+
+      const { error, count } = await supabase
+        .from("color_products")
+        .delete()
+        .in("id", ids);
+
+      if (error) throw error;
+      return { deleted: count || 0 };
+    } catch (error) {
+      console.error("Error batch deleting color products:", error);
       throw error;
     }
   }

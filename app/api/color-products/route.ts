@@ -26,27 +26,62 @@ export async function GET() {
 export async function POST(request: Request) {
   try {
     const body = await request.json();
-    const { brandT_id, color_id } = body;
 
-    if (!brandT_id || typeof brandT_id !== "number") {
-      return NextResponse.json(
-        { error: "Brand ID is required and must be a number" },
-        { status: 400 },
+    // Check if this is a batch operation
+    if (body.items && Array.isArray(body.items)) {
+      const { items } = body;
+
+      if (!Array.isArray(items) || items.length === 0) {
+        return NextResponse.json(
+          { error: "Items array is required and must not be empty" },
+          { status: 400 },
+        );
+      }
+
+      // Validate each item
+      for (const item of items) {
+        if (!item.brandT_id || typeof item.brandT_id !== "number") {
+          return NextResponse.json(
+            { error: "Each item must have a valid brandT_id (number)" },
+            { status: 400 },
+          );
+        }
+
+        if (!item.color_id || typeof item.color_id !== "number") {
+          return NextResponse.json(
+            { error: "Each item must have a valid color_id (number)" },
+            { status: 400 },
+          );
+        }
+      }
+
+      const createdColorBrandTypes =
+        await ProductService.batchCreateColorProducts(items);
+      return NextResponse.json(createdColorBrandTypes, { status: 201 });
+    } else {
+      // Single item creation (legacy support)
+      const { brandT_id, color_id } = body;
+
+      if (!brandT_id || typeof brandT_id !== "number") {
+        return NextResponse.json(
+          { error: "Brand ID is required and must be a number" },
+          { status: 400 },
+        );
+      }
+
+      if (!color_id || typeof color_id !== "number") {
+        return NextResponse.json(
+          { error: "Color ID is required and must be a number" },
+          { status: 400 },
+        );
+      }
+
+      const createdColorBrandType = await ProductService.createColorBrandType(
+        brandT_id,
+        color_id,
       );
+      return NextResponse.json(createdColorBrandType, { status: 201 });
     }
-
-    if (!color_id || typeof color_id !== "number") {
-      return NextResponse.json(
-        { error: "Color ID is required and must be a number" },
-        { status: 400 },
-      );
-    }
-
-    const createdColorBrandType = await ProductService.createColorBrandType(
-      brandT_id,
-      color_id,
-    );
-    return NextResponse.json(createdColorBrandType, { status: 201 });
   } catch (error) {
     console.error("API Error:", error);
     if (
@@ -119,20 +154,51 @@ export async function PUT(request: Request) {
 
 export async function DELETE(request: Request) {
   try {
-    const { searchParams } = new URL(request.url);
-    const id = searchParams.get("id");
+    const body = await request.json();
 
-    if (!id || isNaN(parseInt(id))) {
-      return NextResponse.json(
-        { error: "ID is required as a valid number query parameter" },
-        { status: 400 },
-      );
+    // Check if this is a batch operation
+    if (body.ids && Array.isArray(body.ids)) {
+      const { ids } = body;
+
+      if (!Array.isArray(ids) || ids.length === 0) {
+        return NextResponse.json(
+          { error: "IDs array is required and must not be empty" },
+          { status: 400 },
+        );
+      }
+
+      // Validate each ID
+      for (const id of ids) {
+        if (!id || typeof id !== "number") {
+          return NextResponse.json(
+            { error: "Each ID must be a valid number" },
+            { status: 400 },
+          );
+        }
+      }
+
+      const result = await ProductService.batchDeleteColorProducts(ids);
+      return NextResponse.json({
+        message: "Color brand types deleted successfully",
+        deleted: result.deleted,
+      });
+    } else {
+      // Single item deletion (legacy support)
+      const { searchParams } = new URL(request.url);
+      const id = searchParams.get("id");
+
+      if (!id || isNaN(parseInt(id))) {
+        return NextResponse.json(
+          { error: "ID is required as a valid number query parameter" },
+          { status: 400 },
+        );
+      }
+
+      await ProductService.deleteColorBrandType(parseInt(id));
+      return NextResponse.json({
+        message: "Color brand type deleted successfully",
+      });
     }
-
-    await ProductService.deleteColorBrandType(parseInt(id));
-    return NextResponse.json({
-      message: "Color brand type deleted successfully",
-    });
   } catch (error) {
     console.error("API Error:", error);
 
