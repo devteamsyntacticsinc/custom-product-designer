@@ -137,3 +137,18 @@ export interface BrandTypeWithDetails {
     is_Active: boolean;
   };
 }
+
+export interface ColorBrandTypeWithDetails {
+  id: number;
+  brandT_id: number;
+  color_id: number;
+  brand_type: {
+    brand_id: number;
+    brands: {
+      name: string;
+    };
+  };
+  colors: {
+    value: string;
+  };
+}
