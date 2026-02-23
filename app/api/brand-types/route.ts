@@ -7,15 +7,10 @@ interface DatabaseError extends Error {
   hint?: string;
 }
 
-export async function GET(request: Request) {
+export async function GET() {
   try {
-    const { searchParams } = new URL(request.url);
-    const typeId = searchParams.get("typeId");
-
-    const brands = await ProductService.getBrands(
-      typeId ? Number(typeId) : undefined,
-    );
-    return NextResponse.json(brands);
+    const brandTypes = await ProductService.getBrandTypes();
+    return NextResponse.json(brandTypes);
   } catch (error) {
     console.error("API Error:", error);
     return NextResponse.json(
@@ -31,50 +26,33 @@ export async function GET(request: Request) {
 export async function POST(request: Request) {
   try {
     const body = await request.json();
-    const { name, is_Active, type_ids, type_id } = body;
+    const { brand_id, type_id } = body;
 
-    if (!name || typeof name !== "string" || name.trim() === "") {
+    if (!brand_id || typeof brand_id !== "number") {
       return NextResponse.json(
-        { error: "Brand name is required and must be a non-empty string" },
+        { error: "Brand ID is required and must be a number" },
         { status: 400 },
       );
     }
 
-    let result;
-    if (type_ids && Array.isArray(type_ids)) {
-      // Create brand with multiple types
-      if (type_ids.length === 0) {
-        return NextResponse.json(
-          { error: "At least one product type must be selected" },
-          { status: 400 },
-        );
-      }
-      result = await ProductService.createBrandWithMultipleTypes(
-        name.trim(),
-        type_ids,
-        is_Active !== undefined ? is_Active : true,
-      );
-    } else if (type_id !== undefined) {
-      // Create brand with single type (backward compatibility)
-      result = await ProductService.createBrandWithType(
-        name.trim(),
-        type_id,
-        is_Active !== undefined ? is_Active : true,
-      );
-    } else {
-      // Create brand without type
-      result = await ProductService.createBrand(
-        name.trim(),
-        is_Active !== undefined ? is_Active : true,
+    if (!type_id || typeof type_id !== "number") {
+      return NextResponse.json(
+        { error: "Product Type ID is required and must be a number" },
+        { status: 400 },
       );
     }
 
-    return NextResponse.json(result, { status: 201 });
+    const createdProducts = await ProductService.createBrandType(
+      brand_id,
+      type_id,
+    );
+    return NextResponse.json(createdProducts, { status: 201 });
   } catch (error) {
     console.error("API Error:", error);
     if (
       error instanceof Error &&
-      error.message === "Brand with this name already exists"
+      error.message ===
+        "Brand type with this brand and product type already exists"
     ) {
       return NextResponse.json({ error: error.message }, { status: 409 });
     }
@@ -91,39 +69,41 @@ export async function POST(request: Request) {
 export async function PUT(request: Request) {
   try {
     const body = await request.json();
-    const { id, name, is_Active, type_ids } = body;
+    const { id, brand_id, type_id } = body;
 
     if (!id || typeof id !== "number") {
+      return NextResponse.json(
+        { error: "ID is required and must be a number" },
+        { status: 400 },
+      );
+    }
+
+    if (!brand_id || typeof brand_id !== "number") {
       return NextResponse.json(
         { error: "Brand ID is required and must be a number" },
         { status: 400 },
       );
     }
 
-    if (!name && !type_ids) {
+    if (!type_id || typeof type_id !== "number") {
       return NextResponse.json(
-        { error: "At least name or type_ids must be provided for update" },
+        { error: "Product Type ID is required and must be a number" },
         { status: 400 },
       );
     }
 
-    // Update brand with multiple types
-    const result = await ProductService.updateBrandWithTypes(
+    const updatedBrandType = await ProductService.updateBrandType(
       id,
-      type_ids,
-      name,
-      is_Active,
+      brand_id,
+      type_id,
     );
-
-    return NextResponse.json(result);
+    return NextResponse.json(updatedBrandType);
   } catch (error) {
     console.error("API Error:", error);
-    if (error instanceof Error && error.message === "Brand not found") {
-      return NextResponse.json({ error: error.message }, { status: 404 });
-    }
     if (
       error instanceof Error &&
-      error.message === "Brand with this name already exists"
+      error.message ===
+        "Brand type with this brand_id and type_id already exists"
     ) {
       return NextResponse.json({ error: error.message }, { status: 409 });
     }
@@ -144,13 +124,13 @@ export async function DELETE(request: Request) {
 
     if (!id || isNaN(parseInt(id))) {
       return NextResponse.json(
-        { error: "Brand ID is required as a valid number query parameter" },
+        { error: "ID is required as a valid number query parameter" },
         { status: 400 },
       );
     }
 
-    await ProductService.deleteBrand(parseInt(id));
-    return NextResponse.json({ message: "Brand deleted successfully" });
+    await ProductService.deleteBrandType(parseInt(id));
+    return NextResponse.json({ message: "Brand type deleted successfully" });
   } catch (error) {
     console.error("API Error:", error);
 
@@ -164,7 +144,7 @@ export async function DELETE(request: Request) {
           errorObj.code === "23503")
       ) {
         return NextResponse.json(
-          { error: "Cannot delete brand that is being used by product types" },
+          { error: "Cannot delete brand type that is being used by products" },
           { status: 400 },
         );
       }

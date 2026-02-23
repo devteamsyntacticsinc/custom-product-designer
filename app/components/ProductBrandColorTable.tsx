@@ -24,11 +24,10 @@ import {
 import { Skeleton } from "@/components/ui/skeleton";
 import { cn } from "@/lib/utils";
 import {
-  Brand,
-  BrandGroup,
-  ProductType,
-  Size,
-  SizeProduct,
+  ColorBrandGroup,
+  Color,
+  ColorProduct,
+  ColorBrandTypeWithDetails,
   BrandTypeWithDetails,
 } from "@/types/product";
 import axios, { AxiosError } from "axios";
@@ -49,34 +48,17 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 
-// Get size order for sorting from smallest to largest
-const getSizeOrder = (value: string): number => {
-  const normalized = value.toLowerCase().replace(/\s+/g, " ").trim();
-
-  // Count how many "extra"/"x" prefixes there are to handle XS, XL, XXL, XXXL etc.
-  const extraPrefixMatch = normalized.match(/^(x+|extra\s+)+/);
-  const prefixCount = extraPrefixMatch
-    ? extraPrefixMatch[0].replace(/extra\s+/g, "x").replace(/\s/g, "").length
-    : 0;
-
-  if (normalized.includes("small")) return 10 - prefixCount; // XS=9, XXS=8 (smaller = lower index)
-  if (normalized === "medium" || normalized === "m") return 20;
-  if (normalized.includes("large")) return 30 + prefixCount; // L=30, XL=31, XXL=32 (larger = higher index)
-
-  return 99; // unknown sizes go to the end
-};
-
-// Fetch size products from API
-const fetchSizeProducts = async () => {
+// Fetch color products from API
+const fetchColorProducts = async () => {
   try {
-    const response = await axios.get("/api/size-products");
+    const response = await axios.get("/api/color-products");
     if (!response.data) {
-      throw new Error("Failed to fetch sizes");
+      throw new Error("Failed to fetch color products");
     }
     const data = response.data;
     return data;
   } catch (error) {
-    console.error("Error fetching size products:", error);
+    console.error("Error fetching color products:", error);
     return [];
   }
 };
@@ -95,38 +77,38 @@ const fetchBrandTypes = async () => {
   }
 };
 
-// Fetch sizes from API
-const fetchSizes = async () => {
+// Fetch colors from API
+const fetchColors = async () => {
   try {
-    const response = await axios.get("/api/sizes");
+    const response = await axios.get("/api/colors");
     if (!response.data) {
-      throw new Error("Failed to fetch sizes");
+      throw new Error("Failed to fetch colors");
     }
     const data = response.data;
     return data;
   } catch (error) {
-    console.error("Error fetching size products:", error);
+    console.error("Error fetching colors:", error);
     return [];
   }
 };
 
-export default function ProductBrandSizesTable({
-  refetchSize,
+export default function ProductBrandColorTable({
+  refetchColor,
 }: {
-  refetchSize: number;
+  refetchColor: number;
 }) {
-  const [sizeProducts, setSizeProducts] = useState<SizeProduct[]>([]);
+  const [colorProducts, setColorProducts] = useState<ColorProduct[]>([]);
   const [brandTypes, setBrandTypes] = useState<BrandTypeWithDetails[]>([]);
-  const [sizes, setSizes] = useState<Size[]>([]);
+  const [colors, setColors] = useState<Color[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
   const [expandedTypes, setExpandedTypes] = useState<Set<string>>(
     new Set(["Shirt"]),
   );
   const [hasExpanded, setHasExpanded] = useState(false);
-  const [originalState, setOriginalState] = useState<SizeProduct[]>([]);
+  const [originalState, setOriginalState] = useState<ColorProduct[]>([]);
   const [pendingChanges, setPendingChanges] = useState<{
-    toAdd: { brandT_id: number; size_id: number }[];
+    toAdd: { brandT_id: number; color_id: number }[];
     toDelete: number[];
   }>({ toAdd: [], toDelete: [] });
 
@@ -137,35 +119,38 @@ export default function ProductBrandSizesTable({
     const loadData = async () => {
       setIsLoading(true);
       try {
-        const data = await fetchSizeProducts();
-        setSizeProducts(data);
+        const data = await fetchColorProducts();
+        setColorProducts(data);
         setOriginalState(data);
 
         const brandTypesData = await fetchBrandTypes();
+        const filteredBrandTypes = brandTypesData.filter(
+          (brandType: BrandTypeWithDetails) =>
+            brandType.product_type.is_onlyType === false,
+        );
+        setBrandTypes(filteredBrandTypes);
 
-        setBrandTypes(brandTypesData);
-
-        // Fetch sizes and set them
-        const sizesData = await fetchSizes();
-        setSizes(sizesData);
+        // Fetch colors and set them
+        const colorsData = await fetchColors();
+        setColors(colorsData);
       } catch (error) {
-        console.error("Error loading size products:", error);
+        console.error("Error loading color products:", error);
       } finally {
         setIsLoading(false);
       }
     };
     loadData();
-  }, [refetchSize]);
+  }, [refetchColor]);
 
   // Calculate diff between current and original state
-  const calculateDiff = (current: SizeProduct[], original: SizeProduct[]) => {
+  const calculateDiff = (current: ColorProduct[], original: ColorProduct[]) => {
     const toDelete = original
       .filter(
         (orig) =>
           !current.find(
             (curr) =>
               curr.brandT_id === orig.brandT_id &&
-              curr.size_id === orig.size_id,
+              curr.color_id === orig.color_id,
           ),
       )
       .map((item) => item.id);
@@ -174,14 +159,15 @@ export default function ProductBrandSizesTable({
       .filter((curr) => {
         const existsInOriginal = original.find(
           (orig) =>
-            orig.brandT_id === curr.brandT_id && orig.size_id === curr.size_id,
+            orig.brandT_id === curr.brandT_id &&
+            orig.color_id === curr.color_id,
         );
 
         return !existsInOriginal;
       })
       .map((item) => ({
         brandT_id: item.brandT_id,
-        size_id: item.size_id,
+        color_id: item.color_id,
       }));
 
     return { toAdd, toDelete };
@@ -197,21 +183,17 @@ export default function ProductBrandSizesTable({
       string,
       {
         productTypeName: string;
-        brandTypes: Map<number, BrandGroup & { hasBrandName: boolean }>;
+        brandTypes: Map<number, ColorBrandGroup>;
       }
     >();
 
     // First, build complete structure from ALL brand-types relationships
     brandTypes.forEach((brandType) => {
-      const productTypeName = brandType.product_type.name;
-      const brandName = brandType.brands?.name ?? null;
-      const hasBrandName = brandName !== null;
+      const productTypeName = brandType.product_type?.name || "Unknown";
+      const brandName = brandType.brands?.name || "Unknown";
 
       if (!map.has(productTypeName)) {
-        map.set(productTypeName, {
-          productTypeName,
-          brandTypes: new Map(),
-        });
+        map.set(productTypeName, { productTypeName, brandTypes: new Map() });
       }
 
       const productGroup = map.get(productTypeName)!;
@@ -220,29 +202,27 @@ export default function ProductBrandSizesTable({
         productGroup.brandTypes.set(brandType.id, {
           brandTypeId: brandType.id,
           brandName,
-          sizes: new Set<string>(), // Start empty — sizes will be populated below
+          colors: new Set(), // Start empty — colors will be populated below
           brandTypeRef: {
             id: brandType.id,
-            brands: brandName ? { name: brandName } : { name: "" },
+            brands: { name: brandName },
             product_type: { name: productTypeName },
           },
-          sizeId: 0,
-          hasBrandName, // ✅ stored early
+          colorId: 0, // Will be set when colors are added
         });
       }
     });
 
-    // Then, populate sizes from existing size products
-    sizeProducts.forEach((item) => {
-      const productTypeName = item.brand_type?.product_type?.name ?? "Unknown";
-
+    // Then, populate colors from existing color products
+    colorProducts.forEach((item) => {
+      const productTypeName = item.brand_type?.product_type?.name || "Unknown";
       const productGroup = map.get(productTypeName);
       if (!productGroup) return;
 
       const brandTypeGroup = productGroup.brandTypes.get(item.brand_type.id);
       if (!brandTypeGroup) return;
 
-      brandTypeGroup.sizes.add(item.sizes.value);
+      brandTypeGroup.colors.add(item.colors.value);
     });
 
     return Array.from(map.values())
@@ -254,10 +234,10 @@ export default function ProductBrandSizesTable({
       .map((group) => ({
         productTypeName: group.productTypeName,
         brands: Array.from(group.brandTypes.values()).sort((a, b) =>
-          (a.brandName ?? "").localeCompare(b.brandName ?? ""),
+          a.brandName.localeCompare(b.brandName),
         ),
       }));
-  }, [brandTypes, sizeProducts]);
+  }, [brandTypes, colorProducts]);
 
   // Handles the expansion of each product type using a button
   const toggleTypeExpanded = (
@@ -279,35 +259,34 @@ export default function ProductBrandSizesTable({
   };
 
   // Helper functions for "ALL" checkbox functionality
-  const isAllChecked = (brand: BrandGroup): boolean => {
-    return sizes.every(({ value }) => brand.sizes.has(value));
+  const isAllChecked = (brand: ColorBrandGroup): boolean => {
+    return colors.every(({ value }) => brand.colors.has(value));
   };
 
   // Handles the "ALL" checkbox functionality
-  const handleAllToggle = (brand: BrandGroup, isChecked: boolean) => {
+  const handleAllToggle = (brand: ColorBrandGroup, isChecked: boolean) => {
     // Use the brandTypeRef from the brand group, or find it from existing data
     const brandTypeRef =
       brand.brandTypeRef ||
-      sizeProducts.find((item) => item.brand_type?.id === brand.brandTypeId)
-        ?.brand_type ||
-      originalState.find((item) => item.brand_type?.id === brand.brandTypeId)
-        ?.brand_type;
+      colorProducts.find(
+        (item: ColorProduct) => item.brand_type.id === brand.brandTypeId,
+      )?.brand_type ||
+      originalState.find(
+        (item: ColorProduct) => item.brand_type.id === brand.brandTypeId,
+      )?.brand_type;
 
     if (!brandTypeRef) return;
 
-    setSizeProducts((prev) => {
+    setColorProducts((prev: ColorProduct[]) => {
       let newProducts = [...prev];
 
       if (isChecked) {
-        // Add all missing sizes for this brand
-        sizes.forEach(({ id: sizeId, value }) => {
+        // Add all missing colors for this brand
+        colors.forEach(({ id: colorId, value }) => {
           const exists = newProducts.some(
             (item) =>
-              // Handle both cases: items with valid brand_type.id and items with brandT_id: null
-              (item.brand_type?.id === brand.brandTypeId ||
-                (item.brandT_id === null &&
-                  item.brand_type?.id === brand.brandTypeId)) &&
-              item.sizes.value === value,
+              item.brand_type.id === brand.brandTypeId &&
+              item.colors.value === value,
           );
 
           if (!exists) {
@@ -316,23 +295,17 @@ export default function ProductBrandSizesTable({
               1;
             newProducts.push({
               id: nextId,
-              sizes: { value },
+              colors: { value },
               brand_type: brandTypeRef,
               brandT_id: brand.brandTypeId,
-              size_id: sizeId,
+              color_id: colorId,
             });
           }
         });
       } else {
-        // Remove all sizes for this brand
+        // Remove all colors for this brand
         newProducts = newProducts.filter(
-          (item) =>
-            // Handle both cases: items with valid brand_type.id and items with brandT_id: null
-            !(
-              item.brand_type?.id === brand.brandTypeId ||
-              (item.brandT_id === null &&
-                item.brand_type?.id === brand.brandTypeId)
-            ),
+          (item) => item.brand_type.id !== brand.brandTypeId,
         );
       }
 
@@ -345,47 +318,54 @@ export default function ProductBrandSizesTable({
   };
 
   // Checkbox toggle logic
-  const handleSizeChange = (
+  const handleColorChange = (
     brandTypeId: number,
     brandName: string,
-    size: string,
-    sizeId: number,
-    isMug: boolean,
+    color: string,
+    colorId: number,
   ) => {
-    setSizeProducts((prev) => {
+    setColorProducts((prev: ColorProduct[]) => {
       const existingIndex = prev.findIndex(
-        (item) =>
-          item.brand_type?.id === brandTypeId && item.sizes.value === size,
+        (item: ColorProduct) =>
+          item.brand_type.id === brandTypeId &&
+          (item.brand_type.brands?.name || "Unknown") === brandName &&
+          item.colors.value === color,
       );
 
       let newProducts;
       if (existingIndex !== -1) {
-        newProducts = prev.filter((_, idx) => idx !== existingIndex);
+        newProducts = prev.filter(
+          (_: ColorProduct, idx: number) => idx !== existingIndex,
+        );
       } else {
         // Find brand type reference from current brand groups or existing data
         const brandGroup = groupedByProductType
           .flatMap((group) => group.brands)
-          .find((brand) => brand.brandTypeId === brandTypeId);
+          .find((brand: ColorBrandGroup) => brand.brandTypeId === brandTypeId);
 
         const brandTypeRef =
           brandGroup?.brandTypeRef ||
-          prev.find((item) => item.brand_type?.id === brandTypeId)
+          prev.find((item: ColorProduct) => item.brand_type.id === brandTypeId)
             ?.brand_type ||
-          originalState.find((item) => item.brand_type?.id === brandTypeId)
-            ?.brand_type;
+          originalState.find(
+            (item: ColorProduct) => item.brand_type.id === brandTypeId,
+          )?.brand_type;
 
         if (!brandTypeRef) return prev;
 
         const nextId =
-          prev.reduce((maxId, item) => Math.max(maxId, item.id), 0) + 1;
+          prev.reduce(
+            (maxId: number, item: ColorProduct) => Math.max(maxId, item.id),
+            0,
+          ) + 1;
         newProducts = [
           ...prev,
           {
             id: nextId,
-            sizes: { value: size },
+            colors: { value: color },
             brand_type: brandTypeRef,
             brandT_id: brandTypeId,
-            size_id: sizeId, // Use the actual sizeId passed from the checkbox
+            color_id: colorId, // Use the actual colorId passed from the checkbox
           },
         ];
       }
@@ -402,18 +382,18 @@ export default function ProductBrandSizesTable({
   const handleSave = async () => {
     setIsSaving(true);
     try {
-      const diff = calculateDiff(sizeProducts, originalState);
+      const diff = calculateDiff(colorProducts, originalState);
 
       // Execute parallel API calls
       const promises = [];
 
       if (diff.toAdd.length > 0) {
-        promises.push(axios.post("/api/size-products", { items: diff.toAdd }));
+        promises.push(axios.post("/api/color-products", { items: diff.toAdd }));
       }
 
       if (diff.toDelete.length > 0) {
         promises.push(
-          axios.delete("/api/size-products", { data: { ids: diff.toDelete } }),
+          axios.delete("/api/color-products", { data: { ids: diff.toDelete } }),
         );
       }
 
@@ -421,12 +401,12 @@ export default function ProductBrandSizesTable({
         await Promise.all(promises);
 
         // Refresh data after successful save
-        const freshData = await fetchSizeProducts();
-        setSizeProducts(freshData);
+        const freshData = await fetchColorProducts();
+        setColorProducts(freshData);
         setOriginalState(freshData);
         setPendingChanges({ toAdd: [], toDelete: [] });
       }
-      addToast("success", "Size products saved successfully");
+      addToast("success", "Color products saved successfully");
     } catch (error) {
       const axiosError = error as AxiosError<{
         error?: string;
@@ -437,7 +417,7 @@ export default function ProductBrandSizesTable({
         axiosError.response?.data?.error ||
         axiosError.response?.data?.message ||
         axiosError.message ||
-        "Failed to save size";
+        "Failed to save color";
 
       console.error(message);
       addToast("error", message);
@@ -448,7 +428,7 @@ export default function ProductBrandSizesTable({
 
   // Discard changes logic
   const handleDiscard = () => {
-    setSizeProducts(originalState);
+    setColorProducts(originalState);
     setPendingChanges({ toAdd: [], toDelete: [] });
   };
 
@@ -461,9 +441,9 @@ export default function ProductBrandSizesTable({
     >
       <CardHeader className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
         <div>
-          <CardTitle className="text-lg sm:text-2xl">Brand Sizes</CardTitle>
+          <CardTitle className="text-lg sm:text-2xl">Brand Colors</CardTitle>
           <CardDescription className="text-xs sm:text-sm">
-            Manage sizes for each brand in your store.
+            Manage colors for each brand in your store.
           </CardDescription>
         </div>
         <Button
@@ -587,20 +567,15 @@ export default function ProductBrandSizesTable({
                     <Table className="w-full min-w-max border-collapse">
                       <TableHeader className="border-b border-border">
                         <TableRow className="hover:bg-transparent h-10 sm:h-12">
-                          {productTypeGroup.brands.some(
-                            (brand) => brand.hasBrandName,
-                          ) && (
-                            <TableHead className="text-muted-foreground sticky left-0 bg-background z-30 px-2 sm:px-4 border-r min-w-[110px] sm:min-w-[180px] shadow-[2px_0_5px_-2px_rgba(0,0,0,0.05)] text-[10px] sm:text-xs">
-                              Brand Name
-                            </TableHead>
-                          )}
+                          <TableHead className="text-muted-foreground sticky left-0 bg-background z-30 px-2 sm:px-4 border-r min-w-[110px] sm:min-w-[180px] shadow-[2px_0_5px_-2px_rgba(0,0,0,0.05)] text-[10px] sm:text-xs">
+                            Brand Name
+                          </TableHead>
                           <TableHead className="text-muted-foreground text-center min-w-[50px] sm:min-w-24 px-2 sm:px-4 text-[10px] sm:text-xs">
                             ALL
                           </TableHead>
-                          {sizes
-                            .sort(
-                              (a, b) =>
-                                getSizeOrder(a.value) - getSizeOrder(b.value),
+                          {colors
+                            .sort((a: Color, b: Color) =>
+                              a.value.localeCompare(b.value),
                             )
                             .map(({ id, value }) => (
                               <Tooltip key={id}>
@@ -623,13 +598,9 @@ export default function ProductBrandSizesTable({
                             key={`${brand.brandTypeId}-${brand.brandName}`}
                             className="border-border hover:bg-secondary/30 transition-colors group h-10 sm:h-12"
                           >
-                            {productTypeGroup.brands.some(
-                              (brand) => brand.hasBrandName,
-                            ) && (
-                              <TableCell className="text-foreground font-medium sticky left-0 bg-background z-20 px-2 sm:px-4 border-r whitespace-nowrap min-w-[110px] sm:min-w-[180px] shadow-[2px_0_5px_-2px_rgba(0,0,0,0.05)] group-hover:bg-[#f4f4f5] dark:group-hover:bg-[#18181b] transition-colors text-[11px] sm:text-sm">
-                                {brand.brandName}
-                              </TableCell>
-                            )}
+                            <TableCell className="text-foreground font-medium sticky left-0 bg-background z-20 px-2 sm:px-4 border-r whitespace-nowrap min-w-[110px] sm:min-w-[180px] shadow-[2px_0_5px_-2px_rgba(0,0,0,0.05)] group-hover:bg-[#f4f4f5] dark:group-hover:bg-[#18181b] transition-colors text-[11px] sm:text-sm">
+                              {brand.brandName}
+                            </TableCell>
                             <TableCell className="text-center px-2 sm:px-4">
                               <Checkbox
                                 checked={isAllChecked(brand)}
@@ -639,21 +610,19 @@ export default function ProductBrandSizesTable({
                                 className="cursor-pointer size-4 sm:size-6"
                               />
                             </TableCell>
-                            {sizes.map(({ id, value }) => (
+                            {colors.map(({ id, value }) => (
                               <TableCell
                                 key={id}
                                 className="text-center px-2 sm:px-4"
                               >
                                 <Checkbox
-                                  checked={brand.sizes.has(value)}
+                                  checked={brand.colors.has(value)}
                                   onCheckedChange={() =>
-                                    handleSizeChange(
+                                    handleColorChange(
                                       brand.brandTypeId,
                                       brand.brandName,
                                       value,
-                                      id,
-                                      productTypeGroup.productTypeName ===
-                                        "Mug",
+                                      id, // Use the correct color_id from mapping
                                     )
                                   }
                                   className="cursor-pointer size-4 sm:size-6"
@@ -671,7 +640,7 @@ export default function ProductBrandSizesTable({
       </CardContent>
 
       {hasChanges && (
-        <CardFooter className="fixed bottom-0 left-0 right-0 bg-background border-t border-border px-4 py-4 sm:py-6 z-30">
+        <CardFooter className="fixed bottom-0 left-0 right-0 bg-background border-t border-border px-4 py-4 sm:py-6 z-80">
           <div className="w-full lg:ml-[275px] flex flex-col sm:flex-row items-center justify-between gap-4">
             <div className="flex items-center gap-2">
               <CircleQuestionMark className="size-5 sm:size-6 text-muted-foreground" />
@@ -720,9 +689,9 @@ function SaveChangesDialog({
       <DialogTrigger asChild>{children}</DialogTrigger>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>Save Size Changes?</DialogTitle>
+          <DialogTitle>Save Color Changes?</DialogTitle>
           <DialogDescription>
-            This will update the available sizes for your products. This action
+            This will update the available colors for your products. This action
             cannot be undone.
           </DialogDescription>
         </DialogHeader>

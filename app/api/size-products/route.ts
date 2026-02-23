@@ -37,9 +37,13 @@ export async function POST(request: Request) {
 
     // Validate each item structure
     for (const item of items) {
-      if (!item.brandT_id || typeof item.brandT_id !== "number") {
+      if (
+        item.brandT_id !== undefined &&
+        item.brandT_id !== null &&
+        typeof item.brandT_id !== "number"
+      ) {
         return NextResponse.json(
-          { error: "Each item must have a valid Brand Type" },
+          { error: "Each item must have a valid Brand Type or null for mugs" },
           { status: 400 },
         );
       }
