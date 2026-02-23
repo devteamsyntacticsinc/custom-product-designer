@@ -663,7 +663,7 @@ export default function ProductBrandSizesTable({
       </CardContent>
 
       {hasChanges && (
-        <CardFooter className="fixed bottom-0 left-0 right-0 bg-background border-t border-border px-4 py-4 sm:py-6 z-80">
+        <CardFooter className="fixed bottom-0 left-0 right-0 bg-background border-t border-border px-4 py-4 sm:py-6 z-30">
           <div className="w-full lg:ml-[275px] flex flex-col sm:flex-row items-center justify-between gap-4">
             <div className="flex items-center gap-2">
               <CircleQuestionMark className="size-5 sm:size-6 text-muted-foreground" />
