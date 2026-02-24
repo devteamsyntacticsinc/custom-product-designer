@@ -117,6 +117,16 @@ export async function DELETE(request: Request) {
   } catch (error) {
     console.error('API Error:', error)
 
+    // Handle specific error cases
+    if (error instanceof Error) {
+      if (error.message === 'Product type not found') {
+        return NextResponse.json(
+          { error: error.message },
+          { status: 404 }
+        )
+      }
+    }
+
     // Handle foreign key constraint violation
     if (error && typeof error === 'object' && error !== null) {
       const errorObj = error as DatabaseError
