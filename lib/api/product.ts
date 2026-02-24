@@ -365,7 +365,7 @@ export class ProductService {
   ): Promise<Brand> {
     let brandRes;
     try {
-      // First, get existing brand-type associations for this brand
+      //Get existing brand-type associations for this brand
       const { data: existingAssociations, error: fetchError } = await supabase
         .from("brand_type")
         .select("type_id")
@@ -397,19 +397,58 @@ export class ProductService {
         }
       }
 
-      // Add new associations
+      // Add new associations with null brand claiming logic
       if (toAdd.length > 0) {
-        const newAssociations = toAdd.map((type_id) => ({
-          brand_id,
-          type_id,
-        }));
+        for (const type_id of toAdd) {
+          // Check if brand+type combination already exists
+          const { data: existingBrandType, error: checkError } = await supabase
+            .from("brand_type")
+            .select("id")
+            .eq("brand_id", brand_id)
+            .eq("type_id", type_id)
+            .maybeSingle();
 
-        const { error: insertError } = await supabase
-          .from("brand_type")
-          .insert(newAssociations);
+          if (checkError) {
+            throw checkError;
+          }
 
-        if (insertError) {
-          throw insertError;
+          if (existingBrandType) {
+            continue; // Skip if already exists
+          }
+
+          // Check for null brand record to claim
+          const { data: hasNullBrandType, error: checkNullError } =
+            await supabase
+              .from("brand_type")
+              .select("id")
+              .is("brand_id", null)
+              .eq("type_id", type_id)
+              .maybeSingle();
+
+          if (checkNullError) {
+            throw checkNullError;
+          }
+
+          if (hasNullBrandType) {
+            // Claim the existing null record
+            const { error: updateError } = await supabase
+              .from("brand_type")
+              .update({ brand_id })
+              .eq("id", hasNullBrandType.id);
+
+            if (updateError) {
+              throw updateError;
+            }
+          } else {
+            // Create new brand-type association
+            const { error: insertError } = await supabase
+              .from("brand_type")
+              .insert([{ brand_id, type_id }]);
+
+            if (insertError) {
+              throw insertError;
+            }
+          }
         }
       }
       if (name || is_Active) {
@@ -653,14 +692,12 @@ export class ProductService {
       }
 
       if (productType.is_onlyType) {
-        const { error: brandError } = await supabase
-          .from("brand_type")
-          .insert([
-            {
-              brand_id: null,
-              type_id: productType.id
-            }
-          ]);
+        const { error: brandError } = await supabase.from("brand_type").insert([
+          {
+            brand_id: null,
+            type_id: productType.id,
+          },
+        ]);
 
         if (brandError) {
           console.error("Error inserting into brand_type:", brandError);
@@ -681,7 +718,11 @@ export class ProductService {
     is_onlyType?: boolean,
   ): Promise<ProductType> {
     try {
-      const updateData: { name?: string; is_Active?: boolean; is_onlyType?: boolean } = {};
+      const updateData: {
+        name?: string;
+        is_Active?: boolean;
+        is_onlyType?: boolean;
+      } = {};
       if (name !== undefined) {
         // Check if product type name already exists (excluding current product type, case-insensitive)
         const { data: existingProductType, error: checkError } = await supabase
@@ -733,8 +774,8 @@ export class ProductService {
             .insert([
               {
                 brand_id: null,
-                type_id: id
-              }
+                type_id: id,
+              },
             ]);
 
           if (insertError) throw insertError;
@@ -1284,6 +1325,8 @@ export class ProductService {
     brand_id: number,
     type_id: number,
   ): Promise<BrandType> {
+    let query;
+
     try {
       // Validate brand exists
       const { data: brand, error: brandError } = await supabase
@@ -1324,11 +1367,29 @@ export class ProductService {
         );
       }
 
-      const { data, error } = await supabase
+      // Check if the brand_type is null that is equal to type_id
+      const { data: hasNullBrandType, error: checkNullError } = await supabase
         .from("brand_type")
-        .insert([{ brand_id, type_id }])
-        .select()
-        .single();
+        .select("id")
+        .is("brand_id", null)
+        .eq("type_id", type_id)
+        .maybeSingle();
+
+      if (checkNullError) {
+        console.log(checkNullError);
+        throw checkNullError;
+      }
+      // if it has, then update that existing null brand_type else insert
+      if (hasNullBrandType) {
+        query = supabase
+          .from("brand_type")
+          .update({ brand_id })
+          .eq("id", hasNullBrandType.id);
+      } else {
+        query = supabase.from("brand_type").insert([{ brand_id, type_id }]);
+      }
+
+      const { data, error } = await query.select().single();
 
       if (error) {
         throw error;
