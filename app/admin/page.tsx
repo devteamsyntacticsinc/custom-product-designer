@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { useRouter, usePathname } from "next/navigation";
 import { useSession, signOut } from "next-auth/react";
 import { Button } from "@/components/ui/button";
@@ -75,7 +75,7 @@ export default function AdminDashboard() {
   const [currentPage, setCurrentPage] = useState(1);
   const [pageLoading, setPageLoading] = useState(false);
   const itemsPerPage = 10; // Make it a constant instead of state
-  const [hasFetched, setHasFetched] = useState(false); // Track if we've already fetched
+  const hasFetchedRef = useRef(false); // Use ref to track if we've already fetched
   const router = useRouter();
 
   // Fetch dashboard data
@@ -88,7 +88,7 @@ export default function AdminDashboard() {
         const data = await response.json();
         if (data.success) {
           setDashboardData(data.data);
-          setHasFetched(true);
+          hasFetchedRef.current = true; // Mark as fetched
         }
       } catch (error) {
         console.error("Error fetching dashboard data:", error);
@@ -98,7 +98,7 @@ export default function AdminDashboard() {
         setPageLoading(false);
       }
     },
-    [], // Remove itemsPerPage since it's a constant (useState with no setter)
+    [], // Remove itemsPerPage since it's a constant
   );
 
   const handleRefresh = () => {
@@ -122,11 +122,12 @@ export default function AdminDashboard() {
       return;
     }
 
-    // Only fetch on initial load or when session changes and we haven't fetched yet
-    if (!hasFetched) {
+    // Only fetch on initial load when we haven't fetched yet
+    if (!hasFetchedRef.current) {
       fetchDashboardData(currentPage);
     }
-  }, [session, status, router, currentPage, hasFetched, fetchDashboardData]); // Include all dependencies
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [session, status, router]); // Remove currentPage and fetchDashboardData to prevent re-runs - we use ref instead
 
   const handleLogout = async () => {
     await signOut({ redirect: false });
