@@ -250,28 +250,28 @@ export class OrderService {
   static async getProductOrdersCount(): Promise<number> {
     try {
       const { count, error } = await supabase
-        .from('product_orders')
-        .select('*', { count: 'exact', head: true })
+        .from("product_orders")
+        .select("*", { count: "exact", head: true });
 
-      if (error) throw error
-      return count || 0
+      if (error) throw error;
+      return count || 0;
     } catch (error) {
-      console.error('Error fetching product orders count:', error)
-      return 0
+      console.error("Error fetching product orders count:", error);
+      return 0;
     }
   }
 
   static async getCustomersCount(): Promise<number> {
     try {
       const { count, error } = await supabase
-        .from('customers')
-        .select('*', { count: 'exact', head: true })
+        .from("customers")
+        .select("*", { count: "exact", head: true });
 
-      if (error) throw error
-      return count || 0
+      if (error) throw error;
+      return count || 0;
     } catch (error) {
-      console.error('Error fetching customers count:', error)
-      return 0
+      console.error("Error fetching customers count:", error);
+      return 0;
     }
   }
 
@@ -328,7 +328,10 @@ export class OrderService {
         };
       }
 
-      const allActivities = this.buildActivityFromOrders(allOrders, allCustomers);
+      const allActivities = this.buildActivityFromOrders(
+        allOrders,
+        allCustomers,
+      );
       const total = allActivities.length;
       const totalPages = Math.ceil(total / limit);
       const startIndex = (page - 1) * limit;
@@ -394,6 +397,7 @@ export class OrderService {
       const brandTypeIds = orders
         .map((order) => order.brandT_id)
         .filter(Boolean);
+
       const { data: brandTypes, error: brandTypesError } = await supabase
         .from("brand_type")
         .select(
@@ -402,7 +406,7 @@ export class OrderService {
           brand_id,
           type_id,
           brands (id, name),
-          product_type (id, name)
+          product_type (id, name, is_onlyType, image_products (filepath, is_hasBack))
         `,
         )
         .in("id", brandTypeIds);
@@ -604,7 +608,7 @@ export class OrderService {
           brand_id,
           type_id,
           brands (id, name),
-          product_type (id, name)
+          product_type (id, name, is_onlyType, image_products (filepath, is_hasBack))
         `,
         )
         .in("id", brandTypeIds);
@@ -755,7 +759,7 @@ export class OrderService {
           brand_id,
           type_id,
           brands (id, name),
-          product_type (id, name)
+          product_type (id, name, is_onlyType, image_products (filepath, is_hasBack))
         `,
         )
         .eq("id", orders.brandT_id);

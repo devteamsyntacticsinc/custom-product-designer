@@ -1,114 +1,118 @@
-'use client'
+"use client";
 
-import { useState, useEffect } from 'react'
-import { useRouter, usePathname } from 'next/navigation'
-import { useSession, signOut } from 'next-auth/react'
-import { Button } from '@/components/ui/button'
-import { Card } from '@/components/ui/card'
-import { Badge } from '@/components/ui/badge'
-import { OrderWithCustomer } from '@/types/order'
+import { useState, useEffect } from "react";
+import { useRouter, usePathname } from "next/navigation";
+import { useSession, signOut } from "next-auth/react";
+import { Button } from "@/components/ui/button";
+import { Card } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { OrderWithCustomer } from "@/types/order";
 import {
   Menu,
   User as UserIcon,
   Mail,
   Package,
   RefreshCw,
-  Phone
-} from 'lucide-react'
-import AdminSidebar from '../../components/AdminSidebar'
-import OrdersPageSkeleton from '../../../components/OrdersPageSkeleton'
-import OrderProductPreview from '../../../components/OrderProductPreview'
+  Phone,
+} from "lucide-react";
+import AdminSidebar from "../../components/AdminSidebar";
+import OrdersPageSkeleton from "../../../components/OrdersPageSkeleton";
+import OrderProductPreview from "../../../components/OrderProductPreview";
+import axios from "axios";
 
 export default function OrdersPage() {
-  const { data: session, status } = useSession()
-  const [sidebarOpen, setSidebarOpen] = useState(false)
-  const [isCollapsed, setIsCollapsed] = useState(false)
-  const [orders, setOrders] = useState<OrderWithCustomer[]>([])
-  const [loading, setLoading] = useState(true)
-  const [refreshing, setRefreshing] = useState(false)
-  const router = useRouter()
-  const currentPath = usePathname()
+  const { data: session, status } = useSession();
+  const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [isCollapsed, setIsCollapsed] = useState(false);
+  const [orders, setOrders] = useState<OrderWithCustomer[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
+  const router = useRouter();
+  const currentPath = usePathname();
 
   const fetchOrders = async () => {
     try {
-      const response = await fetch('/api/admin/orders')
-      const data = await response.json()
-      if (data.success) {
-        setOrders(data.data)
-      }
+      const response = await axios.get("/api/admin/orders");
+      const data = response.data;
+      setOrders(data.data);
     } catch (error) {
-      console.error('Error fetching orders:', error)
+      console.error("Error fetching orders:", error);
     } finally {
-      setLoading(false)
-      setRefreshing(false)
+      setLoading(false);
+      setRefreshing(false);
     }
-  }
+  };
 
   const handleRefresh = () => {
-    setRefreshing(true)
-    fetchOrders()
-  }
+    setRefreshing(true);
+    fetchOrders();
+  };
 
   useEffect(() => {
     // Check if user is authenticated and is admin
-    if (status === 'loading') return // Still loading session
-    
-    if (!session || session.user?.role !== 'admin') {
-      router.push('/login')
-      return
+    if (status === "loading") return; // Still loading session
+
+    if (!session || session.user?.role !== "admin") {
+      router.push("/login");
+      return;
     }
 
-    fetchOrders()
-  }, [session, status, router])
+    fetchOrders();
+  }, [session, status, router]);
 
   const handleLogout = async () => {
-    await signOut({ redirect: false })
-    router.push('/login')
-  }
+    await signOut({ redirect: false });
+    router.push("/login");
+  };
 
   const handleNavigate = (href: string) => {
-    router.push(href)
-  }
+    router.push(href);
+  };
 
-  const getCustomerInfo = (customers: OrderWithCustomer['customers']) => {
+  const getCustomerInfo = (customers: OrderWithCustomer["customers"]) => {
     if (Array.isArray(customers)) {
-      return customers[0] || null
+      return customers[0] || null;
     }
-    return customers
-  }
+    return customers;
+  };
 
   const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString('en-US', {
-      year: 'numeric',
-      month: 'short',
-      day: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit'
-    })
-  }
+    return new Date(dateString).toLocaleDateString("en-US", {
+      year: "numeric",
+      month: "short",
+      day: "numeric",
+      hour: "2-digit",
+      minute: "2-digit",
+    });
+  };
 
   const getTotalQuantity = (order: OrderWithCustomer) => {
-    return order.product_sizes?.reduce((total, size) => total + (size.quantity || 0), 0) || 0
-  }
+    return (
+      order.product_sizes?.reduce(
+        (total, size) => total + (size.quantity || 0),
+        0,
+      ) || 0
+    );
+  };
 
-  if (status === 'loading' || !session) {
+  if (status === "loading" || !session) {
     return (
       <div className="min-h-screen bg-gray-50 flex">
         <AdminSidebar
           user={null}
           sidebarOpen={false}
-          setSidebarOpen={() => { }}
-          onLogout={() => { }}
-          onNavigate={() => { }}
+          setSidebarOpen={() => {}}
+          onLogout={() => {}}
+          onNavigate={() => {}}
           isCollapsed={false}
-          onToggleCollapse={() => { }}
+          onToggleCollapse={() => {}}
           currentPath="/admin/orders"
         />
         <div className="flex-1 lg:ml-64 lg:pt-0 pt-16">
           <OrdersPageSkeleton />
         </div>
       </div>
-    )
+    );
   }
 
   if (loading) {
@@ -117,9 +121,9 @@ export default function OrdersPage() {
         <AdminSidebar
           user={{
             id: session.user.id,
-            name: session.user.name || '',
-            email: session.user.email || '',
-            role: session.user.role || 'user'
+            name: session.user.name || "",
+            email: session.user.email || "",
+            role: session.user.role || "user",
           }}
           sidebarOpen={sidebarOpen}
           setSidebarOpen={setSidebarOpen}
@@ -129,11 +133,13 @@ export default function OrdersPage() {
           onToggleCollapse={() => setIsCollapsed(!isCollapsed)}
           currentPath={currentPath}
         />
-        <div className={`flex-1 transition-all duration-300 ${isCollapsed ? 'lg:ml-16' : 'lg:ml-64'} lg:pt-0 pt-16`}>
+        <div
+          className={`flex-1 transition-all duration-300 ${isCollapsed ? "lg:ml-16" : "lg:ml-64"} lg:pt-0 pt-16`}
+        >
           <OrdersPageSkeleton />
         </div>
       </div>
-    )
+    );
   }
 
   return (
@@ -141,9 +147,9 @@ export default function OrdersPage() {
       <AdminSidebar
         user={{
           id: session.user.id,
-          name: session.user.name || '',
-          email: session.user.email || '',
-          role: session.user.role || 'user'
+          name: session.user.name || "",
+          email: session.user.email || "",
+          role: session.user.role || "user",
         }}
         sidebarOpen={sidebarOpen}
         setSidebarOpen={setSidebarOpen}
@@ -165,18 +171,24 @@ export default function OrdersPage() {
           >
             <Menu className="h-4 w-4" />
           </Button>
-          <h1 className="text-lg font-bold tracking-tight text-gray-900">Print Pro</h1>
+          <h1 className="text-lg font-bold tracking-tight text-gray-900">
+            Print Pro
+          </h1>
         </div>
       </header>
 
       {/* Main Content */}
-      <div className={`flex-1 transition-all duration-300 ${isCollapsed ? 'lg:ml-16' : 'lg:ml-64'} lg:pt-0 pt-16`}>
+      <div
+        className={`flex-1 transition-all duration-300 ${isCollapsed ? "lg:ml-16" : "lg:ml-64"} lg:pt-0 pt-16`}
+      >
         {/* Orders Content */}
         <main className="p-4 sm:p-6 lg:p-8">
           {/* Header */}
           <div className="flex flex-row items-center justify-between gap-4 mb-6 sm:mb-8">
             <div>
-              <h1 className="text-xl sm:text-3xl font-bold text-gray-900">Orders</h1>
+              <h1 className="text-xl sm:text-3xl font-bold text-gray-900">
+                Orders
+              </h1>
               <p className="text-xs lg:text-base text-gray-600 mt-1 sm:mt-2">
                 Manage all customer orders
               </p>
@@ -200,20 +212,29 @@ export default function OrdersPage() {
             {orders.length === 0 ? (
               <Card className="p-8 sm:p-12 text-center">
                 <Package className="h-10 w-10 sm:h-12 sm:w-12 text-gray-400 mx-auto mb-4" />
-                <h3 className="text-base sm:text-lg font-semibold text-gray-900 mb-2">No orders yet</h3>
-                <p className="text-sm sm:text-base text-gray-600">When customers place orders, they will appear here.</p>
+                <h3 className="text-base sm:text-lg font-semibold text-gray-900 mb-2">
+                  No orders yet
+                </h3>
+                <p className="text-sm sm:text-base text-gray-600">
+                  When customers place orders, they will appear here.
+                </p>
               </Card>
             ) : (
               orders.map((order) => {
-                const customer = getCustomerInfo(order.customers)
-                const totalQuantity = getTotalQuantity(order)
+                const customer = getCustomerInfo(order.customers);
+                const totalQuantity = getTotalQuantity(order);
 
                 return (
-                  <Card key={order.id} className="p-4 sm:p-6 hover:shadow-md transition-shadow">
+                  <Card
+                    key={order.id}
+                    className="p-4 sm:p-6 hover:shadow-md transition-shadow"
+                  >
                     <div className="space-y-6">
                       {/* Product Preview */}
                       <div>
-                        <h3 className="text-base lg:text-lg font-semibold text-gray-900 mb-3 sm:mb-4">Product Design</h3>
+                        <h3 className="text-base lg:text-lg font-semibold text-gray-900 mb-3 sm:mb-4">
+                          Product Design
+                        </h3>
                         <OrderProductPreview order={order} />
                       </div>
 
@@ -221,20 +242,28 @@ export default function OrdersPage() {
                       <div className="flex flex-col sm:flex-row items-start justify-between gap-6 pt-4 border-t border-gray-100">
                         <div className="flex-1 space-y-3 w-full">
                           <div className="flex flex-wrap items-center gap-2 sm:gap-4 mb-1">
-                            <Badge variant="secondary" className="text-[10px] sm:text-xs">
+                            <Badge
+                              variant="secondary"
+                              className="text-[10px] sm:text-xs"
+                            >
                               #{order.id.toString().slice(-6)}
                             </Badge>
                             <span className="text-xs sm:text-sm text-gray-500 font-medium">
                               {formatDate(order.created_at)}
                             </span>
-                            <Badge variant="outline" className="text-[10px] sm:text-xs text-blue-600 border-blue-200 bg-blue-50">
+                            <Badge
+                              variant="outline"
+                              className="text-[10px] sm:text-xs text-blue-600 border-blue-200 bg-blue-50"
+                            >
                               {totalQuantity} items
                             </Badge>
                           </div>
 
                           <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs sm:text-sm text-gray-600">
                             {order.brand_type?.[0]?.product_type?.name && (
-                              <span className="font-semibold text-gray-900">{order.brand_type[0].product_type.name}</span>
+                              <span className="font-semibold text-gray-900">
+                                {order.brand_type[0].product_type.name}
+                              </span>
                             )}
                             {order.brand_type?.[0]?.brands?.name && (
                               <span className="flex items-center gap-1">
@@ -251,18 +280,26 @@ export default function OrdersPage() {
                           </div>
 
                           {/* Sizes */}
-                          {order.product_sizes && order.product_sizes.length > 0 && (
-                            <div className="flex flex-wrap items-center gap-2 mt-1">
-                              <span className="text-[10px] sm:text-xs font-semibold text-gray-500 uppercase tracking-wider">Sizes:</span>
-                              <div className="flex flex-wrap gap-1.5">
-                                {order.product_sizes.map((size) => (
-                                  <Badge key={size.id} variant="outline" className="text-[10px] sm:text-xs px-2 py-0 h-5">
-                                    {size.sizes?.value || 'Unknown'} ({size.quantity})
-                                  </Badge>
-                                ))}
+                          {order.product_sizes &&
+                            order.product_sizes.length > 0 && (
+                              <div className="flex flex-wrap items-center gap-2 mt-1">
+                                <span className="text-[10px] sm:text-xs font-semibold text-gray-500 uppercase tracking-wider">
+                                  Sizes:
+                                </span>
+                                <div className="flex flex-wrap gap-1.5">
+                                  {order.product_sizes.map((size) => (
+                                    <Badge
+                                      key={size.id}
+                                      variant="outline"
+                                      className="text-[10px] sm:text-xs px-2 py-0 h-5"
+                                    >
+                                      {size.sizes?.value || "Unknown"} (
+                                      {size.quantity})
+                                    </Badge>
+                                  ))}
+                                </div>
                               </div>
-                            </div>
-                          )}
+                            )}
                         </div>
 
                         {/* Customer Info */}
@@ -283,18 +320,20 @@ export default function OrdersPage() {
                               </div>
                             </div>
                           ) : (
-                            <div className="text-xs text-gray-500 italic text-left sm:text-right">Customer info unavailable</div>
+                            <div className="text-xs text-gray-500 italic text-left sm:text-right">
+                              Customer info unavailable
+                            </div>
                           )}
                         </div>
                       </div>
                     </div>
                   </Card>
-                )
+                );
               })
             )}
           </div>
         </main>
       </div>
     </div>
-  )
+  );
 }

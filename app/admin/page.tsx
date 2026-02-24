@@ -798,7 +798,7 @@ function CustomerOrderCard({
           <OrderProductPreview
             order={{
               ...order,
-              customers: null, // Customer orders don't have customer info in the same structure
+              customers: null,
             }}
           />
         </div>
