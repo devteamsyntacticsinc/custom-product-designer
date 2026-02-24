@@ -47,7 +47,9 @@ import { useToast } from "@/contexts/ToastContext";
 import axios from "axios";
 
 export default function ProductTypesTab() {
-  const [productTypes, setProductTypes] = useState<ProductType[]>([]);
+  const [productTypes, setProductTypes] = useState<
+    (ProductType & { images: { file: File; is_hasBack: boolean }[] })[]
+  >([]);
   const [isFetchingProductTypes, setIsFetchingProductTypes] = useState(false);
   const [isMutating, setIsMutating] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -311,7 +313,7 @@ function ProductTypeSheet({
 }: {
   children: React.ReactNode;
   mode: "create" | "edit";
-  initialData?: ProductType;
+  initialData?: ProductType & { images: { file: File; is_hasBack: boolean }[] };
   onSubmit: (
     data: ProductType & { images: { file: File; is_hasBack: boolean }[] },
   ) => Promise<void>;
@@ -620,7 +622,7 @@ function DeleteDialog({
   children: React.ReactNode;
   isLoading: boolean;
   setIsLoading: (value: boolean) => void;
-  productType: ProductType;
+  productType: ProductType & { images: { file: File; is_hasBack: boolean }[] };
   fetchProductTypes: () => Promise<void>;
 }) {
   const { addToast } = useToast();

@@ -660,6 +660,7 @@ export class ProductService {
     name: string,
     is_Active: boolean = true,
     is_onlyType: boolean = false,
+    images: { file: File; is_hasBack: boolean }[],
   ): Promise<ProductType> {
     try {
       // Check if product type already exists (case-insensitive)
@@ -801,6 +802,66 @@ export class ProductService {
       }
     } catch (error) {
       console.error("Error deleting product type:", error);
+      throw error;
+    }
+  }
+
+  static async uploadImagProductType(
+    productTypeId: string,
+    assets: { [key: string]: File | null },
+  ) {
+    try {
+      const placementMap: Record<string, string> = {
+        "front-top-left": "Front - Top Left",
+        "front-center": "Front - Center",
+        "back-top": "Back - Top",
+        "back-bottom": "Back - Bottom",
+      };
+
+      const imageInserts = [];
+      for (const [key, file] of Object.entries(assets)) {
+        if (file && file instanceof File) {
+          // Upload to Supabase Storage
+          const fileName = `${Date.now()}-${file.name}`;
+
+          const { error: uploadError } = await supabase.storage
+            .from("product-images")
+            .upload(fileName, file);
+
+          if (uploadError) {
+            console.error("Error uploading image:", uploadError);
+            continue;
+          }
+
+          // Get public URL
+          const { data: urlData } = supabase.storage
+            .from("product-images")
+            .getPublicUrl(fileName);
+
+          imageInserts.push({
+            productT_id: productTypeId,
+            filepath: urlData.publicUrl,
+            is_hasBack:
+              placementMap[key] === "Back - Top" ||
+              placementMap[key] === "Back - Bottom",
+          });
+        }
+      }
+
+      if (imageInserts.length > 0) {
+        const { error } = await supabase
+          .from("image_products")
+          .insert(imageInserts);
+
+        if (error) {
+          console.error("Error inserting product images:", error);
+          throw error;
+        }
+      }
+
+      return true;
+    } catch (error) {
+      console.error("Error uploading product images:", error);
       throw error;
     }
   }
@@ -1069,12 +1130,16 @@ export class ProductService {
       ]);
 
       // Extract values from settled promises
-      const customersCount = customers.status === 'fulfilled' ? customers.value : 0;
-      const ordersCount = productOrders.status === 'fulfilled' ? productOrders.value : 0;
-      const brandsCount = brands.status === 'fulfilled' ? brands.value : 0;
-      const colorsCount = colors.status === 'fulfilled' ? colors.value : 0;
-      const typesCount = productTypes.status === 'fulfilled' ? productTypes.value : 0;
-      const sizesCount = productSizes.status === 'fulfilled' ? productSizes.value : 0;
+      const customersCount =
+        customers.status === "fulfilled" ? customers.value : 0;
+      const ordersCount =
+        productOrders.status === "fulfilled" ? productOrders.value : 0;
+      const brandsCount = brands.status === "fulfilled" ? brands.value : 0;
+      const colorsCount = colors.status === "fulfilled" ? colors.value : 0;
+      const typesCount =
+        productTypes.status === "fulfilled" ? productTypes.value : 0;
+      const sizesCount =
+        productSizes.status === "fulfilled" ? productSizes.value : 0;
 
       return {
         success: true,
