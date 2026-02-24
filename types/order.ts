@@ -1,17 +1,20 @@
 export interface OrderWithCustomer {
   id: string;
   created_at: string;
-  customers: {
-    id: string;
-    name: string;
-    email: string;
-    contact_number: string;
-  } | {
-    id: string;
-    name: string;
-    email: string;
-    contact_number: string;
-  }[] | null;
+  customers:
+    | {
+        id: string;
+        name: string;
+        email: string;
+        contact_number: string;
+      }
+    | {
+        id: string;
+        name: string;
+        email: string;
+        contact_number: string;
+      }[]
+    | null;
   brand_type?: {
     id: string;
     brands?: {
@@ -52,7 +55,7 @@ export interface CustomerActivity {
 
 export interface ActivityItem {
   id: string;
-  type: 'order' | 'user' | 'product';
+  type: "order" | "user" | "product";
   title: string;
   description: string;
   timestamp: string;
