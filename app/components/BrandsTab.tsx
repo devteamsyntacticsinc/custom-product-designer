@@ -53,6 +53,13 @@ interface BrandExtended extends Brand {
   }[];
 }
 
+interface BrandUpdateData {
+  id: number;
+  name?: string;
+  is_Active?: boolean;
+  type_ids?: number[];
+}
+
 export default function BrandsTab() {
   const [brands, setBrands] = useState<BrandExtended[]>([]);
   const [productTypes, setProductTypes] = useState<ProductType[]>([]);
@@ -113,7 +120,7 @@ export default function BrandsTab() {
     try {
       if (brand_id) {
         // UPDATE - Update brand info and types if provided
-        const updateData: any = {
+        const updateData: BrandUpdateData = {
           id: brand_id,
         };
 
@@ -368,7 +375,7 @@ function BrandSheet({
         name,
         is_Active: active,
         type_ids: selectedTypeIds,
-      } as any);
+      } as Brand & { is_Active: boolean; type_ids?: number[] });
       setName("");
       setSelectedTypeIds([]);
       onOpenChange(false);

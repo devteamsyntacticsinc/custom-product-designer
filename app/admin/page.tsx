@@ -189,7 +189,7 @@ export default function AdminDashboard() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 flex">
+    <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex">
       <AdminSidebar
         user={{
           id: session.user.id,
@@ -355,7 +355,7 @@ export default function AdminDashboard() {
                     >
                       <div
                         key={activity.id}
-                        className="flex items-center space-x-4 cursor-pointer hover:bg-gray-50 p-4 rounded-md"
+                        className="flex items-center space-x-4 cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-800 p-4 rounded-md"
                       >
                         <div
                           className={`w-2 h-2 ${getActivityColor(activity.type)} rounded-full`}
@@ -592,7 +592,7 @@ function OrderDetails({ order }: { order: OrderWithCustomer }) {
         </div>
 
         {/* Order Details */}
-        <div className="flex flex-col sm:flex-row items-start justify-between gap-6 pt-4 border-t border-gray-100">
+        <div className="flex flex-col sm:flex-row items-start justify-between gap-6 pt-4 border-t border-gray-100 dark:border-gray-800">
           <div className="flex-1 space-y-3 w-full">
             <div className="flex flex-wrap items-center gap-2 sm:gap-4 mb-1">
               <Badge variant="secondary" className="text-[10px] sm:text-xs">
@@ -603,13 +603,13 @@ function OrderDetails({ order }: { order: OrderWithCustomer }) {
               </span>
               <Badge
                 variant="outline"
-                className="text-[10px] sm:text-xs text-blue-600 border-blue-200 bg-blue-50"
+                className="text-[10px] sm:text-xs text-blue-600 border-blue-200 bg-blue-50 dark:border-blue-800 dark:bg-blue-950"
               >
                 {totalQuantity} items
               </Badge>
             </div>
 
-            <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs sm:text-sm text-gray-600">
+            <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs sm:text-sm text-gray-600 dark:text-gray-400">
               {order.brand_type?.[0]?.product_type?.name && (
                 <span className="font-semibold ">
                   {order.brand_type[0].product_type.name}
@@ -651,7 +651,7 @@ function OrderDetails({ order }: { order: OrderWithCustomer }) {
           </div>
 
           {/* Customer Info */}
-          <div className="w-full sm:w-auto sm:text-right space-y-2 border-t sm:border-t-0 pt-4 sm:pt-0">
+          <div className="w-full sm:w-auto sm:text-right space-y-2 border-t sm:border-t-0 pt-4 sm:pt-0 dark:border-gray-800">
             {customer ? (
               <div className="flex flex-col sm:items-end gap-1">
                 <div className="flex items-center sm:justify-end gap-2 text-sm font-bold ">

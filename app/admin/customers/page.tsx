@@ -40,7 +40,7 @@ export default function CustomersPage() {
 
     if (status === 'loading' || !session) {
         return (
-            <div className="min-h-screen bg-gray-50 flex">
+            <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex">
                 <AdminSidebar
                     user={null}
                     sidebarOpen={false}
@@ -64,7 +64,7 @@ export default function CustomersPage() {
     }
 
     return (
-        <div className="min-h-screen bg-gray-50 flex">
+        <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex">
             <AdminSidebar
                 user={{
                     id: session.user.id,
@@ -81,7 +81,7 @@ export default function CustomersPage() {
                 currentPath={currentPath}
             />
 
-            <header className="bg-white shadow-sm border-b lg:hidden fixed top-0 left-0 right-0 z-40 px-4">
+            <header className="bg-white dark:bg-gray-800 shadow-sm border-b lg:hidden fixed top-0 left-0 right-0 z-40 px-4">
                 <div className="relative flex items-center justify-center h-16">
                     <Button
                         variant="ghost"
@@ -101,9 +101,9 @@ export default function CustomersPage() {
                 <div className="p-4 sm:p-6 lg:p-8">
                     {/* Header */}
                     <div className="flex flex-row items-center justify-between gap-4 mb-6 sm:mb-8">
-                        <div>
-                            <h1 className="text-xl sm:text-3xl font-bold text-gray-900">Customers</h1>
-                            <p className="text-xs lg:text-base text-gray-600 mt-1 sm:mt-2">
+                        <div className="dark:text-gray-200">
+                            <h1 className="text-xl sm:text-3xl font-bold text-gray-900 dark:text-gray-200">Customers</h1>
+                            <p className="text-xs lg:text-base text-gray-600 mt-1 sm:mt-2 dark:text-gray-400">
                                 View customer accounts, contact information, and purchase history.
                             </p>
                         </div>
@@ -112,7 +112,7 @@ export default function CustomersPage() {
                             size="icon"
                             onClick={handleRefresh}
                             disabled={refreshing}
-                            className="rounded-full h-8 w-8 sm:h-10 sm:w-10 text-gray-400 hover:bg-gray-200 hover:text-gray-900 transition-colors shrink-0"
+                            className="rounded-full h-8 w-8 sm:h-10 sm:w-10 text-gray-400 hover:bg-gray-200 hover:text-gray-900 dark:text-gray-400 dark:hover:bg-gray-700 dark:hover:text-gray-200 transition-colors shrink-0"
                         >
                             <RefreshCw
                                 className={`h-4 w-4 sm:h-5 sm:w-5 ${refreshing ? "animate-spin" : ""}`}

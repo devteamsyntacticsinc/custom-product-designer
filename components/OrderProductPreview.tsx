@@ -124,10 +124,10 @@ export default function OrderProductPreview({
   return (
     <div className="space-y-4">
       {/* Product Info & Actions */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 p-4 bg-white border border-gray-100 rounded-xl shadow-sm">
-        <div className="flex items-center gap-4 text-sm text-gray-600">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 p-4 bg-white dark:bg-gray-700 border border-gray-100 dark:border-gray-800 rounded-xl shadow-sm">
+        <div className="flex items-center gap-4 text-sm text-gray-600 dark:text-gray-400">
           <div className="flex flex-col">
-            <span className="font-semibold text-gray-900 text-sm lg:text-lg">
+            <span className="font-semibold text-gray-900 dark:text-white text-sm lg:text-lg">
               {brandName}
             </span>
             <span className="text-xs lg:text-base text-gray-500">
@@ -145,7 +145,7 @@ export default function OrderProductPreview({
           <Button
             variant="outline"
             size="sm"
-            className="flex items-center gap-2 hover:bg-gray-50 transition-colors cursor-pointer"
+            className="flex items-center gap-2 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors cursor-pointer"
             onClick={(e: React.MouseEvent) => {
               e.preventDefault();
               productImages.forEach((img, index) => {
