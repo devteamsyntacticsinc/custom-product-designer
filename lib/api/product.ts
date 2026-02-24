@@ -653,14 +653,12 @@ export class ProductService {
       }
 
       if (productType.is_onlyType) {
-        const { error: brandError } = await supabase
-          .from("brand_type")
-          .insert([
-            {
-              brand_id: null,
-              type_id: productType.id
-            }
-          ]);
+        const { error: brandError } = await supabase.from("brand_type").insert([
+          {
+            brand_id: null,
+            type_id: productType.id,
+          },
+        ]);
 
         if (brandError) {
           console.error("Error inserting into brand_type:", brandError);
@@ -681,7 +679,11 @@ export class ProductService {
     is_onlyType?: boolean,
   ): Promise<ProductType> {
     try {
-      const updateData: { name?: string; is_Active?: boolean; is_onlyType?: boolean } = {};
+      const updateData: {
+        name?: string;
+        is_Active?: boolean;
+        is_onlyType?: boolean;
+      } = {};
       if (name !== undefined) {
         // Check if product type name already exists (excluding current product type, case-insensitive)
         const { data: existingProductType, error: checkError } = await supabase
@@ -733,8 +735,8 @@ export class ProductService {
             .insert([
               {
                 brand_id: null,
-                type_id: id
-              }
+                type_id: id,
+              },
             ]);
 
           if (insertError) throw insertError;
@@ -1284,6 +1286,8 @@ export class ProductService {
     brand_id: number,
     type_id: number,
   ): Promise<BrandType> {
+    let query;
+
     try {
       // Validate brand exists
       const { data: brand, error: brandError } = await supabase
@@ -1324,11 +1328,29 @@ export class ProductService {
         );
       }
 
-      const { data, error } = await supabase
+      // Check if the brand_type is null that is equal to type_id
+      const { data: hasNullBrandType, error: checkNullError } = await supabase
         .from("brand_type")
-        .insert([{ brand_id, type_id }])
-        .select()
-        .single();
+        .select("id")
+        .is("brand_id", null)
+        .eq("type_id", type_id)
+        .maybeSingle();
+
+      if (checkNullError) {
+        console.log(checkNullError);
+        throw checkNullError;
+      }
+      // if it has, then update that existing null brand_type else insert
+      if (hasNullBrandType) {
+        query = supabase
+          .from("brand_type")
+          .update({ brand_id })
+          .eq("id", hasNullBrandType.id);
+      } else {
+        query = supabase.from("brand_type").insert([{ brand_id, type_id }]);
+      }
+
+      const { data, error } = await query.select().single();
 
       if (error) {
         throw error;
