@@ -250,28 +250,28 @@ export class OrderService {
   static async getProductOrdersCount(): Promise<number> {
     try {
       const { count, error } = await supabase
-        .from("product_orders")
-        .select("*", { count: "exact", head: true });
+        .from('product_orders')
+        .select('*', { count: 'exact', head: true })
 
-      if (error) throw error;
-      return count || 0;
+      if (error) throw error
+      return count || 0
     } catch (error) {
-      console.error("Error fetching product orders count:", error);
-      return 0;
+      console.error('Error fetching product orders count:', error)
+      return 0
     }
   }
 
   static async getCustomersCount(): Promise<number> {
     try {
       const { count, error } = await supabase
-        .from("customers")
-        .select("*", { count: "exact", head: true });
+        .from('customers')
+        .select('*', { count: 'exact', head: true })
 
-      if (error) throw error;
-      return count || 0;
+      if (error) throw error
+      return count || 0
     } catch (error) {
-      console.error("Error fetching customers count:", error);
-      return 0;
+      console.error('Error fetching customers count:', error)
+      return 0
     }
   }
 
@@ -292,11 +292,16 @@ export class OrderService {
         .order("created_at", { ascending: false });
 
       if (customersError) {
-        console.error("Customers query error:", customersError);
-        throw customersError;
+        console.error("Error fetching customers:", customersError);
+        return {
+          activities: [],
+          total: 0,
+          totalPages: 0,
+          currentPage: page,
+        };
       }
 
-      // Get all orders with customer information
+      // Get all orders
       const { data: allOrders, error: ordersError } = await supabase
         .from("product_orders")
         .select(
@@ -314,62 +319,16 @@ export class OrderService {
         .order("created_at", { ascending: false });
 
       if (ordersError) {
-        const { data: ordersData, error: altError } = await supabase
-          .from("product_orders")
-          .select("id, created_at, customer_id")
-          .order("created_at", { ascending: false });
-
-        if (altError) {
-          console.error("Alternative orders query error:", altError);
-          throw altError;
-        }
-
-        // Fetch customer data separately
-        const customerIds =
-          ordersData?.map((order) => order.customer_id).filter(Boolean) || [];
-        const { data: customersData, error: customersFetchError } =
-          await supabase
-            .from("customers")
-            .select("id, name, email, contact_number")
-            .in("id", customerIds);
-
-        if (customersFetchError) {
-          console.error("Customers fetch error:", customersFetchError);
-          throw customersFetchError;
-        }
-
-        // Combine order and customer data
-        const combinedOrders =
-          ordersData?.map((order) => ({
-            ...order,
-            customers:
-              customersData?.filter(
-                (customer) => customer.id === order.customer_id,
-              ) || [],
-          })) || [];
-
-        const allActivities = this.buildActivityFromOrders(
-          combinedOrders,
-          allCustomers || [],
-        );
-        const total = allActivities.length;
-        const totalPages = Math.ceil(total / limit);
-        const startIndex = (page - 1) * limit;
-        const endIndex = startIndex + limit;
-        const paginatedActivities = allActivities.slice(startIndex, endIndex);
-
+        console.error("Error fetching orders:", ordersError);
         return {
-          activities: paginatedActivities,
-          total,
-          totalPages,
+          activities: [],
+          total: 0,
+          totalPages: 0,
           currentPage: page,
         };
       }
 
-      const allActivities = this.buildActivityFromOrders(
-        allOrders || [],
-        allCustomers || [],
-      );
+      const allActivities = this.buildActivityFromOrders(allOrders, allCustomers);
       const total = allActivities.length;
       const totalPages = Math.ceil(total / limit);
       const startIndex = (page - 1) * limit;

@@ -1053,7 +1053,7 @@ export class ProductService {
         colors,
         productTypes,
         productSizes,
-      ] = await Promise.all([
+      ] = await Promise.allSettled([
         // Get customers count
         OrderService.getCustomersCount(),
         // Get orders count
@@ -1068,21 +1068,25 @@ export class ProductService {
         this.getProductCombinationsCount(),
       ]);
 
-      // Get recent activity
-      const recentActivity = await OrderService.getRecentActivity();
+      // Extract values from settled promises
+      const customersCount = customers.status === 'fulfilled' ? customers.value : 0;
+      const ordersCount = productOrders.status === 'fulfilled' ? productOrders.value : 0;
+      const brandsCount = brands.status === 'fulfilled' ? brands.value : 0;
+      const colorsCount = colors.status === 'fulfilled' ? colors.value : 0;
+      const typesCount = productTypes.status === 'fulfilled' ? productTypes.value : 0;
+      const sizesCount = productSizes.status === 'fulfilled' ? productSizes.value : 0;
 
       return {
         success: true,
         data: {
           stats: {
-            totalOrders: productOrders,
-            totalUsers: customers,
-            activeProducts: productSizes, // Using product combinations as active products
-            totalBrands: brands,
-            totalColors: colors,
-            totalTypes: productTypes,
+            totalOrders: ordersCount,
+            totalUsers: customersCount,
+            activeProducts: sizesCount, // Using product combinations as active products
+            totalBrands: brandsCount,
+            totalColors: colorsCount,
+            totalTypes: typesCount,
           },
-          recentActivity,
         },
       };
     } catch (error) {
@@ -1099,7 +1103,6 @@ export class ProductService {
             totalColors: 0,
             totalTypes: 0,
           },
-          recentActivity: [],
         },
       };
     }

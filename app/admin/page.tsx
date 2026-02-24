@@ -74,7 +74,8 @@ export default function AdminDashboard() {
   const [refreshing, setRefreshing] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
   const [pageLoading, setPageLoading] = useState(false);
-  const [itemsPerPage] = useState(10);
+  const itemsPerPage = 10; // Make it a constant instead of state
+  const [hasFetched, setHasFetched] = useState(false); // Track if we've already fetched
   const router = useRouter();
 
   // Fetch dashboard data
@@ -87,27 +88,29 @@ export default function AdminDashboard() {
         const data = await response.json();
         if (data.success) {
           setDashboardData(data.data);
+          setHasFetched(true);
         }
       } catch (error) {
         console.error("Error fetching dashboard data:", error);
       } finally {
         setLoading(false);
         setRefreshing(false);
+        setPageLoading(false);
       }
     },
-    [itemsPerPage],
+    [], // Remove itemsPerPage since it's a constant (useState with no setter)
   );
 
   const handleRefresh = () => {
-    setRefreshing(true);
+    setRefreshing(true);  
     fetchDashboardData(currentPage);
   };
 
   const handlePageChange = async (page: number) => {
+    if (pageLoading || page === currentPage) return; // Prevent duplicate calls
     setPageLoading(true);
     setCurrentPage(page);
     await fetchDashboardData(page);
-    setPageLoading(false);
   };
 
   useEffect(() => {
@@ -119,8 +122,11 @@ export default function AdminDashboard() {
       return;
     }
 
-    fetchDashboardData(currentPage);
-  }, [session, status, router, currentPage, fetchDashboardData]);
+    // Only fetch on initial load or when session changes and we haven't fetched yet
+    if (!hasFetched) {
+      fetchDashboardData(currentPage);
+    }
+  }, [session, status, router, currentPage, hasFetched, fetchDashboardData]); // Include all dependencies
 
   const handleLogout = async () => {
     await signOut({ redirect: false });
@@ -501,9 +507,9 @@ function CustomerDrawer({
       setOrderData(null);
       setCustomerWithOrders(null);
     }
-  }, [open]);
+  }, [activity.id, open]);
 
-  const { title, description, timestamp } = activity;
+  const { title, description } = activity;
   return (
     <Drawer open={open} onOpenChange={setOpen}>
       <DrawerTrigger asChild>{children}</DrawerTrigger>
