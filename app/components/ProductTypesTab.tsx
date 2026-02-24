@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -31,7 +31,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
-import { Edit, Trash2, Plus } from "lucide-react";
+import { Edit, Trash2, Plus, Upload, X } from "lucide-react";
 import { ProductType } from "@/types/product";
 import {
   Dialog,
@@ -89,17 +89,29 @@ export default function ProductTypesTab() {
 
   const handleSubmitProductType = async (
     payload: ProductType & { is_Active: boolean; is_onlyType: boolean },
+    assets: { file?: File; url?: string; is_hasBack: boolean }[] = []
   ) => {
     setIsMutating(true);
     try {
+      const formData = new FormData();
+      formData.append("name", payload.name);
+      formData.append("is_Active", String(payload.is_Active));
+      formData.append("is_onlyType", String(payload.is_onlyType));
+
+      // Add images
+      const newAssets = assets.filter((a) => a.file instanceof File);
+      formData.append("image_count", newAssets.length.toString());
+      newAssets.forEach((asset, index) => {
+        formData.append(`image_${index}`, asset.file as File);
+        formData.append(`side_${index}`, String(asset.is_hasBack));
+      });
+
       if (payload.id) {
         // UPDATE
+        formData.append("id", payload.id.toString());
         const res = await fetch(`/api/product-types`, {
           method: "PUT",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({ ...payload, id: payload.id.toString() }),
+          body: formData,
         });
 
         // Check HTTP status
@@ -112,10 +124,7 @@ export default function ProductTypesTab() {
         // SAVE
         const res = await fetch("/api/product-types", {
           method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify(payload),
+          body: formData,
         });
         // Check HTTP status
         if (!res.ok) {
@@ -308,13 +317,71 @@ function ProductTypeSheet({
   children: React.ReactNode;
   mode: "create" | "edit";
   initialData?: ProductType & { is_Active: boolean; is_onlyType: boolean };
-  onSubmit: (data: ProductType & { is_Active: boolean; is_onlyType: boolean }) => Promise<void>;
+  onSubmit: (data: ProductType & { is_Active: boolean; is_onlyType: boolean }, assets: { file?: File; url?: string; is_hasBack: boolean }[]) => Promise<void>;
   isLoading: boolean;
 }) {
   const [name, setName] = useState("");
   const [open, onOpenChange] = useState(false);
   const [active, setActive] = useState(true);
   const [onlyType, setOnlyType] = useState(false);
+  const [assigned, setAssigned] = useState("");
+  const [assets, setAssets] = useState<{ id?: number; file?: File; url?: string; is_hasBack: boolean }[]>([]);
+  const fileInputRefs = useRef<Record<string, HTMLInputElement | null>>({});
+
+  const handleFileChange = (slotId: string, file: File | null) => {
+    if (file) {
+      if (assets.length >= 2) {
+        alert("Maximum of 2 images allowed.");
+        if (fileInputRefs.current[slotId]) {
+          fileInputRefs.current[slotId]!.value = "";
+        }
+        return;
+      }
+
+      const isFrontTaken = assets.some((a) => !a.is_hasBack);
+      const isBackTaken = assets.some((a) => a.is_hasBack);
+
+      let is_hasBack = false;
+      if (isFrontTaken && !isBackTaken) {
+        is_hasBack = true;
+      } else if (isFrontTaken && isBackTaken) {
+        if (fileInputRefs.current[slotId]) {
+          fileInputRefs.current[slotId]!.value = "";
+        }
+        return;
+      }
+
+      setAssets((prev) => [...prev, { file, is_hasBack }]);
+      if (fileInputRefs.current[slotId]) {
+        fileInputRefs.current[slotId]!.value = "";
+      }
+    }
+  };
+
+  const removeAsset = (index: number) => {
+    setAssets((prev) => prev.filter((_, i) => i !== index));
+  };
+
+  const togglePlacement = (index: number) => {
+    const nextIsBack = !assets[index].is_hasBack;
+
+    const updatedAssets = assets.map((a, i) =>
+      i === index ? { ...a, is_hasBack: nextIsBack } : a
+    );
+
+    const frontCount = updatedAssets.filter((a) => !a.is_hasBack).length;
+    const backCount = updatedAssets.filter((a) => a.is_hasBack).length;
+
+    if (frontCount > 1 || backCount > 1) {
+      setAssigned(
+        "*Only one image should be assigned to the front or the back."
+      );
+    } else {
+      setAssigned("");
+    }
+
+    setAssets(updatedAssets);
+  };
 
   const handleOpenChange = (nextOpen: boolean) => {
     onOpenChange(nextOpen);
@@ -323,10 +390,19 @@ function ProductTypeSheet({
       setName(initialData?.name ?? "");
       setActive(initialData?.is_Active ?? true);
       setOnlyType(initialData?.is_onlyType ?? false);
+
+      // Populate existing images
+      const existingAssets = initialData?.image_products?.map(img => ({
+        id: img.id,
+        url: img.filepath,
+        is_hasBack: img.is_hasBack
+      })) ?? [];
+      setAssets(existingAssets);
     } else {
       setName("");
       setActive(true);
       setOnlyType(false);
+      setAssets([]);
     }
   };
 
@@ -337,7 +413,7 @@ function ProductTypeSheet({
         name,
         is_Active: active,
         is_onlyType: onlyType,
-      });
+      }, assets);
       setName("");
       onOpenChange(false);
     } catch (error) {
@@ -377,6 +453,107 @@ function ProductTypeSheet({
             />
           </div>
 
+          {name.length === 0 && (
+            <p className="text-red-500 text-sm italic">
+              *Product Type Name is required before saving.
+            </p>
+          )}
+
+          <div className="space-y-4">
+            <Label htmlFor="product-type-image" className="text-sm font-medium">
+              Product Type Images
+            </Label>
+            <Input
+              type="file"
+              accept="image/*"
+              className="hidden"
+              id="product-type-image-input"
+              ref={(el) => {
+                fileInputRefs.current["image"] = el;
+              }}
+              onChange={(e) => handleFileChange("image", e.target.files?.[0] || null)}
+            />
+            <div
+              className={`group flex items-center justify-between p-3 rounded-xl border border-gray-200 transition-colors min-w-0 bg-gray-50/50 cursor-pointer ${assets.length < 2 ? "" : "hidden"}`}
+              onClick={() => {
+                if (assets.length < 2) {
+                  fileInputRefs.current["image"]?.click();
+                }
+              }}
+            >
+              <span className="text-sm truncate mr-2 text-gray-600">
+                Upload Product Type Image
+              </span>
+              <Upload className="w-6 h-6 text-gray-400 group-hover:text-gray-600 mb-2" />
+            </div>
+
+            {/* Image List */}
+            {assets.length > 0 && (
+              <div className="space-y-2 mt-4 max-h-[250px] overflow-y-auto pr-2 custom-scrollbar">
+                {assets.map((item, index) => (
+                  <div
+                    key={index}
+                    className="flex items-center justify-between p-2 rounded-lg border border-gray-200 bg-white"
+                  >
+                    <div className="flex items-center space-x-3 min-w-0 flex-1">
+                      <div className="w-10 h-10 rounded border border-gray-100 flex-shrink-0 overflow-hidden flex items-center justify-center bg-gray-50">
+                        <img
+                          src={item.file ? URL.createObjectURL(item.file) : item.url}
+                          alt="preview"
+                          className="max-w-full max-h-full object-contain"
+                        />
+                      </div>
+                      <div className="flex flex-col min-w-0">
+                        <span className="text-xs font-semibold text-gray-900 truncate">
+                          {item.file?.name || item.url?.split('/').pop() || "Product Image"}
+                        </span>
+                        <div className="flex items-center space-x-1 mt-0.5">
+                          <span className={`text-[9px] px-1.5 py-0.5 rounded-full ${item.is_hasBack ? "bg-orange-50 text-orange-600 font-medium" : "bg-blue-50 text-blue-600 font-medium"}`}>
+                            {item.is_hasBack ? "Back" : "Front"}
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="flex items-center space-x-4 ml-4">
+                      <div className="flex items-center space-x-2">
+                        <span className={`text-[10px] ${!item.is_hasBack ? "text-gray-900 font-bold" : "text-gray-400"}`}>F</span>
+                        <Switch
+                          checked={item.is_hasBack}
+                          onCheckedChange={() => togglePlacement(index)}
+                          className="scale-75"
+                        />
+                        <span className={`text-[10px] ${item.is_hasBack ? "text-gray-900 font-bold" : "text-gray-400"}`}>B</span>
+                      </div>
+
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          removeAsset(index);
+                        }}
+                        className="p-1 rounded-full hover:bg-red-50 text-red-500 transition-colors"
+                      >
+                        <X className="w-4 h-4" />
+                      </button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+
+          {assigned && (
+            <p className="text-red-500 text-sm italic">
+              {assigned}
+            </p>
+          )}
+
+          {assets.length === 0 && (
+            <p className="text-red-500 text-sm italic">
+              *Product Type Image is required before saving.
+            </p>
+          )}
+
           <div className="flex flex-col">
             <Label htmlFor="product-type-name" className="text-sm">
               Is only Type
@@ -408,7 +585,7 @@ function ProductTypeSheet({
         <SheetFooter className="mt-6 sm:mt-0">
           <Button
             onClick={handleSubmit}
-            disabled={isLoading}
+            disabled={isLoading || name.length === 0 || assets.length === 0 || assigned.length > 0}
             className="w-full sm:w-auto"
           >
             {isLoading
