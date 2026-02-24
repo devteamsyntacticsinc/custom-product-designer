@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { useRouter, usePathname } from 'next/navigation'
 import { useSession, signOut } from 'next-auth/react'
 import { Button } from '@/components/ui/button'
@@ -11,8 +11,18 @@ import {
   ShoppingBag,
   RefreshCw
 } from 'lucide-react'
+import {
+  Pagination,
+  PaginationContent,
+  PaginationItem,
+  PaginationLink,
+  PaginationNext,
+  PaginationPrevious,
+  PaginationEllipsis,
+} from "@/components/ui/pagination"
 import AdminSidebar from '../components/AdminSidebar'
 import AdminDashboardSkeleton from '../components/AdminDashboardSkeleton'
+import ActivitySkeleton from '../../components/ActivitySkeleton'
 
 export default function AdminDashboard() {
   const { data: session, status } = useSession()
@@ -29,22 +39,30 @@ export default function AdminDashboard() {
       totalColors: number
       totalTypes: number
     }
-    recentActivity: Array<{
-      id: string
-      type: 'order' | 'user' | 'product'
-      title: string
-      description: string
-      timestamp: string
-    }>
+    recentActivity: {
+      activities: Array<{
+        id: string
+        type: 'order' | 'user' | 'product'
+        title: string
+        description: string
+        timestamp: string
+      }>
+      total: number
+      totalPages: number
+      currentPage: number
+    }
   } | null>(null)
   const [loading, setLoading] = useState(true)
   const [refreshing, setRefreshing] = useState(false)
+  const [pageLoading, setPageLoading] = useState(false)
+  const [currentPage, setCurrentPage] = useState(1)
+  const [itemsPerPage] = useState(10)
   const router = useRouter()
 
   // Fetch dashboard data
-  const fetchDashboardData = async () => {
+  const fetchDashboardData = useCallback(async (page: number = 1) => {
     try {
-      const response = await fetch('/api/dashboard')
+      const response = await fetch(`/api/dashboard?page=${page}&limit=${itemsPerPage}`)
       const data = await response.json()
       if (data.success) {
         setDashboardData(data.data)
@@ -55,11 +73,21 @@ export default function AdminDashboard() {
       setLoading(false)
       setRefreshing(false)
     }
+  }, [itemsPerPage])
+
+  // Handle page change
+  const handlePageChange = async (page: number) => {
+    setPageLoading(true)
+    setCurrentPage(page)
+    await fetchDashboardData(page)
+    setPageLoading(false)
   }
 
-  const handleRefresh = () => {
+  // Handle refresh
+  const handleRefresh = async () => {
     setRefreshing(true)
-    fetchDashboardData()
+    await fetchDashboardData(currentPage)
+    setRefreshing(false)
   }
 
   useEffect(() => {
@@ -71,8 +99,8 @@ export default function AdminDashboard() {
       return
     }
 
-    fetchDashboardData()
-  }, [session, status, router])
+    fetchDashboardData(currentPage)
+  }, [session, status, router, currentPage, fetchDashboardData])
 
   const handleLogout = async () => {
     await signOut({ redirect: false })
@@ -217,50 +245,121 @@ export default function AdminDashboard() {
           <Card className="p-6">
             <div>
               <CardTitle className="mb-2 text-sm lg:text-base">Recent Activity</CardTitle>
-              <CardDescription className="mb-4 text-xs lg:text-sm">Latest actions in system</CardDescription>
+              <CardDescription className="mb-4 text-xs lg:text-sm">
+                Latest actions in system ({dashboardData?.recentActivity.total || 0} total)
+              </CardDescription>
             </div>
             <div className="space-y-4">
-              {dashboardData?.recentActivity.map((activity) => {
-                const getActivityColor = (type: string) => {
-                  switch (type) {
-                    case 'order': return 'bg-blue-500'
-                    case 'user': return 'bg-green-500'
-                    case 'product': return 'bg-yellow-500'
-                    default: return 'bg-gray-500'
+              {pageLoading ? (
+                <ActivitySkeleton />
+              ) : (
+                dashboardData?.recentActivity.activities.map((activity) => {
+                  const getActivityColor = (type: string) => {
+                    switch (type) {
+                      case 'order': return 'bg-blue-500'
+                      case 'user': return 'bg-green-500'
+                      case 'product': return 'bg-yellow-500'
+                      default: return 'bg-gray-500'
+                    }
                   }
-                }
 
-                const getTimeAgo = (timestamp: string) => {
-                  const now = new Date()
-                  const activityTime = new Date(timestamp)
-                  const diffMs = now.getTime() - activityTime.getTime()
-                  const diffMins = Math.floor(diffMs / 60000)
+                  const getTimeAgo = (timestamp: string) => {
+                    const now = new Date()
+                    const activityTime = new Date(timestamp)
+                    const diffMs = now.getTime() - activityTime.getTime()
+                    const diffMins = Math.floor(diffMs / 60000)
 
-                  if (diffMins < 60) {
-                    return `${diffMins} min ago`
-                  } else if (diffMins < 1440) {
-                    return `${Math.floor(diffMins / 60)} hour${Math.floor(diffMins / 60) > 1 ? 's' : ''} ago`
-                  } else {
-                    return `${Math.floor(diffMins / 1440)} day${Math.floor(diffMins / 1440) > 1 ? 's' : ''} ago`
+                    if (diffMins < 60) {
+                      return `${diffMins} min ago`
+                    } else if (diffMins < 1440) {
+                      return `${Math.floor(diffMins / 60)} hour${Math.floor(diffMins / 60) > 1 ? 's' : ''} ago`
+                    } else {
+                      return `${Math.floor(diffMins / 1440)} day${Math.floor(diffMins / 1440) > 1 ? 's' : ''} ago`
+                    }
                   }
-                }
 
-                return (
-                  <div key={activity.id} className="flex items-center space-x-4">
-                    <div className={`w-2 h-2 ${getActivityColor(activity.type)} rounded-full`}></div>
-                    <div className="flex-1">
-                      <p className="text-sm lg:text-base font-medium">{activity.title}</p>
-                      <p className="text-xs lg:text-sm text-gray-500">{activity.description}</p>
+                  return (
+                    <div key={activity.id} className="flex items-center space-x-4">
+                      <div className={`w-2 h-2 ${getActivityColor(activity.type)} rounded-full`}></div>
+                      <div className="flex-1">
+                        <p className="text-sm lg:text-base font-medium">{activity.title}</p>
+                        <p className="text-xs lg:text-sm text-gray-500">{activity.description}</p>
+                      </div>
+                      <span className="text-xs lg:text-sm text-gray-500">{getTimeAgo(activity.timestamp)}</span>
                     </div>
-                    <span className="text-xs lg:text-sm text-gray-500">{getTimeAgo(activity.timestamp)}</span>
-                  </div>
-                )
-              }) || (
-                  <div className="text-center text-gray-500 py-4">
-                    No recent activity
-                  </div>
-                )}
+                  )
+                }) || (
+                    <div className="text-center text-gray-500 py-4">
+                      No recent activity
+                    </div>
+                  )
+              )}
             </div>
+            
+            {/* Pagination */}
+            {dashboardData?.recentActivity.totalPages && dashboardData.recentActivity.totalPages > 1 && (
+              <div className="mt-6 flex justify-center">
+                <Pagination>
+                  <PaginationContent>
+                    <PaginationItem>
+                      <PaginationPrevious 
+                        onClick={() => handlePageChange(currentPage - 1)}
+                        className={
+                          currentPage === 1 || pageLoading
+                            ? "pointer-events-none opacity-50" 
+                            : "cursor-pointer"
+                        }
+                      />
+                    </PaginationItem>
+                    
+                    {Array.from({ length: dashboardData.recentActivity.totalPages }, (_, i) => i + 1).map((page) => {
+                      if (
+                        page === 1 || 
+                        page === dashboardData.recentActivity.totalPages || 
+                        (page >= currentPage - 1 && page <= currentPage + 1)
+                      ) {
+                        return (
+                          <PaginationItem key={page}>
+                            <PaginationLink
+                              onClick={() => handlePageChange(page)}
+                              isActive={currentPage === page}
+                              className={
+                                pageLoading 
+                                  ? "pointer-events-none" 
+                                  : "cursor-pointer"
+                              }
+                            >
+                              {page}
+                            </PaginationLink>
+                          </PaginationItem>
+                        )
+                      } else if (
+                        page === currentPage - 2 || 
+                        page === currentPage + 2
+                      ) {
+                        return (
+                          <PaginationItem key={page}>
+                            <PaginationEllipsis />
+                          </PaginationItem>
+                        )
+                      }
+                      return null
+                    })}
+                    
+                    <PaginationItem>
+                      <PaginationNext 
+                        onClick={() => handlePageChange(currentPage + 1)}
+                        className={
+                          currentPage === dashboardData.recentActivity.totalPages || pageLoading
+                            ? "pointer-events-none opacity-50" 
+                            : "cursor-pointer"
+                        }
+                      />
+                    </PaginationItem>
+                  </PaginationContent>
+                </Pagination>
+              </div>
+            )}
           </Card>
         </main>
       </div>

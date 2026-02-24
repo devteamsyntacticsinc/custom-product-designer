@@ -247,10 +247,26 @@ export class OrderService {
     }
   }
 
-  static async getRecentActivity(): Promise<ActivityItem[]> {
+  static async getRecentActivity(page: number = 1, limit: number = 10): Promise<{
+  activities: ActivityItem[]
+  total: number
+  totalPages: number
+  currentPage: number
+}> {
     try {
-      // Get recent orders with proper customer join
-      const { data: recentOrders, error: ordersError } = await supabase
+      // Get all customers
+      const { data: allCustomers, error: customersError } = await supabase
+        .from('customers')
+        .select('id, name, email, contact_number, created_at')
+        .order('created_at', { ascending: false })
+
+      if (customersError) {
+        console.error('Customers query error:', customersError)
+        throw customersError
+      }
+
+      // Get all orders with customer information
+      const { data: allOrders, error: ordersError } = await supabase
         .from('product_orders')
         .select(`
           id,
@@ -263,14 +279,12 @@ export class OrderService {
           )
         `)
         .order('created_at', { ascending: false })
-        .limit(3)
 
       if (ordersError) {
         const { data: ordersData, error: altError } = await supabase
           .from('product_orders')
           .select('id, created_at, customer_id')
-          .order('created_at', { ascending: false })
-          .limit(3)
+          .order('created_at', { ascending: false })   
 
         if (altError) {
           console.error('Alternative orders query error:', altError)
@@ -295,25 +309,42 @@ export class OrderService {
           customers: customersData?.filter(customer => customer.id === order.customer_id) || []
         })) || []
 
-        return this.buildActivityFromOrders(combinedOrders, [])
+        const allActivities = this.buildActivityFromOrders(combinedOrders, allCustomers || [])
+        const total = allActivities.length
+        const totalPages = Math.ceil(total / limit)
+        const startIndex = (page - 1) * limit
+        const endIndex = startIndex + limit
+        const paginatedActivities = allActivities.slice(startIndex, endIndex)
+
+        return {
+          activities: paginatedActivities,
+          total,
+          totalPages,
+          currentPage: page
+        }
       }
 
-      // Get recent customers
-      const { data: recentCustomers, error: customersError } = await supabase
-        .from('customers')
-        .select('id, name, email, contact_number, created_at')
-        .order('created_at', { ascending: false })
-        .limit(2)
+      const allActivities = this.buildActivityFromOrders(allOrders || [], allCustomers || [])
+      const total = allActivities.length
+      const totalPages = Math.ceil(total / limit)
+      const startIndex = (page - 1) * limit
+      const endIndex = startIndex + limit
+      const paginatedActivities = allActivities.slice(startIndex, endIndex)
 
-      if (customersError) {
-        console.error('Customers query error:', customersError)
-        throw customersError
+      return {
+        activities: paginatedActivities,
+        total,
+        totalPages,
+        currentPage: page
       }
-
-      return this.buildActivityFromOrders(recentOrders, recentCustomers)
     } catch (error) {
       console.error('Error fetching recent activity:', error)
-      return []
+      return {
+        activities: [],
+        total: 0,
+        totalPages: 0,
+        currentPage: page
+      }
     }
   }
 
@@ -474,9 +505,8 @@ export class OrderService {
       })
     }
 
-    // Sort by timestamp and return latest 5
+    // Sort by timestamp (newest first) and return all activities
     return activities
       .sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime())
-      .slice(0, 5)
   }
 }
