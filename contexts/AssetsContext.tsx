@@ -1,18 +1,19 @@
 "use client";
 
 import { createContext, useContext, useState, ReactNode } from "react";
+import { ProductType } from "@/types/product";
 
 interface AssetsContextType {
   assets: Record<string, File | null>;
   setAssets: React.Dispatch<React.SetStateAction<Record<string, File | null>>>;
-  selectedProductTypeName: string;
-  setSelectedProductTypeName: (name: string) => void;
+  selectedProductType: ProductType | null;
+  setSelectedProductType: (type: ProductType | null) => void;
 }
 
 const AssetsContext = createContext<AssetsContextType | undefined>(undefined);
 
 export function AssetsProvider({ children }: { children: ReactNode }) {
-  const [selectedProductTypeName, setSelectedProductTypeName] = useState<string>("");
+  const [selectedProductType, setSelectedProductType] = useState<ProductType | null>(null);
   const [assets, setAssets] = useState<Record<string, File | null>>({
     "front-top-left": null,
     "front-center": null,
@@ -21,7 +22,7 @@ export function AssetsProvider({ children }: { children: ReactNode }) {
   });
 
   return (
-    <AssetsContext.Provider value={{ assets, setAssets, selectedProductTypeName, setSelectedProductTypeName }}>
+    <AssetsContext.Provider value={{ assets, setAssets, selectedProductType, setSelectedProductType }}>
       {children}
     </AssetsContext.Provider>
   );

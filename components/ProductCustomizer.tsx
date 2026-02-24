@@ -20,7 +20,7 @@ import ProductCustomizerSkeleton from "./ProductCustomizerSkeleton";
 import { CardTitle } from "@/components/ui/card";
 
 export default function ProductCustomizer() {
-  const { assets, setAssets, setSelectedProductTypeName } = useAssets();
+  const { assets, setAssets, selectedProductType, setSelectedProductType } = useAssets();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [currentStep, setCurrentStep] = useState<"customize" | "contact">(
     "customize",
@@ -28,7 +28,6 @@ export default function ProductCustomizer() {
   const [productType, setProductType] = useState("");
   const [brand, setBrand] = useState("");
   const [color, setColor] = useState("");
-  const [selectedProductType, setSelectedProductType] = useState<ProductType | null>(null);
   const [sizeSelection, setSizeSelection] = useState<
     {
       size: number;
@@ -329,7 +328,6 @@ export default function ProductCustomizer() {
               setProductType(value);
               const selected = productTypes.find(pt => pt.id.toString() === value);
               setSelectedProductType(selected || null);
-              setSelectedProductTypeName(selected?.name || "");
               // Reset brand and color when product type changes
               setBrand("");
               setColor("");

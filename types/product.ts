@@ -39,6 +39,14 @@ export interface ProductType {
   name: string;
   is_Active?: boolean;
   is_onlyType?: boolean;
+  image_products?: ImageProducts[];
+}
+
+export interface ImageProducts {
+  id: number;
+  producT_id: number;
+  filepath: string;
+  is_hasBack: boolean;
 }
 
 export interface Size {
