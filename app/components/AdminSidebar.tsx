@@ -1,8 +1,7 @@
 "use client";
 
-import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
-import { User } from "@/types/login";
+import { Button } from '@/components/ui/button'
+import { Badge } from '@/components/ui/badge'
 import {
   LayoutDashboard,
   Users,
@@ -24,14 +23,19 @@ const sidebarItems = [
 ];
 
 interface AdminSidebarProps {
-  user: User | null;
-  sidebarOpen: boolean;
-  setSidebarOpen: (open: boolean) => void;
-  onLogout: () => void;
-  onNavigate: (href: string) => void;
-  isCollapsed?: boolean;
-  onToggleCollapse?: () => void;
-  currentPath?: string;
+  user: {
+    id: string
+    name: string
+    email: string
+    role: string
+  } | null
+  sidebarOpen: boolean
+  setSidebarOpen: (open: boolean) => void
+  onLogout: () => void
+  onNavigate: (href: string) => void
+  isCollapsed?: boolean
+  onToggleCollapse?: () => void
+  currentPath?: string
 }
 
 export default function AdminSidebar({
@@ -85,9 +89,8 @@ export default function AdminSidebar({
         <nav className="mt-6">
           <div className={`${isCollapsed ? "px-2" : "px-4"} space-y-2`}>
             {sidebarItems.map((item) => {
-              const isActive =
-                currentPath === item.href ||
-                (currentPath.startsWith(item.href) && item.href !== "/admin");
+              const isActive = currentPath === item.href || 
+                (item.href !== '/admin' && currentPath.startsWith(item.href))
               return (
                 <Button
                   key={item.label}
