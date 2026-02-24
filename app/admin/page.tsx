@@ -4,16 +4,22 @@ import { useState, useEffect, useCallback } from "react";
 import { useRouter, usePathname } from "next/navigation";
 import { useSession, signOut } from "next-auth/react";
 import { Button } from "@/components/ui/button";
-import { Card, CardDescription, CardTitle } from "@/components/ui/card";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 import {
   Menu,
   Users,
   ShoppingBag,
   RefreshCw,
-  Loader2,
   UserIcon,
   Mail,
   Phone,
+  Package,
 } from "lucide-react";
 import AdminSidebar from "../components/AdminSidebar";
 import AdminDashboardSkeleton from "../components/AdminDashboardSkeleton";
@@ -41,6 +47,7 @@ import {
   PaginationPrevious,
   PaginationEllipsis,
 } from "@/components/ui/pagination";
+import Link from "next/link";
 
 export default function AdminDashboard() {
   const { data: session, status } = useSession();
@@ -102,7 +109,7 @@ export default function AdminDashboard() {
   );
 
   const handleRefresh = () => {
-    setRefreshing(true);  
+    setRefreshing(true);
     fetchDashboardData(currentPage);
   };
 
@@ -209,9 +216,7 @@ export default function AdminDashboard() {
           >
             <Menu className="h-4 w-4" />
           </Button>
-          <h1 className="text-lg font-bold tracking-tight text-gray-900">
-            Print Pro
-          </h1>
+          <h1 className="text-lg font-bold tracking-tight ">Print Pro</h1>
         </div>
       </header>
 
@@ -223,9 +228,7 @@ export default function AdminDashboard() {
         <main className="p-6">
           <div className="mb-8 flex items-center justify-between">
             <div>
-              <h1 className="text-xl lg:text-2xl font-bold text-gray-900">
-                Dashboard
-              </h1>
+              <h1 className="text-xl lg:text-2xl font-bold ">Dashboard</h1>
               <p className="text-gray-600 text-sm lg:text-base">
                 Welcome back, {session.user?.name}!
               </p>
@@ -360,11 +363,11 @@ export default function AdminDashboard() {
                           <p className="text-sm lg:text-base font-medium">
                             {activity.title}
                           </p>
-                          <p className="text-xs lg:text-sm text-gray-500">
+                          <p className="text-xs lg:text-sm text-muted-foreground">
                             {activity.description}
                           </p>
                         </div>
-                        <span className="text-xs lg:text-sm text-gray-500">
+                        <span className="text-xs lg:text-sm text-muted-foreground">
                           {getTimeAgo(activity.timestamp)}
                         </span>
                       </div>
@@ -372,7 +375,7 @@ export default function AdminDashboard() {
                   );
                 })
               ) : (
-                <div className="text-center text-gray-500 py-4">
+                <div className="text-center text-muted-foreground py-4">
                   No recent activity
                 </div>
               )}
@@ -476,6 +479,8 @@ function CustomerDrawer({
   const [customerWithOrders, setCustomerWithOrders] =
     useState<CustomerWithOrdersForDashboard | null>(null);
 
+  const isOrderActivity = activity.id.includes("order");
+
   useEffect(() => {
     // TODO: Fetch customer order data when drawer opens
     if (open) {
@@ -514,20 +519,24 @@ function CustomerDrawer({
     <Drawer open={open} onOpenChange={setOpen}>
       <DrawerTrigger asChild>{children}</DrawerTrigger>
       <DrawerContent className={cn("", isFetching && "min-h-[45vh]")}>
-        <DrawerHeader className="justify-start flex flex-col items-start">
-          <DrawerTitle className="flex items-center justify-center gap-2">
-            <div
-              className={`w-2 h-2 ${getActivityColor(activity.type)} rounded-full`}
-            ></div>
-            <span className="text-lg">{title}</span>
-          </DrawerTitle>
-          <DrawerDescription>{description}</DrawerDescription>
-        </DrawerHeader>
-        ={" "}
-        {isFetching ? (
-          <div className="flex items-center justify-center h-full">
-            <Loader2 className="animate-spin" />
+        <DrawerHeader className="justify-between flex flex-row items-center">
+          <div className="justify-start flex flex-col items-start">
+            <DrawerTitle className="flex items-center justify-center gap-2">
+              <div
+                className={`w-2 h-2 ${getActivityColor(activity.type)} rounded-full`}
+              />
+              <span className="text-lg">{title}</span>
+            </DrawerTitle>
+            <DrawerDescription>{description}</DrawerDescription>
           </div>
+          <Link href={isOrderActivity ? "/admin/orders" : "/admin/customers"}>
+            <Button className="" variant={"outline"}>
+              {isOrderActivity ? "Go to Orders Page" : "Go to Customers Page"}
+            </Button>
+          </Link>
+        </DrawerHeader>
+        {isFetching ? (
+          <OrderDetailsSkeleton />
         ) : orderData ? (
           <OrderDetails order={orderData} />
         ) : customerWithOrders ? (
@@ -570,12 +579,12 @@ function OrderDetails({ order }: { order: OrderWithCustomer }) {
   return (
     <Card
       key={order.id}
-      className="p-4 sm:p-6 hover:shadow-md transition-shadow overflow-y-auto"
+      className="p-4 sm:p-6 hover:shadow-md transition-shadow overflow-y-auto border-none shadow-none"
     >
       <div className="space-y-6">
         {/* Product Preview */}
         <div>
-          <h3 className="text-base lg:text-lg font-semibold text-gray-900 mb-3 sm:mb-4">
+          <h3 className="text-base lg:text-lg font-semibold  mb-3 sm:mb-4">
             Product Design
           </h3>
           <OrderProductPreview order={order} />
@@ -588,7 +597,7 @@ function OrderDetails({ order }: { order: OrderWithCustomer }) {
               <Badge variant="secondary" className="text-[10px] sm:text-xs">
                 #{order.id.toString().slice(-6)}
               </Badge>
-              <span className="text-xs sm:text-sm text-gray-500 font-medium">
+              <span className="text-xs sm:text-sm text-muted-foreground font-medium">
                 {formatDate(order.created_at)}
               </span>
               <Badge
@@ -601,7 +610,7 @@ function OrderDetails({ order }: { order: OrderWithCustomer }) {
 
             <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs sm:text-sm text-gray-600">
               {order.brand_type?.[0]?.product_type?.name && (
-                <span className="font-semibold text-gray-900">
+                <span className="font-semibold ">
                   {order.brand_type[0].product_type.name}
                 </span>
               )}
@@ -622,7 +631,7 @@ function OrderDetails({ order }: { order: OrderWithCustomer }) {
             {/* Sizes */}
             {order.product_sizes && order.product_sizes.length > 0 && (
               <div className="flex flex-wrap items-center gap-2 mt-1">
-                <span className="text-[10px] sm:text-xs font-semibold text-gray-500 uppercase tracking-wider">
+                <span className="text-[10px] sm:text-xs font-semibold text-muted-foreground uppercase tracking-wider">
                   Sizes:
                 </span>
                 <div className="flex flex-wrap gap-1.5">
@@ -644,21 +653,21 @@ function OrderDetails({ order }: { order: OrderWithCustomer }) {
           <div className="w-full sm:w-auto sm:text-right space-y-2 border-t sm:border-t-0 pt-4 sm:pt-0">
             {customer ? (
               <div className="flex flex-col sm:items-end gap-1">
-                <div className="flex items-center sm:justify-end gap-2 text-sm font-bold text-gray-900">
-                  <UserIcon className="h-4 w-4 text-gray-400" />
+                <div className="flex items-center sm:justify-end gap-2 text-sm font-bold ">
+                  <UserIcon className="h-4 w-4 text-muted-foreground" />
                   {customer.name}
                 </div>
-                <div className="flex items-center sm:justify-end gap-2 text-xs text-gray-500">
-                  <Mail className="h-3.5 w-3.5 text-gray-400" />
+                <div className="flex items-center sm:justify-end gap-2 text-xs text-muted-foreground">
+                  <Mail className="h-3.5 w-3.5 text-muted-foreground" />
                   {customer.email}
                 </div>
-                <div className="flex items-center sm:justify-end gap-2 text-xs text-gray-500">
-                  <Phone className="h-3.5 w-3.5 text-gray-400" />
+                <div className="flex items-center sm:justify-end gap-2 text-xs text-muted-foreground">
+                  <Phone className="h-3.5 w-3.5 text-muted-foreground" />
                   {customer.contact_number}
                 </div>
               </div>
             ) : (
-              <div className="text-xs text-gray-500 italic text-left sm:text-right">
+              <div className="text-xs text-muted-foreground italic text-left sm:text-right">
                 Customer info unavailable
               </div>
             )}
@@ -674,5 +683,229 @@ function CustomerWithOrdersDetails({
 }: {
   customerOrders: CustomerWithOrdersForDashboard;
 }) {
-  return <div>Customer Content Here</div>;
+  const customer = customerOrders.customer;
+  const orders = customerOrders.orders;
+
+  return (
+    <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 p-4 overflow-y-auto">
+      {/* Left Column - Customer Details */}
+      <Card className="py-6 lg:col-span-1 max-h-fit">
+        <CardHeader className="flex items-center gap-3">
+          <div className="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center">
+            <UserIcon className="h-6 w-6 text-blue-600" />
+          </div>
+          <div>
+            <CardTitle className="text-xl font-bold ">
+              {customer.name}
+            </CardTitle>
+            <CardDescription className="text-sm text-muted-foreground">
+              Customer ID: #{customer.id.toString().slice(-6)}
+            </CardDescription>
+          </div>
+        </CardHeader>
+
+        <CardContent className="space-y-3 pt-2">
+          <div className="flex items-center gap-3">
+            <Mail className="h-4 w-4 text-muted-foreground" />
+            <span className="text-sm ">{customer.email}</span>
+          </div>
+          <div className="flex items-center gap-3">
+            <Phone className="h-4 w-4 text-muted-foreground" />
+            <span className="text-sm ">{customer.contact_number}</span>
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Right Column - Order History */}
+      <div className="lg:col-span-2">
+        <div className="flex items-center justify-between mb-4">
+          <h3 className="text-lg font-semibold ">Order History</h3>
+          <Badge variant="secondary" className="text-xs">
+            {customerOrders.orders.length} orders
+          </Badge>
+        </div>
+
+        {orders.length === 0 ? (
+          <Card className="p-8 text-center h-96 justify-center">
+            <div className="text-muted-foreground">
+              <Package className="h-12 w-12 mx-auto mb-3 text-muted-foreground" />
+              <p className="">No orders found</p>
+            </div>
+          </Card>
+        ) : (
+          <div className="space-y-4 max-h-[600px] overflow-y-auto pr-2">
+            {orders.map((order) => (
+              <CustomerOrderCard key={order.id} order={order} />
+            ))}
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
+function CustomerOrderCard({
+  order,
+}: {
+  order: CustomerWithOrdersForDashboard["orders"][0];
+}) {
+  const getTotalQuantity = (
+    order: CustomerWithOrdersForDashboard["orders"][0],
+  ) => {
+    return (
+      order.product_sizes?.reduce(
+        (total, size) => total + (size.quantity || 0),
+        0,
+      ) || 0
+    );
+  };
+
+  const totalQuantity = getTotalQuantity(order);
+  const formatDate = (dateString: string) => {
+    return new Date(dateString).toLocaleDateString("en-US", {
+      year: "numeric",
+      month: "short",
+      day: "numeric",
+      hour: "2-digit",
+      minute: "2-digit",
+    });
+  };
+
+  return (
+    <Card className="p-4 hover:shadow-md transition-shadow">
+      <div className="space-y-4">
+        {/* Order Header */}
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <Badge variant="secondary" className="text-xs">
+              #{order.id.toString().slice(-6)}
+            </Badge>
+            <span className="text-xs text-muted-foreground">
+              {formatDate(order.created_at)}
+            </span>
+          </div>
+          <Badge
+            variant="outline"
+            className="text-xs text-blue-600 border-blue-200 bg-blue-50"
+          >
+            {totalQuantity} items
+          </Badge>
+        </div>
+
+        {/* Product Preview */}
+        <div>
+          <OrderProductPreview
+            order={{
+              ...order,
+              customers: null, // Customer orders don't have customer info in the same structure
+            }}
+          />
+        </div>
+
+        {/* Order Details */}
+        <div className="space-y-2">
+          <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-gray-600">
+            {order.brand_type?.[0]?.product_type?.name && (
+              <span className="font-semibold ">
+                {order.brand_type[0].product_type.name}
+              </span>
+            )}
+            {order.brand_type?.[0]?.brands?.name && (
+              <span className="flex items-center gap-1">
+                <span>•</span>
+                {order.brand_type[0].brands.name}
+              </span>
+            )}
+            {order.colors?.[0]?.value && (
+              <span className="flex items-center gap-1">
+                <span>•</span>
+                {order.colors[0].value}
+              </span>
+            )}
+          </div>
+
+          {/* Sizes */}
+          {order.product_sizes && order.product_sizes.length > 0 && (
+            <div className="flex flex-wrap items-center gap-2">
+              <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
+                Sizes:
+              </span>
+              <div className="flex flex-wrap gap-1">
+                {order.product_sizes.map((size) => (
+                  <Badge
+                    key={size.id}
+                    variant="outline"
+                    className="text-xs px-2 py-0 h-5"
+                  >
+                    {size.sizes?.value || "Unknown"} ({size.quantity})
+                  </Badge>
+                ))}
+              </div>
+            </div>
+          )}
+        </div>
+      </div>
+    </Card>
+  );
+}
+
+function OrderDetailsSkeleton() {
+  return (
+    <Card className="p-4 sm:p-6 border-none shadow-none">
+      <div className="space-y-6">
+        {/* Product Design Skeleton */}
+        <div>
+          <div className="h-6 w-32 bg-gray-200 rounded-md animate-pulse mb-3 sm:mb-4" />
+          <div className="bg-gray-100 rounded-lg h-48 w-full animate-pulse" />
+        </div>
+
+        {/* Order Details Skeleton */}
+        <div className="flex flex-col sm:flex-row items-start justify-between gap-6 pt-4 border-t border-gray-100">
+          <div className="flex-1 space-y-3 w-full">
+            {/* Order ID, Date, Items Badges */}
+            <div className="flex flex-wrap items-center gap-2 sm:gap-4 mb-1">
+              <div className="h-5 w-16 bg-gray-200 rounded animate-pulse" />
+              <div className="h-4 w-24 bg-gray-200 rounded animate-pulse" />
+              <div className="h-5 w-16 bg-gray-200 rounded animate-pulse" />
+            </div>
+
+            {/* Product Type, Brand, Color */}
+            <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
+              <div className="h-4 w-20 bg-gray-200 rounded animate-pulse" />
+              <div className="h-4 w-16 bg-gray-200 rounded animate-pulse" />
+              <div className="h-4 w-12 bg-gray-200 rounded animate-pulse" />
+            </div>
+
+            {/* Sizes */}
+            <div className="flex flex-wrap items-center gap-2 mt-1">
+              <div className="h-3 w-12 bg-gray-200 rounded animate-pulse" />
+              <div className="flex flex-wrap gap-1.5">
+                <div className="h-5 w-12 bg-gray-200 rounded animate-pulse" />
+                <div className="h-5 w-12 bg-gray-200 rounded animate-pulse" />
+                <div className="h-5 w-12 bg-gray-200 rounded animate-pulse" />
+              </div>
+            </div>
+          </div>
+
+          {/* Customer Info Skeleton */}
+          <div className="w-full sm:w-auto sm:text-right space-y-2 border-t sm:border-t-0 pt-4 sm:pt-0">
+            <div className="flex flex-col sm:items-end gap-1">
+              <div className="flex items-center sm:justify-end gap-2">
+                <div className="h-4 w-4 bg-gray-200 rounded animate-pulse" />
+                <div className="h-4 w-24 bg-gray-200 rounded animate-pulse" />
+              </div>
+              <div className="flex items-center sm:justify-end gap-2">
+                <div className="h-3.5 w-3.5 bg-gray-200 rounded animate-pulse" />
+                <div className="h-3.5 w-32 bg-gray-200 rounded animate-pulse" />
+              </div>
+              <div className="flex items-center sm:justify-end gap-2">
+                <div className="h-3.5 w-3.5 bg-gray-200 rounded animate-pulse" />
+                <div className="h-3.5 w-28 bg-gray-200 rounded animate-pulse" />
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </Card>
+  );
 }
