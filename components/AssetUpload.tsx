@@ -3,6 +3,7 @@
 import { useRef } from "react";
 import { Upload, X } from "lucide-react";
 import { Input } from "@/components/ui/input";
+import { useAssets } from "@/contexts/AssetsContext";
 
 type AssetSlot = {
   id: string;
@@ -24,7 +25,10 @@ export default function AssetUpload({
   assets: Record<string, File | null>;
   setAssets: React.Dispatch<React.SetStateAction<Record<string, File | null>>>;
 }) {
+  const { selectedProductTypeName } = useAssets();
   const fileInputRefs = useRef<Record<string, HTMLInputElement | null>>({});
+
+  const isMug = selectedProductTypeName.toLowerCase().includes("mug");
 
   const handleFileChange = (slotId: string, file: File | null) => {
     setAssets((prev) => ({ ...prev, [slotId]: file }));
@@ -39,6 +43,9 @@ export default function AssetUpload({
 
   const renderSlot = (slot: AssetSlot) => {
     const asset = assets[slot.id];
+    const isDisabled = isMug && slot.id !== "front-center";
+
+    if (isDisabled) return null;
 
     return (
       <div key={slot.id} className="mb-2">
@@ -58,7 +65,7 @@ export default function AssetUpload({
           onClick={() => !asset && fileInputRefs.current[slot.id]?.click()}
         >
           <span className={`text-sm truncate mr-2 ${asset ? "text-gray-900 font-medium" : "text-gray-600"}`}>
-            {asset ? asset.name : slot.label}
+            {asset ? asset.name : (isMug && slot.id === "front-center" ? "Mug Design" : slot.label)}
           </span>
           {asset ? (
             <button
@@ -78,7 +85,7 @@ export default function AssetUpload({
     );
   };
 
-  const sides: ("Front" | "Back")[] = ["Front", "Back"];
+  const sides: ("Front" | "Back")[] = isMug ? ["Front"] : ["Front", "Back"];
 
   return (
     <div className="space-y-6">

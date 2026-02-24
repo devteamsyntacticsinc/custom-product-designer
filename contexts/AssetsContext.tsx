@@ -5,11 +5,14 @@ import { createContext, useContext, useState, ReactNode } from "react";
 interface AssetsContextType {
   assets: Record<string, File | null>;
   setAssets: React.Dispatch<React.SetStateAction<Record<string, File | null>>>;
+  selectedProductTypeName: string;
+  setSelectedProductTypeName: (name: string) => void;
 }
 
 const AssetsContext = createContext<AssetsContextType | undefined>(undefined);
 
 export function AssetsProvider({ children }: { children: ReactNode }) {
+  const [selectedProductTypeName, setSelectedProductTypeName] = useState<string>("");
   const [assets, setAssets] = useState<Record<string, File | null>>({
     "front-top-left": null,
     "front-center": null,
@@ -18,7 +21,7 @@ export function AssetsProvider({ children }: { children: ReactNode }) {
   });
 
   return (
-    <AssetsContext.Provider value={{ assets, setAssets }}>
+    <AssetsContext.Provider value={{ assets, setAssets, selectedProductTypeName, setSelectedProductTypeName }}>
       {children}
     </AssetsContext.Provider>
   );
