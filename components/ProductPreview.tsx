@@ -9,7 +9,7 @@ const BlobImage = ({ src, alt, className }: { src: string; alt: string; classNam
 );
 
 export default function ProductPreview() {
-  const { assets, selectedProductTypeName } = useAssets();
+  const { assets, selectedProductType } = useAssets();
   const [previews, setPreviews] = useState<Record<string, string>>({});
 
   useEffect(() => {
@@ -43,16 +43,16 @@ export default function ProductPreview() {
         {/* Product Display */}
         <div className="flex flex-col lg:flex-row w-full relative justify-center items-start">
           {/* Front Product */}
-          <div className={`relative w-full aspect-square ${selectedProductTypeName.toLowerCase().includes("mug") ? "max-w-lg" : " "}`}>
+          <div className={`relative w-full aspect-square ${selectedProductType?.is_onlyType ? "max-w-lg" : " "}`}>
             <Image
-              src={selectedProductTypeName.toLowerCase().includes("mug") ? "/image/mug.png" : "/image/Front Shirt.png"}
-              alt={selectedProductTypeName.toLowerCase().includes("mug") ? "Mug" : "T-Shirt Front"}
-              width={selectedProductTypeName.toLowerCase().includes("mug") ? 700 : 1000}
-              height={selectedProductTypeName.toLowerCase().includes("mug") ? 700 : 1000}
+              src={selectedProductType?.is_onlyType ? "/image/mug.png" : "/image/Front Shirt.png"}
+              alt={selectedProductType?.is_onlyType ? "Mug" : "T-Shirt Front"}
+              width={selectedProductType?.is_onlyType ? 700 : 1000}
+              height={selectedProductType?.is_onlyType ? 700 : 1000}
               className="object-contain"
             />
             {/* Front Design Area - Top Left */}
-            <div className={`absolute top-[35%] left-[63%] w-[10%] h-[10%] border-2 border-dashed border-gray-400 rounded flex items-center justify-center transform -translate-x-1/2 -translate-y-1/2 overflow-hidden bg-white/50 z-10 ${selectedProductTypeName.toLowerCase().includes("mug") ? "hidden" : ""}`}>
+            <div className={`absolute top-[35%] left-[63%] w-[10%] h-[10%] border-2 border-dashed border-gray-400 rounded flex items-center justify-center transform -translate-x-1/2 -translate-y-1/2 overflow-hidden bg-white/50 z-10 ${selectedProductType?.is_onlyType ? "hidden" : ""}`}>
               {previews["front-top-left"] ? (
                 <BlobImage src={previews["front-top-left"]} alt="Preview" className="w-full h-full object-contain" />
               ) : (
@@ -60,21 +60,21 @@ export default function ProductPreview() {
               )}
             </div>
             {/* Front Design Area - Center Large */}
-            <div className={`absolute border-2 border-dashed border-gray-400 rounded flex items-center justify-center transform -translate-x-1/2 -translate-y-1/2 overflow-hidden bg-white/50 z-10 ${selectedProductTypeName.toLowerCase().includes("mug")
+            <div className={`absolute border-2 border-dashed border-gray-400 rounded flex items-center justify-center transform -translate-x-1/2 -translate-y-1/2 overflow-hidden bg-white/50 z-10 ${selectedProductType?.is_onlyType
               ? "top-[50%] left-[44%] w-[30%] h-[45%]"
               : "top-[58%] left-[50%] w-[30%] h-[35%]"
               }`}>
               {previews["front-center"] ? (
                 <BlobImage src={previews["front-center"]} alt="Preview" className="w-full h-full object-contain" />
               ) : (
-                <span className="text-gray-400 text-[10px]">{selectedProductTypeName.toLowerCase().includes("mug") ? "Mug Design" : "Front Center"}</span>
+                <span className="text-gray-400 text-[10px]">{selectedProductType?.is_onlyType ? "Mug Design" : "Front Center"}</span>
               )}
             </div>
           </div>
 
           {/* Back Product (Only for shirts) */}
-          {!selectedProductTypeName.toLowerCase().includes("mug") && (
-            <div className={`relative w-full aspect-square ${selectedProductTypeName.toLowerCase().includes("mug") ? "max-w-lg" : ""}`}>
+          {!selectedProductType?.is_onlyType && (
+            <div className={`relative w-full aspect-square ${selectedProductType?.is_onlyType ? "max-w-lg" : ""}`}>
               <Image
                 src="/image/Back Shirt.png"
                 alt="T-Shirt Back"
