@@ -89,29 +89,17 @@ export default function ProductTypesTab() {
 
   const handleSubmitProductType = async (
     payload: ProductType & { is_Active: boolean; is_onlyType: boolean },
-    assets: { file?: File; url?: string; is_hasBack: boolean }[] = []
   ) => {
     setIsMutating(true);
     try {
-      const formData = new FormData();
-      formData.append("name", payload.name);
-      formData.append("is_Active", String(payload.is_Active));
-      formData.append("is_onlyType", String(payload.is_onlyType));
-
-      // Add images
-      const newAssets = assets.filter((a) => a.file instanceof File);
-      formData.append("image_count", newAssets.length.toString());
-      newAssets.forEach((asset, index) => {
-        formData.append(`image_${index}`, asset.file as File);
-        formData.append(`side_${index}`, String(asset.is_hasBack));
-      });
-
       if (payload.id) {
         // UPDATE
-        formData.append("id", payload.id.toString());
         const res = await fetch(`/api/product-types`, {
           method: "PUT",
-          body: formData,
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({ ...payload, id: payload.id.toString() }),
         });
 
         // Check HTTP status
@@ -124,7 +112,10 @@ export default function ProductTypesTab() {
         // SAVE
         const res = await fetch("/api/product-types", {
           method: "POST",
-          body: formData,
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify(payload),
         });
         // Check HTTP status
         if (!res.ok) {
@@ -317,7 +308,7 @@ function ProductTypeSheet({
   children: React.ReactNode;
   mode: "create" | "edit";
   initialData?: ProductType & { is_Active: boolean; is_onlyType: boolean };
-  onSubmit: (data: ProductType & { is_Active: boolean; is_onlyType: boolean }, assets: { file?: File; url?: string; is_hasBack: boolean }[]) => Promise<void>;
+  onSubmit: (data: ProductType & { is_Active: boolean; is_onlyType: boolean }) => Promise<void>;
   isLoading: boolean;
 }) {
   const [name, setName] = useState("");
@@ -325,7 +316,7 @@ function ProductTypeSheet({
   const [active, setActive] = useState(true);
   const [onlyType, setOnlyType] = useState(false);
   const [assigned, setAssigned] = useState("");
-  const [assets, setAssets] = useState<{ id?: number; file?: File; url?: string; is_hasBack: boolean }[]>([]);
+  const [assets, setAssets] = useState<{ file: File; is_hasBack: boolean }[]>([]);
   const fileInputRefs = useRef<Record<string, HTMLInputElement | null>>({});
 
   const handleFileChange = (slotId: string, file: File | null) => {
@@ -390,14 +381,7 @@ function ProductTypeSheet({
       setName(initialData?.name ?? "");
       setActive(initialData?.is_Active ?? true);
       setOnlyType(initialData?.is_onlyType ?? false);
-
-      // Populate existing images
-      const existingAssets = initialData?.image_products?.map(img => ({
-        id: img.id,
-        url: img.filepath,
-        is_hasBack: img.is_hasBack
-      })) ?? [];
-      setAssets(existingAssets);
+      setAssets([]);
     } else {
       setName("");
       setActive(true);
@@ -413,7 +397,7 @@ function ProductTypeSheet({
         name,
         is_Active: active,
         is_onlyType: onlyType,
-      }, assets);
+      });
       setName("");
       onOpenChange(false);
     } catch (error) {
@@ -498,14 +482,14 @@ function ProductTypeSheet({
                     <div className="flex items-center space-x-3 min-w-0 flex-1">
                       <div className="w-10 h-10 rounded border border-gray-100 flex-shrink-0 overflow-hidden flex items-center justify-center bg-gray-50">
                         <img
-                          src={item.file ? URL.createObjectURL(item.file) : item.url}
+                          src={URL.createObjectURL(item.file)}
                           alt="preview"
                           className="max-w-full max-h-full object-contain"
                         />
                       </div>
                       <div className="flex flex-col min-w-0">
                         <span className="text-xs font-semibold text-gray-900 truncate">
-                          {item.file?.name || item.url?.split('/').pop() || "Product Image"}
+                          {item.file.name}
                         </span>
                         <div className="flex items-center space-x-1 mt-0.5">
                           <span className={`text-[9px] px-1.5 py-0.5 rounded-full ${item.is_hasBack ? "bg-orange-50 text-orange-600 font-medium" : "bg-blue-50 text-blue-600 font-medium"}`}>
@@ -542,7 +526,7 @@ function ProductTypeSheet({
             )}
           </div>
 
-          {assigned && (
+          {assigned && assets.length !== 0 && (
             <p className="text-red-500 text-sm italic">
               {assigned}
             </p>
