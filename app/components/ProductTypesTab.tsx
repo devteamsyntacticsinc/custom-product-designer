@@ -44,11 +44,10 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 import { useToast } from "@/contexts/ToastContext";
+import axios from "axios";
 
 export default function ProductTypesTab() {
-  const [productTypes, setProductTypes] = useState<
-    (ProductType & { is_Active: boolean; is_onlyType: boolean })[]
-  >([]);
+  const [productTypes, setProductTypes] = useState<ProductType[]>([]);
   const [isFetchingProductTypes, setIsFetchingProductTypes] = useState(false);
   const [isMutating, setIsMutating] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -59,21 +58,13 @@ export default function ProductTypesTab() {
       setError(null);
       setIsFetchingProductTypes(true);
 
-      // Add cache-busting timestamp to prevent stale data
-      const timestamp = Date.now();
-      const response = await fetch(`/api/product-types?t=${timestamp}`, {
-        cache: "no-store", // Prevent browser caching
-        headers: {
-          "Cache-Control": "no-cache",
-          Pragma: "no-cache",
-        },
-      });
+      const response = await axios.get(`/api/product-types`);
 
-      if (!response.ok) {
+      if (!response.data) {
         throw new Error("Failed to fetch product types");
       }
 
-      const productTypes = await response.json();
+      const productTypes = response.data;
       setProductTypes(productTypes);
     } catch (error) {
       console.log(error);
@@ -88,50 +79,63 @@ export default function ProductTypesTab() {
   }, []);
 
   const handleSubmitProductType = async (
-    payload: ProductType & { is_Active: boolean; is_onlyType: boolean },
+    payload: ProductType & { images: { file: File; is_hasBack: boolean }[] },
   ) => {
     setIsMutating(true);
     try {
+      const formData = new FormData();
+
+      // Append basic product type data
+      formData.append("id", payload.id.toString());
+      formData.append("name", payload.name);
+      formData.append("is_Active", (payload.is_Active ?? true).toString());
+      formData.append("is_onlyType", (payload.is_onlyType ?? false).toString());
+
+      // Append images with their metadata
+      payload.images.forEach((imageData, index) => {
+        formData.append(`images[${index}].file`, imageData.file);
+        formData.append(
+          `images[${index}].is_hasBack`,
+          imageData.is_hasBack.toString(),
+        );
+      });
+
       if (payload.id) {
         // UPDATE
-        const res = await fetch(`/api/product-types`, {
-          method: "PUT",
+        const response = await axios.put("/api/product-types", formData, {
           headers: {
-            "Content-Type": "application/json",
+            "Content-Type": "multipart/form-data",
           },
-          body: JSON.stringify({ ...payload, id: payload.id.toString() }),
         });
-
-        // Check HTTP status
-        if (!res.ok) {
-          const errorData = await res.json();
-          throw new Error(errorData?.error || "Failed to update product type");
+        if (!response.data) {
+          throw new Error("Failed to update product type");
         }
+
         addToast("success", "Product type updated successfully");
       } else {
         // SAVE
-        const res = await fetch("/api/product-types", {
-          method: "POST",
+        const response = await axios.post("/api/product-types", formData, {
           headers: {
-            "Content-Type": "application/json",
+            "Content-Type": "multipart/form-data",
           },
-          body: JSON.stringify(payload),
         });
-        // Check HTTP status
-        if (!res.ok) {
-          const errorData = await res.json();
-          throw new Error(errorData?.error || "Failed to save product type");
+        if (!response.data) {
+          throw new Error("Failed to save product type");
         }
+
         addToast("success", "Product type saved successfully");
       }
 
       await fetchProductTypes();
     } catch (error) {
       console.error(error);
-      addToast(
-        "error",
-        error instanceof Error ? error.message : "Failed to save product type",
-      );
+      const errorMessage = axios.isAxiosError(error)
+        ? error.response?.data?.error || error.message
+        : error instanceof Error
+          ? error.message
+          : "Failed to save product type";
+
+      addToast("error", errorMessage);
     } finally {
       setIsMutating(false);
     }
@@ -307,8 +311,10 @@ function ProductTypeSheet({
 }: {
   children: React.ReactNode;
   mode: "create" | "edit";
-  initialData?: ProductType & { is_Active: boolean; is_onlyType: boolean };
-  onSubmit: (data: ProductType & { is_Active: boolean; is_onlyType: boolean }) => Promise<void>;
+  initialData?: ProductType;
+  onSubmit: (
+    data: ProductType & { images: { file: File; is_hasBack: boolean }[] },
+  ) => Promise<void>;
   isLoading: boolean;
 }) {
   const [name, setName] = useState("");
@@ -316,7 +322,9 @@ function ProductTypeSheet({
   const [active, setActive] = useState(true);
   const [onlyType, setOnlyType] = useState(false);
   const [assigned, setAssigned] = useState("");
-  const [assets, setAssets] = useState<{ file: File; is_hasBack: boolean }[]>([]);
+  const [assets, setAssets] = useState<{ file: File; is_hasBack: boolean }[]>(
+    [],
+  );
   const fileInputRefs = useRef<Record<string, HTMLInputElement | null>>({});
 
   const handleFileChange = (slotId: string, file: File | null) => {
@@ -357,7 +365,7 @@ function ProductTypeSheet({
     const nextIsBack = !assets[index].is_hasBack;
 
     const updatedAssets = assets.map((a, i) =>
-      i === index ? { ...a, is_hasBack: nextIsBack } : a
+      i === index ? { ...a, is_hasBack: nextIsBack } : a,
     );
 
     const frontCount = updatedAssets.filter((a) => !a.is_hasBack).length;
@@ -365,7 +373,7 @@ function ProductTypeSheet({
 
     if (frontCount > 1 || backCount > 1) {
       setAssigned(
-        "*Only one image should be assigned to the front or the back."
+        "*Only one image should be assigned to the front or the back.",
       );
     } else {
       setAssigned("");
@@ -397,6 +405,7 @@ function ProductTypeSheet({
         name,
         is_Active: active,
         is_onlyType: onlyType,
+        images: assets,
       });
       setName("");
       onOpenChange(false);
@@ -455,7 +464,9 @@ function ProductTypeSheet({
               ref={(el) => {
                 fileInputRefs.current["image"] = el;
               }}
-              onChange={(e) => handleFileChange("image", e.target.files?.[0] || null)}
+              onChange={(e) =>
+                handleFileChange("image", e.target.files?.[0] || null)
+              }
             />
             <div
               className={`group flex items-center justify-between p-3 rounded-xl border border-gray-200 transition-colors min-w-0 bg-gray-50/50 cursor-pointer ${assets.length < 2 ? "" : "hidden"}`}
@@ -480,7 +491,7 @@ function ProductTypeSheet({
                     className="flex items-center justify-between p-2 rounded-lg border border-gray-200 bg-white"
                   >
                     <div className="flex items-center space-x-3 min-w-0 flex-1">
-                      <div className="w-10 h-10 rounded border border-gray-100 flex-shrink-0 overflow-hidden flex items-center justify-center bg-gray-50">
+                      <div className="w-10 h-10 rounded border border-gray-100 shrink-0 overflow-hidden flex items-center justify-center bg-gray-50">
                         <img
                           src={URL.createObjectURL(item.file)}
                           alt="preview"
@@ -492,7 +503,9 @@ function ProductTypeSheet({
                           {item.file.name}
                         </span>
                         <div className="flex items-center space-x-1 mt-0.5">
-                          <span className={`text-[9px] px-1.5 py-0.5 rounded-full ${item.is_hasBack ? "bg-orange-50 text-orange-600 font-medium" : "bg-blue-50 text-blue-600 font-medium"}`}>
+                          <span
+                            className={`text-[9px] px-1.5 py-0.5 rounded-full ${item.is_hasBack ? "bg-orange-50 text-orange-600 font-medium" : "bg-blue-50 text-blue-600 font-medium"}`}
+                          >
                             {item.is_hasBack ? "Back" : "Front"}
                           </span>
                         </div>
@@ -501,13 +514,21 @@ function ProductTypeSheet({
 
                     <div className="flex items-center space-x-4 ml-4">
                       <div className="flex items-center space-x-2">
-                        <span className={`text-[10px] ${!item.is_hasBack ? "text-gray-900 font-bold" : "text-gray-400"}`}>F</span>
+                        <span
+                          className={`text-[10px] ${!item.is_hasBack ? "text-gray-900 font-bold" : "text-gray-400"}`}
+                        >
+                          F
+                        </span>
                         <Switch
                           checked={item.is_hasBack}
                           onCheckedChange={() => togglePlacement(index)}
                           className="scale-75"
                         />
-                        <span className={`text-[10px] ${item.is_hasBack ? "text-gray-900 font-bold" : "text-gray-400"}`}>B</span>
+                        <span
+                          className={`text-[10px] ${item.is_hasBack ? "text-gray-900 font-bold" : "text-gray-400"}`}
+                        >
+                          B
+                        </span>
                       </div>
 
                       <button
@@ -527,9 +548,7 @@ function ProductTypeSheet({
           </div>
 
           {assigned && assets.length !== 0 && (
-            <p className="text-red-500 text-sm italic">
-              {assigned}
-            </p>
+            <p className="text-red-500 text-sm italic">{assigned}</p>
           )}
 
           {assets.length === 0 && (
@@ -569,7 +588,12 @@ function ProductTypeSheet({
         <SheetFooter className="mt-6 sm:mt-0">
           <Button
             onClick={handleSubmit}
-            disabled={isLoading || name.length === 0 || assets.length === 0 || assigned.length > 0}
+            disabled={
+              isLoading ||
+              name.length === 0 ||
+              assets.length === 0 ||
+              assigned.length > 0
+            }
             className="w-full sm:w-auto"
           >
             {isLoading
@@ -596,7 +620,7 @@ function DeleteDialog({
   children: React.ReactNode;
   isLoading: boolean;
   setIsLoading: (value: boolean) => void;
-  productType: ProductType & { is_Active: boolean; is_onlyType: boolean };
+  productType: ProductType;
   fetchProductTypes: () => Promise<void>;
 }) {
   const { addToast } = useToast();
@@ -607,13 +631,10 @@ function DeleteDialog({
 
     setIsLoading(true);
     try {
-      const res = await fetch(`/api/product-types?id=${productType.id}`, {
-        method: "DELETE",
-      });
+      const res = await axios.delete(`/api/product-types?id=${productType.id}`);
 
-      if (!res.ok) {
-        const errorData = await res.json();
-        throw new Error(errorData?.error || "Failed to delete product type");
+      if (!res.data) {
+        throw new Error("Failed to delete product type");
       }
       await fetchProductTypes();
       addToast("success", "Product type deleted successfully");
