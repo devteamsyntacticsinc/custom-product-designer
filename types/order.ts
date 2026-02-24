@@ -24,6 +24,11 @@ export interface OrderWithCustomer {
     product_type?: {
       id: string;
       name: string;
+      is_onlyType: boolean;
+      image_products?: {
+        filepath: string;
+        is_hasBack: boolean;
+      }[];
     };
   }[];
   colors?: {

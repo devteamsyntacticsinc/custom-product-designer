@@ -22,8 +22,14 @@ export interface CustomerWithOrders {
       product_type?: {
         id: string;
         name: string;
+        is_onlyType: boolean;
+        image_products?: {
+          filepath: string;
+          is_hasBack: boolean;
+        }[];
       };
     }[];
+
     colors?: {
       id: string;
       value: string;
@@ -64,6 +70,11 @@ export interface CustomerWithOrdersForDashboard {
       product_type?: {
         id: string;
         name: string;
+        is_onlyType: boolean;
+        image_products?: {
+          filepath: string;
+          is_hasBack: boolean;
+        }[];
       };
     }[];
     colors?: {
