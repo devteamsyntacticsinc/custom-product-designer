@@ -2,10 +2,10 @@ import { supabase } from "@/lib/supabase";
 import { OrderData, OrderResult } from "@/types/product";
 import {
   OrderWithCustomer,
-  CustomerWithOrders,
   CustomerActivity,
   ActivityItem,
 } from "@/types/order";
+import { CustomerWithOrdersForDashboard } from "@/types/customer";
 
 export class OrderService {
   static async createCustomer(
@@ -551,7 +551,7 @@ export class OrderService {
   // Get all orders for a specific customer
   static async getOrdersByCustomerId(
     customerId: number,
-  ): Promise<CustomerWithOrders> {
+  ): Promise<CustomerWithOrdersForDashboard> {
     try {
       // Fetch customer details first
       const { data: customer, error: customerError } = await supabase

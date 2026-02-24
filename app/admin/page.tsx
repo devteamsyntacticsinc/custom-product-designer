@@ -26,10 +26,11 @@ import {
   DrawerDescription,
 } from "@/components/ui/drawer";
 import axios from "axios";
-import { OrderWithCustomer, CustomerWithOrders } from "@/types/order";
+import { OrderWithCustomer } from "@/types/order";
 import OrderProductPreview from "@/components/OrderProductPreview";
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
+import { CustomerWithOrdersForDashboard } from "@/types/customer";
 
 export default function AdminDashboard() {
   const { data: session, status } = useSession();
@@ -359,7 +360,7 @@ function CustomerDrawer({
   const [isFetching, setIsFetching] = useState(false);
   const [orderData, setOrderData] = useState<OrderWithCustomer | null>(null);
   const [customerWithOrders, setCustomerWithOrders] =
-    useState<CustomerWithOrders | null>(null);
+    useState<CustomerWithOrdersForDashboard | null>(null);
 
   useEffect(() => {
     // TODO: Fetch customer order data when drawer opens
@@ -408,17 +409,18 @@ function CustomerDrawer({
           </DrawerTitle>
           <DrawerDescription>{description}</DrawerDescription>
         </DrawerHeader>
-=          {isFetching ? (
-            <div className="flex items-center justify-center h-full">
-              <Loader2 className="animate-spin" />
-            </div>
-          ) : orderData ? (
-            <OrderDetails order={orderData} />
-          ) : customerWithOrders ? (
-            <CustomerWithOrdersDetails customerOrders={customerWithOrders} />
-          ) : (
-            <div>Nothing to see here</div>
-          )}
+        ={" "}
+        {isFetching ? (
+          <div className="flex items-center justify-center h-full">
+            <Loader2 className="animate-spin" />
+          </div>
+        ) : orderData ? (
+          <OrderDetails order={orderData} />
+        ) : customerWithOrders ? (
+          <CustomerWithOrdersDetails customerOrders={customerWithOrders} />
+        ) : (
+          <div>Nothing to see here</div>
+        )}
       </DrawerContent>
     </Drawer>
   );
@@ -556,7 +558,7 @@ function OrderDetails({ order }: { order: OrderWithCustomer }) {
 function CustomerWithOrdersDetails({
   customerOrders,
 }: {
-  customerOrders: CustomerWithOrders;
+  customerOrders: CustomerWithOrdersForDashboard;
 }) {
   return <div>Customer Content Here</div>;
 }
