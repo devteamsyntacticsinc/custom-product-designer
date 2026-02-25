@@ -19,6 +19,8 @@ import AdminSidebar from "../../components/AdminSidebar";
 import OrdersPageSkeleton from "../../../components/OrdersPageSkeleton";
 import OrderProductPreview from "../../../components/OrderProductPreview";
 import axios from "axios";
+import { useToast } from "@/contexts/ToastContext";
+
 
 export default function OrdersPage() {
   const { data: session, status } = useSession();
@@ -29,12 +31,15 @@ export default function OrdersPage() {
   const [refreshing, setRefreshing] = useState(false);
   const router = useRouter();
   const currentPath = usePathname();
+  const { addToast } = useToast();
+  const [sendingEmailIds, setSendingEmailIds] = useState<Set<string>>(new Set());
+
 
   // Initialize theme on component mount
   useEffect(() => {
     const savedTheme = localStorage.getItem('admin-theme') as 'light' | 'dark' | 'system';
     const root = document.documentElement;
-    
+
     if (savedTheme === 'dark') {
       root.classList.add('dark');
     } else if (savedTheme === 'light') {
@@ -65,6 +70,27 @@ export default function OrdersPage() {
   const handleRefresh = () => {
     setRefreshing(true);
     fetchOrders();
+  };
+
+  const handleSendPickupEmail = async (orderId: string) => {
+    setSendingEmailIds((prev) => new Set(prev).add(orderId));
+    try {
+      const res = await axios.post(`/api/orders/${orderId}/pickup-mail`);
+
+      const data = res.data;
+      addToast("success", data.message);
+    } catch (error: any) {
+      console.error("Error sending pickup email:", error);
+      const msg = error.response?.data?.error || "Failed to send pickup email";
+
+      addToast("error", msg);
+    } finally {
+      setSendingEmailIds((prev) => {
+        const next = new Set(prev);
+        next.delete(orderId);
+        return next;
+      });
+    }
   };
 
   useEffect(() => {
@@ -120,11 +146,11 @@ export default function OrdersPage() {
         <AdminSidebar
           user={null}
           sidebarOpen={false}
-          setSidebarOpen={() => {}}
-          onLogout={() => {}}
-          onNavigate={() => {}}
+          setSidebarOpen={() => { }}
+          onLogout={() => { }}
+          onNavigate={() => { }}
           isCollapsed={false}
-          onToggleCollapse={() => {}}
+          onToggleCollapse={() => { }}
           currentPath="/admin/orders"
         />
         <div className="flex-1 lg:ml-64 lg:pt-0 pt-16">
@@ -251,9 +277,27 @@ export default function OrdersPage() {
                     <div className="space-y-6">
                       {/* Product Preview */}
                       <div>
-                        <h3 className="text-base lg:text-lg font-semibold text-gray-900 dark:text-white mb-3 sm:mb-4">
-                          Product Design
-                        </h3>
+                        <div className="flex items-center content-center justify-between mb-2">
+                          <h3 className="text-base lg:text-lg font-semibold text-gray-900 dark:text-white mb-3 sm:mb-4">
+                            Product Design
+                          </h3>
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => handleSendPickupEmail(order.id)}
+                            disabled={sendingEmailIds.has(order.id)}
+                            className="rounded-full h-10 w-fit sm:h-10 sm:w-fit text-gray-900 hover:bg-gray-200 transition-colors shrink-0 gap-2"
+                          >
+                            <Mail
+                              className={`h-4 w-4 sm:h-5 sm:w-5 ${sendingEmailIds.has(order.id) ? "animate-pulse" : ""}`}
+                            />
+                            <span>
+                              {sendingEmailIds.has(order.id)
+                                ? "Sending..."
+                                : "Send Pickup Email"}
+                            </span>
+                          </Button>
+                        </div>
                         <OrderProductPreview order={order} />
                       </div>
 
