@@ -566,37 +566,30 @@ function ProductTypeSheet({
             <Label htmlFor="product-type-image" className="text-sm font-medium">
               Product Type Images
             </Label>
-            <div className="space-y-4 flex flex-col">
-              <Input
-                type="file"
-                accept="image/*"
-                className="hidden"
-                id="product-type-image-input"
-                ref={(el) => {
-                  fileInputRefs.current["image"] = el;
-                }}
-                onChange={(e) =>
-                  handleFileChange("image", e.target.files?.[0] || null)
+            <Input
+              type="file"
+              accept="image/*"
+              className="hidden"
+              id="product-type-image-input"
+              ref={(el) => {
+                fileInputRefs.current["image"] = el;
+              }}
+              onChange={(e) =>
+                handleFileChange("image", e.target.files?.[0] || null)
+              }
+            />
+            <div
+              className={`group flex items-center justify-between p-3 rounded-xl border border-gray-200 transition-colors min-w-0 bg-gray-50/50 cursor-pointer ${assets.length < 2 ? "" : "hidden"}`}
+              onClick={() => {
+                if (assets.length < 2) {
+                  fileInputRefs.current["image"]?.click();
                 }
-              />
-              <div
-                className={`group flex items-center justify-between p-3 rounded-xl border border-gray-200 transition-colors min-w-0 bg-gray-50/50 cursor-pointer ${assets.length < 2 ? "" : "hidden"}`}
-                onClick={() => {
-                  if (assets.length < 2) {
-                    fileInputRefs.current["image"]?.click();
-                  }
-                }}
-              >
-                <span className="text-sm truncate mr-2 text-gray-600">
-                  Upload Product Type Image
-                </span>
-                <Upload className="w-6 h-6 text-gray-400 group-hover:text-gray-600 mb-2" />
-              </div>
-              <ImageDialogShowcase>
-                <Button className="ml-auto" variant="outline">
-                  Image Reference
-                </Button>
-              </ImageDialogShowcase>
+              }}
+            >
+              <span className="text-sm truncate mr-2 text-gray-600">
+                Upload Product Type Image
+              </span>
+              <Upload className="w-6 h-6 text-gray-400 group-hover:text-gray-600 mb-2" />
             </div>
 
             {/* Image List */}
@@ -658,7 +651,7 @@ function ProductTypeSheet({
                         <Switch
                           checked={item.is_hasBack}
                           onCheckedChange={() => togglePlacement(index)}
-                          className="scale-75"
+                          className="scale-75 data-[state=unchecked]:bg-primary"
                         />
                         <span
                           className={`text-[10px] ${item.is_hasBack ? "text-gray-900 font-bold" : "text-gray-400"}`}
@@ -726,8 +719,18 @@ function ProductTypeSheet({
             </Label>
           </div>
         </div>
+        <div>
+          <p className="text-muted-foreground">
+            Need help? View a sample of an{" "}
+            <ImageDialogShowcase>
+              <span className="underline font-medium text-black cursor-pointer">
+                accepted image.{" "}
+              </span>
+            </ImageDialogShowcase>
+          </p>
+        </div>
 
-        <SheetFooter className="mt-6 sm:mt-0">
+        <SheetFooter className="mt-6">
           <Button
             onClick={handleSubmit}
             disabled={
