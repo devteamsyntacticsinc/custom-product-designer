@@ -154,8 +154,10 @@ function generateOrderEmailHTML(orderData: OrderData, customerId: string, isCust
         <div style="margin-bottom: 20px;">
           <h2 style="color: #555; font-size: 18px;">Product Details</h2>
           <p><strong>Product Type:</strong> ${orderData.productType}</p>
+          ${!orderData.is_onlyType ? `
           <p><strong>Brand:</strong> ${orderData.brand}</p>
           <p><strong>Color:</strong> ${orderData.color}</p>
+          ` : ''}
         </div>
 
         <div style="margin-bottom: 20px;">

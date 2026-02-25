@@ -68,7 +68,7 @@ export class OrderService {
   }
 
   static async getBrandTypeId(
-    brandId: string,
+    brandId: string | null,
     typeId: string,
   ): Promise<{ id: string }> {
     try {
@@ -93,7 +93,7 @@ export class OrderService {
   static async createProductOrder(
     customerId: string,
     brandTypeId: string,
-    colorId: string,
+    colorId: string | null,
   ): Promise<OrderResult["productOrderData"]> {
     try {
       const { data, error } = await supabase
@@ -215,16 +215,37 @@ export class OrderService {
         orderData.contactInformation,
       );
 
-      // Get brand type ID using the ID fields
-      const brandTypeData = await this.getBrandTypeId(
-        orderData.brandId,
-        orderData.productTypeId,
-      );
+      // Always get brand type ID for the product type
+      // If brandId exists, use it to find the specific brand type
+      // If no brandId (is_onlyType), find any brand type for this product type
+      let brandTypeId: string;
+      
+      if (orderData.brandId) {
+        const brandTypeData = await this.getBrandTypeId(
+          orderData.brandId,
+          orderData.productTypeId,
+        );
+        brandTypeId = brandTypeData.id;
+      } else {
+        // For is_onlyType products, find any brand type for this product type
+        const { data: defaultBrandType } = await supabase
+          .from("brand_type")
+          .select("id")
+          .eq("type_id", orderData.productTypeId)
+          .limit(1)
+          .single();
 
-      // Create product order using the color ID
+        if (!defaultBrandType) {
+          throw new Error("No brand type found for this product type");
+        }
+
+        brandTypeId = defaultBrandType.id;
+      }
+
+      // Create product order - colorId can be null
       const productOrderData = await this.createProductOrder(
         customerData.id,
-        brandTypeData.id,
+        brandTypeId,
         orderData.colorId,
       );
 
@@ -563,11 +584,11 @@ export class OrderService {
 
       if (customerError) {
         console.error("Error fetching customer:", customerError);
-        return { customer: null as any, orders: [] };
+        return { customer: null, orders: [] };
       }
 
       if (!customer) {
-        return { customer: null as any, orders: [] };
+        return { customer: null, orders: [] };
       }
 
       // Fetch all orders for the customer
@@ -709,7 +730,7 @@ export class OrderService {
       };
     } catch (error) {
       console.error("Error fetching orders by customer ID:", error);
-      return { customer: null as any, orders: [] };
+      return { customer: null, orders: [] };
     }
   }
 

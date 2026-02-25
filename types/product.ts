@@ -74,12 +74,13 @@ export interface Size {
 export interface OrderData {
   // IDs for database operations
   productTypeId: string;
-  brandId: string;
-  colorId: string;
+  brandId: string | null;
+  colorId: string | null;
   // Display names for email
   productType: string;
   brand: string;
   color: string;
+  is_onlyType?: boolean;
   sizeSelection: { size: string; quantity: number }[];
   assets: Record<string, File | null>;
   contactInformation: {
