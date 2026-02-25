@@ -32,20 +32,6 @@ export async function POST(request: Request) {
     let is_onlyType: boolean;
     let images: { file: File; is_hasBack: boolean }[] = [];
 
-    if (!images || images.length === 0) {
-      return NextResponse.json(
-        { error: "At least one image is required" },
-        { status: 400 },
-      );
-    }
-
-    if (images.length > 2) {
-      return NextResponse.json(
-        { error: "Maximum of 2 images allowed" },
-        { status: 400 },
-      );
-    }
-
     if (contentType.includes("multipart/form-data")) {
       // Handle FormData with images
       const formData = await request.formData();
@@ -82,6 +68,20 @@ export async function POST(request: Request) {
       images = body.images || [];
     }
 
+    if (!images || images.length === 0) {
+      return NextResponse.json(
+        { error: "At least one image is required" },
+        { status: 400 },
+      );
+    }
+
+    if (images.length > 2) {
+      return NextResponse.json(
+        { error: "Maximum of 2 images allowed" },
+        { status: 400 },
+      );
+    }
+
     if (!name || typeof name !== "string" || name.trim() === "") {
       return NextResponse.json(
         {
@@ -95,7 +95,7 @@ export async function POST(request: Request) {
       name.trim(),
       is_Active !== undefined ? is_Active : true,
       is_onlyType !== undefined ? is_onlyType : false,
-      images
+      images,
     );
     return NextResponse.json(productType, { status: 201 });
   } catch (error) {
@@ -125,20 +125,6 @@ export async function PUT(request: Request) {
     let is_Active: boolean | undefined;
     let is_onlyType: boolean | undefined;
     let images: { file: File; is_hasBack: boolean }[] = [];
-
-    if (!images || images.length === 0) {
-      return NextResponse.json(
-        { error: "At least one image is required" },
-        { status: 400 },
-      );
-    }
-
-    if (images.length > 2) {
-      return NextResponse.json(
-        { error: "Maximum of 2 images allowed" },
-        { status: 400 },
-      );
-    }
 
     if (contentType.includes("multipart/form-data")) {
       // Handle FormData with images
@@ -178,6 +164,16 @@ export async function PUT(request: Request) {
       images = body.images || [];
     }
 
+    // Validate images only if they are provided (optional for updates)
+    if (images.length > 0) {
+      if (images.length > 2) {
+        return NextResponse.json(
+          { error: "Maximum of 2 images allowed" },
+          { status: 400 },
+        );
+      }
+    }
+
     if (!id || typeof id !== "string" || id.trim() === "") {
       return NextResponse.json(
         { error: "Product type ID is required and must be a non-empty string" },
@@ -205,6 +201,7 @@ export async function PUT(request: Request) {
       name ? name.trim() : undefined,
       is_Active,
       is_onlyType,
+      images,
     );
     return NextResponse.json(productType);
   } catch (error) {
@@ -247,11 +244,8 @@ export async function DELETE(request: Request) {
 
     // Handle specific error cases
     if (error instanceof Error) {
-      if (error.message === 'Product type not found') {
-        return NextResponse.json(
-          { error: error.message },
-          { status: 404 }
-        )
+      if (error.message === "Product type not found") {
+        return NextResponse.json({ error: error.message }, { status: 404 });
       }
     }
 

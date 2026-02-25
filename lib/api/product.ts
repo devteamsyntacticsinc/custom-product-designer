@@ -8,6 +8,7 @@ import {
   BrandType,
   ColorBrandTypeWithDetails,
   BrandTypeWithDetails,
+  ImageProducts,
 } from "@/types/product";
 
 export class ProductService {
@@ -627,11 +628,17 @@ export class ProductService {
     }
   }
 
-  static async getProductTypes(): Promise<ProductType[]> {
+  static async getProductTypes(): Promise<
+    (Omit<ProductType, "image_products"> & {
+      image_products?: Pick<ImageProducts, "filepath" | "is_hasBack">[];
+    })[]
+  > {
     try {
       const { data, error } = await supabase
         .from("product_type")
-        .select("id, name, is_onlyType, is_Active")
+        .select(
+          "id, name, is_onlyType, is_Active, image_products(filepath, is_hasBack)",
+        )
         .order("name");
 
       if (error) {
@@ -705,6 +712,11 @@ export class ProductService {
         }
       }
 
+      // Upload images if provided
+      if (images && images.length > 0) {
+        await this.uploadImageProductType(productType.id.toString(), images);
+      }
+
       return productType;
     } catch (error) {
       console.error("Error creating product type:", error);
@@ -717,6 +729,7 @@ export class ProductService {
     name?: string,
     is_Active?: boolean,
     is_onlyType?: boolean,
+    images?: { file: File; is_hasBack: boolean }[],
   ): Promise<ProductType> {
     try {
       const updateData: {
@@ -783,6 +796,11 @@ export class ProductService {
         }
       }
 
+      // Upload images if provided
+      if (images && images.length > 0) {
+        await this.uploadImageProductType(id, images);
+      }
+
       return productType;
     } catch (error) {
       console.error("Error updating product type:", error);
@@ -826,37 +844,44 @@ export class ProductService {
           const brandTypeId = nullBrandType.id;
 
           // Check if this brand_type is used in size_product table
-          const { count: sizeProductCount, error: sizeProductError } = await supabase
-            .from("size_product")
-            .select("*", { count: "exact", head: true })
-            .eq("brandT_id", brandTypeId);
+          const { count: sizeProductCount, error: sizeProductError } =
+            await supabase
+              .from("size_product")
+              .select("*", { count: "exact", head: true })
+              .eq("brandT_id", brandTypeId);
 
           if (sizeProductError) {
             throw sizeProductError;
           }
 
           // Check if this brand_type is used in color_products table
-          const { count: colorProductCount, error: colorProductError } = await supabase
-            .from("color_products")
-            .select("*", { count: "exact", head: true })
-            .eq("brandT_id", brandTypeId);
+          const { count: colorProductCount, error: colorProductError } =
+            await supabase
+              .from("color_products")
+              .select("*", { count: "exact", head: true })
+              .eq("brandT_id", brandTypeId);
 
           if (colorProductError) {
             throw colorProductError;
           }
 
           // Check if this brand_type is used in product_orders table
-          const { count: productOrderCount, error: productOrderError } = await supabase
-            .from("product_orders")
-            .select("*", { count: "exact", head: true })
-            .eq("brandT_id", brandTypeId);
+          const { count: productOrderCount, error: productOrderError } =
+            await supabase
+              .from("product_orders")
+              .select("*", { count: "exact", head: true })
+              .eq("brandT_id", brandTypeId);
 
           if (productOrderError) {
             throw productOrderError;
           }
 
           // If the brand_type is not used in any transaction tables, delete it
-          if (sizeProductCount === 0 && colorProductCount === 0 && productOrderCount === 0) {
+          if (
+            sizeProductCount === 0 &&
+            colorProductCount === 0 &&
+            productOrderCount === 0
+          ) {
             const { error: deleteBrandTypeError } = await supabase
               .from("brand_type")
               .delete()
@@ -884,27 +909,20 @@ export class ProductService {
     }
   }
 
-  static async uploadImagProductType(
+  static async uploadImageProductType(
     productTypeId: string,
-    assets: { [key: string]: File | null },
+    assets: { file: File; is_hasBack: boolean }[],
   ) {
     try {
-      const placementMap: Record<string, string> = {
-        "front-top-left": "Front - Top Left",
-        "front-center": "Front - Center",
-        "back-top": "Back - Top",
-        "back-bottom": "Back - Bottom",
-      };
-
       const imageInserts = [];
-      for (const [key, file] of Object.entries(assets)) {
-        if (file && file instanceof File) {
+      for (const asset of assets) {
+        if (asset && asset.file instanceof File) {
           // Upload to Supabase Storage
-          const fileName = `${Date.now()}-${file.name}`;
+          const fileName = `${Date.now()}-${asset.file.name}`;
 
           const { error: uploadError } = await supabase.storage
             .from("product-images")
-            .upload(fileName, file);
+            .upload(fileName, asset.file);
 
           if (uploadError) {
             console.error("Error uploading image:", uploadError);
@@ -919,9 +937,7 @@ export class ProductService {
           imageInserts.push({
             productT_id: productTypeId,
             filepath: urlData.publicUrl,
-            is_hasBack:
-              placementMap[key] === "Back - Top" ||
-              placementMap[key] === "Back - Bottom",
+            is_hasBack: asset.is_hasBack,
           });
         }
       }
