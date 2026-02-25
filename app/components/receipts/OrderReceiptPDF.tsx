@@ -1,4 +1,12 @@
-import { Document, Page, Text, View, Image, Font } from "@react-pdf/renderer";
+import {
+  Document,
+  Page,
+  Text,
+  View,
+  Image,
+  Font,
+  StyleSheet,
+} from "@react-pdf/renderer";
 import { OrderWithCustomer } from "@/types/order";
 import { receiptStyles as styles } from "./styles";
 
@@ -11,6 +19,40 @@ Font.register({
 interface OrderReceiptPDFProps {
   order: OrderWithCustomer;
 }
+
+interface CustomStyle {
+  top?: string | number;
+  left?: string | number;
+  width?: string | number;
+  height?: string | number;
+  [key: string]: any;
+}
+
+// Design area component for PDF
+const DesignAreaPDF = ({
+  placement,
+  imageUrl,
+  customStyle,
+}: {
+  placement: string;
+  imageUrl?: string;
+  customStyle: CustomStyle;
+}) => {
+  const normalizedImageUrl = imageUrl
+    ? normalizeImageUrlForPdf(imageUrl)
+    : undefined;
+  return (
+    <View style={[styles.designOverlay, customStyle]}>
+      {normalizedImageUrl ? (
+        <Image src={normalizedImageUrl} style={styles.designImage} />
+      ) : (
+        <Text style={{ fontSize: 6, color: "#9ca3af", textAlign: "center" }}>
+          {placement}
+        </Text>
+      )}
+    </View>
+  );
+};
 
 const blobToBase64 = (blob: Blob): Promise<string> => {
   return new Promise((resolve, reject) => {
@@ -131,35 +173,9 @@ export default function OrderReceiptPDF({ order }: OrderReceiptPDFProps) {
     });
   };
 
-  // Design area component for PDF
-  const DesignAreaPDF = ({
-    placement,
-    imageUrl,
-    customStyle,
-  }: {
-    placement: string;
-    imageUrl?: string;
-    customStyle: any;
-  }) => {
-    const normalizedImageUrl = imageUrl
-      ? normalizeImageUrlForPdf(imageUrl)
-      : undefined;
-    return (
-      <View style={[styles.designOverlay, customStyle]}>
-        {normalizedImageUrl ? (
-          <Image src={normalizedImageUrl} style={styles.designImage} />
-        ) : (
-          <Text style={{ fontSize: 6, color: "#9ca3af", textAlign: "center" }}>
-            {placement}
-          </Text>
-        )}
-      </View>
-    );
-  };
-
   return (
     <Document>
-      <Page size="A4" style={styles.page}>
+      <Page size="LEGAL" style={styles.page}>
         {/* Header */}
         <View style={styles.header}>
           <Text style={styles.title}>Print Pro Order Receipt</Text>
@@ -380,12 +396,16 @@ export default function OrderReceiptPDF({ order }: OrderReceiptPDFProps) {
         {order.product_images && order.product_images.length > 0 && (
           <View style={styles.section}>
             <Text style={styles.sectionTitle}>Design Areas</Text>
-            {order.product_images.map((image, index) => (
-              <View key={image.id} style={styles.row}>
-                <Text style={styles.label}>{image.place}:</Text>
-                <Text style={styles.value}>Design uploaded</Text>
-              </View>
-            ))}
+            {order.product_images.map((image) => {
+              const fileName = image.url?.split("/").pop();
+
+              return (
+                <View key={image.id} style={styles.row}>
+                  <Text style={styles.label}>{image.place}:</Text>
+                  <Text style={styles.value}>{fileName}</Text>
+                </View>
+              );
+            })}
           </View>
         )}
 
