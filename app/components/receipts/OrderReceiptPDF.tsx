@@ -380,12 +380,16 @@ export default function OrderReceiptPDF({ order }: OrderReceiptPDFProps) {
         {order.product_images && order.product_images.length > 0 && (
           <View style={styles.section}>
             <Text style={styles.sectionTitle}>Design Areas</Text>
-            {order.product_images.map((image, index) => (
-              <View key={image.id} style={styles.row}>
-                <Text style={styles.label}>{image.place}:</Text>
-                <Text style={styles.value}>Design uploaded</Text>
-              </View>
-            ))}
+            {order.product_images.map((image) => {
+              const fileName = image.url?.split("/").pop();
+
+              return (
+                <View key={image.id} style={styles.row}>
+                  <Text style={styles.label}>{image.place}:</Text>
+                  <Text style={styles.value}>{fileName}</Text>
+                </View>
+              );
+            })}
           </View>
         )}
 

@@ -15,6 +15,7 @@ import {
   RefreshCw,
   Phone,
   Download,
+  Check,
 } from "lucide-react";
 import AdminSidebar from "../../components/AdminSidebar";
 import OrdersPageSkeleton from "../../../components/OrdersPageSkeleton";
@@ -34,6 +35,7 @@ export default function OrdersPage() {
   const router = useRouter();
   const currentPath = usePathname();
   const { addToast } = useToast();
+  const [downloadedIds, setDownloadedIds] = useState<Set<string>>(new Set());
   const [sendingEmailIds, setSendingEmailIds] = useState<Set<string>>(
     new Set(),
   );
@@ -97,6 +99,18 @@ export default function OrdersPage() {
         return next;
       });
     }
+  };
+
+  const handleDownload = (orderId: string) => {
+    // Use setTimeout to defer state update until after download triggers
+    setTimeout(() => {
+      setDownloadedIds((prev) => {
+        const next = new Set(prev);
+        next.add(orderId);
+        return next;
+      });
+      addToast("success", "Receipt downloaded successfully");
+    }, 0);
   };
 
   useEffect(() => {
@@ -274,6 +288,14 @@ export default function OrdersPage() {
               orders.map((order) => {
                 const customer = getCustomerInfo(order.customers);
                 const totalQuantity = getTotalQuantity(order);
+                const customerName =
+                  customer?.name
+                    ?.trim()
+                    .toLowerCase()
+                    .replace(/\s+/g, "-") // replace ALL spaces (1 or more) with single -
+                    .replace(/[^a-z0-9-]/g, "") // remove special characters
+                    .replace(/-+/g, "-") // remove duplicate dashes
+                    .replace(/^-|-$/g, "") || "unknown-customer"; // remove leading/trailing dash
 
                 return (
                   <Card
@@ -288,19 +310,36 @@ export default function OrdersPage() {
                             Product Design
                           </h3>
                           <div className="flex items-center gap-2">
-                            <PDFDownloadLink
-                              document={<OrderReceiptPDF order={order} />}
-                              fileName={`receipt-${order.id}.pdf`}
-                            >
+                            {downloadedIds.has(order.id) ? (
                               <Button
                                 variant="outline"
                                 size="sm"
-                                className=" h-10 w-fit sm:h-10 sm:w-fit text-gray-900 hover:bg-gray-200 transition-colors shrink-0 gap-2 cursor-pointer"
+                                className=" h-10 w-fit sm:h-10 sm:w-fit shrink-0 gap-2 hover:bg-green-50 hover:text-green-500 cursor-not-allowed bg-green-50 border-green-500"
                               >
-                                <Download className={`h-4 w-4 sm:h-5 sm:w-5`} />
-                                <span>Download Receipt</span>
+                                <Check
+                                  className={`h-4 w-4 sm:h-5 sm:w-5 text-green-500`}
+                                />
+                                <span className="text-green-500">
+                                  Downloaded
+                                </span>
                               </Button>
-                            </PDFDownloadLink>
+                            ) : (
+                              // Then in JSX:
+                              <PDFDownloadLink
+                                document={<OrderReceiptPDF order={order} />}
+                                fileName={`${customerName}.pdf`}
+                              >
+                                <Button
+                                  variant="outline"
+                                  size="sm"
+                                  onClick={() => handleDownload(order.id)}
+                                  className="h-10 w-fit sm:h-10 sm:w-fit text-gray-900 hover:bg-gray-200 transition-colors shrink-0 gap-2 cursor-pointer"
+                                >
+                                  <Download className="h-4 w-4 sm:h-5 sm:w-5" />
+                                  <span>Download Receipt</span>
+                                </Button>
+                              </PDFDownloadLink>
+                            )}
                             <Button
                               variant="outline"
                               size="sm"
