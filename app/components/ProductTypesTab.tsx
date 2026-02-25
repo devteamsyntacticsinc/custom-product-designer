@@ -50,7 +50,7 @@ import Image from "next/image";
 export const validateImageClient = (file: File): Promise<void> => {
   const MIN_RATIO = 0.85;
   const MAX_RATIO = 1.15;
-  const MIN_SIZE = 500;
+  const MIN_SIZE = 200;
 
   return new Promise((resolve, reject) => {
     const img = document.createElement("img");
@@ -64,7 +64,7 @@ export const validateImageClient = (file: File): Promise<void> => {
 
       if (width < MIN_SIZE || height < MIN_SIZE) {
         reject(
-          new Error("Image must have at least 500 width x 500 height pixels."),
+          new Error("Image must have at least 200 width x 200 height pixels."),
         );
         return;
       }
@@ -877,7 +877,7 @@ function ImageDialogShowcase({ children }: { children: React.ReactNode }) {
           <ul className="list-disc list-inside space-y-1">
             <li>Must be a PNG or JPG file</li>
             <li>Must have a transparent background</li>
-            <li>Must be at least 500x500 pixels</li>
+            <li>Must be at least 200 x 200 pixels</li>
             <li>
               Image must be square (equal width and height) or near-square (at
               least 85% match)
