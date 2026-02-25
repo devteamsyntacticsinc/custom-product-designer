@@ -43,16 +43,16 @@ export default function ProductPreview() {
         {/* Product Display */}
         <div className="flex flex-col lg:flex-row w-full relative justify-center items-start">
           {/* Front Product */}
-          <div className={`relative w-full aspect-square ${selectedProductType?.is_onlyType ? "max-w-lg" : " "}`}>
+          <div className="relative aspect-square flex justify-center items-start w-[50%]">
             <Image
-              src={selectedProductType?.is_onlyType ? "/image/mug.png" : "/image/Front Shirt.png"}
-              alt={selectedProductType?.is_onlyType ? "Mug" : "T-Shirt Front"}
-              width={selectedProductType?.is_onlyType ? 700 : 1000}
-              height={selectedProductType?.is_onlyType ? 700 : 1000}
+              src={selectedProductType?.image_products?.find(img => img.is_hasBack === false)?.filepath || "/image/Front Shirt.png"}
+              alt="Front Product"
+              width={1000}
+              height={1000}
               className="object-contain"
             />
             {/* Front Design Area - Top Left */}
-            <div className={`absolute top-[35%] left-[63%] w-[10%] h-[10%] border-2 border-dashed border-gray-400 rounded flex items-center justify-center transform -translate-x-1/2 -translate-y-1/2 overflow-hidden bg-white/50 z-10 ${selectedProductType?.is_onlyType ? "hidden" : ""}`}>
+            <div className={`absolute top-[25%] left-[65%] w-[10%] h-[10%] border-2 border-dashed border-gray-400 rounded flex items-center justify-center transform -translate-x-1/2 -translate-y-1/2 overflow-hidden bg-white/50 z-10 ${selectedProductType?.is_onlyType ? "hidden" : ""}`}>
               {previews["front-top-left"] ? (
                 <BlobImage src={previews["front-top-left"]} alt="Preview" className="w-full h-full object-contain" />
               ) : (
@@ -60,30 +60,27 @@ export default function ProductPreview() {
               )}
             </div>
             {/* Front Design Area - Center Large */}
-            <div className={`absolute border-2 border-dashed border-gray-400 rounded flex items-center justify-center transform -translate-x-1/2 -translate-y-1/2 overflow-hidden bg-white/50 z-10 ${selectedProductType?.is_onlyType
-              ? "top-[50%] left-[44%] w-[30%] h-[45%]"
-              : "top-[58%] left-[50%] w-[30%] h-[35%]"
-              }`}>
+            <div className={`absolute border-2 border-dashed border-gray-400 rounded flex items-center justify-center transform -translate-x-1/2 -translate-y-1/2 overflow-hidden bg-white/50 z-10 ${selectedProductType?.is_onlyType ? "top-[53%] left-[45%] w-[30%] h-[40%] " : "top-[58%] left-[50%] w-[30%] h-[40%]"}`}>
               {previews["front-center"] ? (
                 <BlobImage src={previews["front-center"]} alt="Preview" className="w-full h-full object-contain" />
               ) : (
-                <span className="text-gray-400 text-[10px]">{selectedProductType?.is_onlyType ? "Mug Design" : "Front Center"}</span>
+                <span className="text-gray-400 text-[10px]">Front Center</span>
               )}
             </div>
           </div>
 
           {/* Back Product (Only for shirts) */}
-          {!selectedProductType?.is_onlyType && (
-            <div className={`relative w-full aspect-square ${selectedProductType?.is_onlyType ? "max-w-lg" : ""}`}>
+          {selectedProductType?.image_products?.find(img => img.is_hasBack === true) && (
+            <div className="relative aspect-square flex justify-center items-start w-[50%]">
               <Image
-                src="/image/Back Shirt.png"
+                src={selectedProductType?.image_products?.find(img => img.is_hasBack === true)?.filepath || "/image/Back Shirt.png"}
                 alt="T-Shirt Back"
                 width={1000}
                 height={1000}
                 className="object-contain"
               />
               {/* Back Design Area - Top Center */}
-              <div className="absolute top-[35%] left-[50%] w-[10%] h-[10%] border-2 border-dashed border-gray-400 rounded flex items-center justify-center transform -translate-x-1/2 -translate-y-1/2 overflow-hidden bg-white/50 z-10">
+              <div className="absolute top-[25%] left-[50%] w-[10%] h-[10%] border-2 border-dashed border-gray-400 rounded flex items-center justify-center transform -translate-x-1/2 -translate-y-1/2 overflow-hidden bg-white/50 z-10">
                 {previews["back-top"] ? (
                   <BlobImage src={previews["back-top"]} alt="Preview" className="w-full h-full object-contain" />
                 ) : (
@@ -91,7 +88,7 @@ export default function ProductPreview() {
                 )}
               </div>
               {/* Back Design Area - Bottom Center */}
-              <div className="absolute top-[70%] left-[50%] w-[38%] h-[8%] border-2 border-dashed border-gray-400 rounded flex items-center justify-center transform -translate-x-1/2 -translate-y-1/2 overflow-hidden bg-white/50 z-10">
+              <div className="absolute top-[75%] left-[50%] w-[38%] h-[8%] border-2 border-dashed border-gray-400 rounded flex items-center justify-center transform -translate-x-1/2 -translate-y-1/2 overflow-hidden bg-white/50 z-10">
                 {previews["back-bottom"] ? (
                   <BlobImage src={previews["back-bottom"]} alt="Preview" className="w-full h-full object-contain" />
                 ) : (

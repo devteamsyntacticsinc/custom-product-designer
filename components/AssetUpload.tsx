@@ -28,7 +28,8 @@ export default function AssetUpload({
   const { selectedProductType } = useAssets();
   const fileInputRefs = useRef<Record<string, HTMLInputElement | null>>({});
 
-  const isOnlyType = selectedProductType?.is_onlyType;
+  const isHasBack = selectedProductType?.image_products?.find(img => img.is_hasBack);
+  const is_onlyType = selectedProductType?.is_onlyType;
 
   const handleFileChange = (slotId: string, file: File | null) => {
     setAssets((prev) => ({ ...prev, [slotId]: file }));
@@ -43,7 +44,7 @@ export default function AssetUpload({
 
   const renderSlot = (slot: AssetSlot) => {
     const asset = assets[slot.id];
-    const isDisabled = isOnlyType && slot.id !== "front-center";
+    const isDisabled = is_onlyType && slot.id !== "front-center";
 
     if (isDisabled) return null;
 
@@ -65,7 +66,7 @@ export default function AssetUpload({
           onClick={() => !asset && fileInputRefs.current[slot.id]?.click()}
         >
           <span className={`text-sm truncate mr-2 ${asset ? "text-gray-900 font-medium" : "text-gray-600"}`}>
-            {asset ? asset.name : (isOnlyType && slot.id === "front-center" ? "Mug Design" : slot.label)}
+            {asset ? asset.name : (!isHasBack && slot.id === "front-center" ? "Center" : slot.label)}
           </span>
           {asset ? (
             <button
@@ -85,7 +86,7 @@ export default function AssetUpload({
     );
   };
 
-  const sides: ("Front" | "Back")[] = isOnlyType ? ["Front"] : ["Front", "Back"];
+  const sides: ("Front" | "Back")[] = !isHasBack ? ["Front"] : ["Front", "Back"];
 
   return (
     <div className="space-y-6">
