@@ -125,6 +125,7 @@ export async function PUT(request: Request) {
     let is_Active: boolean | undefined;
     let is_onlyType: boolean | undefined;
     let images: { file: File; is_hasBack: boolean }[] = [];
+    let imagesToDelete: number[] = [];
 
     if (contentType.includes("multipart/form-data")) {
       // Handle FormData with images
@@ -154,6 +155,18 @@ export async function PUT(request: Request) {
           }
         }
       }
+
+      // Extract images to delete
+      const deleteKeys = Array.from(formData.keys()).filter((key) =>
+        key.startsWith("imagesToDelete["),
+      );
+
+      for (const key of deleteKeys) {
+        const imageId = formData.get(key);
+        if (imageId) {
+          imagesToDelete.push(parseInt(imageId.toString(), 10));
+        }
+      }
     } else {
       // Handle regular JSON (backward compatibility)
       const body = await request.json();
@@ -162,6 +175,7 @@ export async function PUT(request: Request) {
       is_Active = body.is_Active;
       is_onlyType = body.is_onlyType;
       images = body.images || [];
+      imagesToDelete = body.imagesToDelete || [];
     }
 
     // Validate images only if they are provided (optional for updates)
@@ -202,6 +216,7 @@ export async function PUT(request: Request) {
       is_Active,
       is_onlyType,
       images,
+      imagesToDelete,
     );
     return NextResponse.json(productType);
   } catch (error) {
@@ -226,18 +241,50 @@ export async function PUT(request: Request) {
 }
 
 export async function DELETE(request: Request) {
+  let imagesToDelete: number[] = [];
+
   try {
-    const { searchParams } = new URL(request.url);
-    const id = searchParams.get("id");
+    const contentType = request.headers.get("content-type") || "";
+    let id: string;
+
+    if (contentType.includes("multipart/form-data")) {
+      // Handle FormData with images to delete
+      const formData = await request.formData();
+      id = formData.get("id") as string;
+
+      // Extract images to delete
+      const deleteKeys = Array.from(formData.keys()).filter((key) =>
+        key.startsWith("imagesToDelete["),
+      );
+
+      for (const key of deleteKeys) {
+        const imageId = formData.get(key);
+        if (imageId) {
+          imagesToDelete.push(parseInt(imageId.toString(), 10));
+        }
+      }
+    } else {
+      // Handle query parameters (backward compatibility)
+      const { searchParams } = new URL(request.url);
+      id = searchParams.get("id") || "";
+
+      // Also check if there's a JSON body with imagesToDelete
+      try {
+        const body = await request.json().catch(() => ({}));
+        imagesToDelete = body.imagesToDelete || [];
+      } catch {
+        // Ignore JSON parsing errors for backward compatibility
+      }
+    }
 
     if (!id || typeof id !== "string" || id.trim() === "") {
       return NextResponse.json(
-        { error: "Product type ID is required as a query parameter" },
+        { error: "Product type ID is required" },
         { status: 400 },
       );
     }
 
-    await ProductService.deleteProductType(id.trim());
+    await ProductService.deleteProductType(id.trim(), imagesToDelete);
     return NextResponse.json({ message: "Product type deleted successfully" });
   } catch (error) {
     console.error("API Error:", error);

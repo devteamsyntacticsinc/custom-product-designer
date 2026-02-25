@@ -32,7 +32,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { Edit, Trash2, Plus, Upload, X } from "lucide-react";
-import { ProductType } from "@/types/product";
+import { ProductType, ProductImage } from "@/types/product";
 import {
   Dialog,
   DialogClose,
@@ -82,7 +82,11 @@ export default function ProductTypesTab() {
   }, []);
 
   const handleSubmitProductType = async (
-    payload: ProductType & { images: { file: File; is_hasBack: boolean }[] },
+    payload: ProductType & {
+      images: { file: File; is_hasBack: boolean }[];
+      imagesToDelete?: number[];
+      existingImages?: { id: number; filepath: string; is_hasBack: boolean }[];
+    },
   ) => {
     setIsMutating(true);
     try {
@@ -102,6 +106,13 @@ export default function ProductTypesTab() {
           imageData.is_hasBack.toString(),
         );
       });
+
+      // Append images to delete
+      if (payload.imagesToDelete && payload.imagesToDelete.length > 0) {
+        payload.imagesToDelete.forEach((imageId, index) => {
+          formData.append(`imagesToDelete[${index}]`, imageId.toString());
+        });
+      }
 
       if (payload.id) {
         // UPDATE
@@ -314,9 +325,15 @@ function ProductTypeSheet({
 }: {
   children: React.ReactNode;
   mode: "create" | "edit";
-  initialData?: ProductType & { images: { file: File; is_hasBack: boolean }[] };
+  initialData?: ProductType & {
+    image_products?: { id: number; filepath: string; is_hasBack: boolean }[];
+  };
   onSubmit: (
-    data: ProductType & { images: { file: File; is_hasBack: boolean }[] },
+    data: ProductType & {
+      images: { file: File; is_hasBack: boolean }[];
+      imagesToDelete?: number[];
+      existingImages?: { id: number; filepath: string; is_hasBack: boolean }[];
+    },
   ) => Promise<void>;
   isLoading: boolean;
 }) {
@@ -325,9 +342,8 @@ function ProductTypeSheet({
   const [active, setActive] = useState(true);
   const [onlyType, setOnlyType] = useState(false);
   const [assigned, setAssigned] = useState("");
-  const [assets, setAssets] = useState<{ file: File; is_hasBack: boolean }[]>(
-    [],
-  );
+  const [assets, setAssets] = useState<ProductImage[]>([]);
+  const [imagesToDelete, setImagesToDelete] = useState<number[]>([]);
   const fileInputRefs = useRef<Record<string, HTMLInputElement | null>>({});
 
   const handleFileChange = (slotId: string, file: File | null) => {
@@ -353,7 +369,7 @@ function ProductTypeSheet({
         return;
       }
 
-      setAssets((prev) => [...prev, { file, is_hasBack }]);
+      setAssets((prev) => [...prev, { file, is_hasBack, _isExisting: false }]);
       if (fileInputRefs.current[slotId]) {
         fileInputRefs.current[slotId]!.value = "";
       }
@@ -361,6 +377,13 @@ function ProductTypeSheet({
   };
 
   const removeAsset = (index: number) => {
+    const assetToRemove = assets[index];
+
+    // If it's an existing image, add to delete list
+    if (assetToRemove._isExisting) {
+      setImagesToDelete((prev) => [...prev, assetToRemove.id]);
+    }
+
     setAssets((prev) => prev.filter((_, i) => i !== index));
   };
 
@@ -392,23 +415,48 @@ function ProductTypeSheet({
       setName(initialData?.name ?? "");
       setActive(initialData?.is_Active ?? true);
       setOnlyType(initialData?.is_onlyType ?? false);
-      setAssets([]);
+
+      // Load existing images for edit mode
+      if (mode === "edit" && initialData?.image_products) {
+        const existingImages: ProductImage[] = initialData.image_products.map(
+          (img) => ({
+            id: img.id || 0, // Fallback for safety
+            filepath: img.filepath,
+            is_hasBack: img.is_hasBack,
+            _isExisting: true,
+          }),
+        );
+        setAssets(existingImages);
+      } else {
+        setAssets([]);
+      }
+
+      setImagesToDelete([]);
     } else {
       setName("");
       setActive(true);
       setOnlyType(false);
       setAssets([]);
+      setImagesToDelete([]);
     }
   };
 
   const handleSubmit = async () => {
     try {
+      // Separate new images from existing ones
+      const newImages = assets.filter((asset) => !asset._isExisting) as {
+        file: File;
+        is_hasBack: boolean;
+      }[];
+
       await onSubmit({
         id: initialData?.id ?? 0,
         name,
         is_Active: active,
         is_onlyType: onlyType,
-        images: assets,
+        images: newImages,
+        imagesToDelete,
+        existingImages: assets.filter((asset) => asset._isExisting),
       });
       setName("");
       onOpenChange(false);
@@ -495,17 +543,29 @@ function ProductTypeSheet({
                   >
                     <div className="flex items-center space-x-3 min-w-0 flex-1">
                       <div className="w-10 h-10 rounded border border-gray-100 shrink-0 overflow-hidden flex items-center justify-center bg-gray-50">
-                        <Image
-                          src={URL.createObjectURL(item.file)}
-                          alt="preview"
-                          width={40}
-                          height={40}
-                          className="max-w-full max-h-full object-contain"
-                        />
+                        {item._isExisting ? (
+                          <Image
+                            src={item.filepath}
+                            alt="preview"
+                            width={40}
+                            height={40}
+                            className="max-w-full max-h-full object-contain"
+                          />
+                        ) : (
+                          <Image
+                            src={URL.createObjectURL(item.file)}
+                            alt="preview"
+                            width={40}
+                            height={40}
+                            className="max-w-full max-h-full object-contain"
+                          />
+                        )}
                       </div>
                       <div className="flex flex-col min-w-0">
                         <span className="text-xs font-semibold text-gray-900 truncate">
-                          {item.file.name}
+                          {item._isExisting
+                            ? `Existing ${item.is_hasBack ? "Back" : "Front"} Image`
+                            : item.file.name}
                         </span>
                         <div className="flex items-center space-x-1 mt-0.5">
                           <span
@@ -513,6 +573,11 @@ function ProductTypeSheet({
                           >
                             {item.is_hasBack ? "Back" : "Front"}
                           </span>
+                          {item._isExisting && (
+                            <span className="text-[9px] px-1.5 py-0.5 rounded-full bg-gray-100 text-gray-600 font-medium">
+                              Existing
+                            </span>
+                          )}
                         </div>
                       </div>
                     </div>
@@ -625,7 +690,9 @@ function DeleteDialog({
   children: React.ReactNode;
   isLoading: boolean;
   setIsLoading: (value: boolean) => void;
-  productType: ProductType & { images: { file: File; is_hasBack: boolean }[] };
+  productType: ProductType & {
+    image_products?: { id: number; filepath: string; is_hasBack: boolean }[];
+  };
   fetchProductTypes: () => Promise<void>;
 }) {
   const { addToast } = useToast();
@@ -636,7 +703,22 @@ function DeleteDialog({
 
     setIsLoading(true);
     try {
-      const res = await axios.delete(`/api/product-types?id=${productType.id}`);
+      const formData = new FormData();
+      formData.append("id", productType.id.toString());
+
+      // If there are images to delete, add them to FormData
+      if (productType.image_products && productType.image_products.length > 0) {
+        productType.image_products.forEach((image, index) => {
+          formData.append(`imagesToDelete[${index}]`, image.id.toString());
+        });
+      }
+
+      const res = await axios.delete("/api/product-types", {
+        data: formData,
+        headers: {
+          "Content-Type": "multipart/form-data",
+        },
+      });
 
       if (!res.data) {
         throw new Error("Failed to delete product type");
@@ -646,12 +728,13 @@ function DeleteDialog({
       setOpen(false);
     } catch (error) {
       console.error(error);
-      addToast(
-        "error",
-        error instanceof Error
+      const errorMessage = axios.isAxiosError(error)
+        ? error.response?.data?.error || error.message
+        : error instanceof Error
           ? error.message
-          : "Failed to delete product type",
-      );
+          : "Failed to delete product type";
+
+      addToast("error", errorMessage);
       // Close dialog on error as well
       setOpen(false);
     } finally {
@@ -671,7 +754,8 @@ function DeleteDialog({
             {productType.is_onlyType && (
               <>
                 {" "}
-                Since this is an &quot;Only Type&quot; product, the system will also check for and remove any unused brand type associations.
+                Since this is an &quot;Only Type&quot; product, the system will
+                also check for and remove any unused brand type associations.
               </>
             )}
           </DialogDescription>
