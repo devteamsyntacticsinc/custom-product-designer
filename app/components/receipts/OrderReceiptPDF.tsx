@@ -175,7 +175,7 @@ export default function OrderReceiptPDF({ order }: OrderReceiptPDFProps) {
 
   return (
     <Document>
-      <Page size="A4" style={styles.page}>
+      <Page size="LEGAL" style={styles.page}>
         {/* Header */}
         <View style={styles.header}>
           <Text style={styles.title}>Print Pro Order Receipt</Text>
