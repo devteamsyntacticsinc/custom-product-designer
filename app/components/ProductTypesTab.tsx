@@ -47,6 +47,48 @@ import { useToast } from "@/contexts/ToastContext";
 import axios from "axios";
 import Image from "next/image";
 
+export const validateImageClient = (file: File): Promise<void> => {
+  const MIN_RATIO = 0.85;
+  const MAX_RATIO = 1.15;
+  const MIN_SIZE = 500;
+
+  return new Promise((resolve, reject) => {
+    const img = document.createElement("img");
+    const objectUrl = URL.createObjectURL(file);
+
+    img.onload = () => {
+      const { width, height } = img;
+      const ratio = width / height;
+
+      URL.revokeObjectURL(objectUrl);
+
+      if (width < MIN_SIZE || height < MIN_SIZE) {
+        reject(
+          new Error("Image must have at least 500 width x 500 height pixels."),
+        );
+        return;
+      }
+
+      if (ratio < MIN_RATIO || ratio > MAX_RATIO) {
+        reject(
+          new Error(
+            "Image must be square (equal width and height) or near-square (at least 85% match).",
+          ),
+        );
+        return;
+      }
+
+      resolve();
+    };
+
+    img.onerror = () => {
+      reject(new Error("Invalid image file."));
+    };
+
+    img.src = objectUrl;
+  });
+};
+
 export default function ProductTypesTab() {
   const [productTypes, setProductTypes] = useState<
     (ProductType & { images: { file: File; is_hasBack: boolean }[] })[]
@@ -342,14 +384,29 @@ function ProductTypeSheet({
   const [active, setActive] = useState(true);
   const [onlyType, setOnlyType] = useState(false);
   const [assigned, setAssigned] = useState("");
+  const [imageValidationError, setImageValidationError] = useState("");
   const [assets, setAssets] = useState<ProductImage[]>([]);
   const [imagesToDelete, setImagesToDelete] = useState<number[]>([]);
   const fileInputRefs = useRef<Record<string, HTMLInputElement | null>>({});
 
-  const handleFileChange = (slotId: string, file: File | null) => {
+  const handleFileChange = async (slotId: string, file: File | null) => {
     if (file) {
       if (assets.length >= 2) {
         alert("Maximum of 2 images allowed.");
+        if (fileInputRefs.current[slotId]) {
+          fileInputRefs.current[slotId]!.value = "";
+        }
+        return;
+      }
+
+      // Validate image before processing
+      try {
+        await validateImageClient(file);
+        setImageValidationError(""); // Clear any previous validation errors
+      } catch (error) {
+        const errorMessage =
+          error instanceof Error ? error.message : "Invalid image file.";
+        setImageValidationError(errorMessage);
         if (fileInputRefs.current[slotId]) {
           fileInputRefs.current[slotId]!.value = "";
         }
@@ -415,6 +472,7 @@ function ProductTypeSheet({
       setName(initialData?.name ?? "");
       setActive(initialData?.is_Active ?? true);
       setOnlyType(initialData?.is_onlyType ?? false);
+      setImageValidationError(""); // Reset validation error when opening
 
       // Load existing images for edit mode
       if (mode === "edit" && initialData?.image_products) {
@@ -436,6 +494,7 @@ function ProductTypeSheet({
       setName("");
       setActive(true);
       setOnlyType(false);
+      setImageValidationError(""); // Reset validation error when closing
       setAssets([]);
       setImagesToDelete([]);
     }
@@ -507,30 +566,37 @@ function ProductTypeSheet({
             <Label htmlFor="product-type-image" className="text-sm font-medium">
               Product Type Images
             </Label>
-            <Input
-              type="file"
-              accept="image/*"
-              className="hidden"
-              id="product-type-image-input"
-              ref={(el) => {
-                fileInputRefs.current["image"] = el;
-              }}
-              onChange={(e) =>
-                handleFileChange("image", e.target.files?.[0] || null)
-              }
-            />
-            <div
-              className={`group flex items-center justify-between p-3 rounded-xl border border-gray-200 transition-colors min-w-0 bg-gray-50/50 cursor-pointer ${assets.length < 2 ? "" : "hidden"}`}
-              onClick={() => {
-                if (assets.length < 2) {
-                  fileInputRefs.current["image"]?.click();
+            <div className="space-y-4 flex flex-col">
+              <Input
+                type="file"
+                accept="image/*"
+                className="hidden"
+                id="product-type-image-input"
+                ref={(el) => {
+                  fileInputRefs.current["image"] = el;
+                }}
+                onChange={(e) =>
+                  handleFileChange("image", e.target.files?.[0] || null)
                 }
-              }}
-            >
-              <span className="text-sm truncate mr-2 text-gray-600">
-                Upload Product Type Image
-              </span>
-              <Upload className="w-6 h-6 text-gray-400 group-hover:text-gray-600 mb-2" />
+              />
+              <div
+                className={`group flex items-center justify-between p-3 rounded-xl border border-gray-200 transition-colors min-w-0 bg-gray-50/50 cursor-pointer ${assets.length < 2 ? "" : "hidden"}`}
+                onClick={() => {
+                  if (assets.length < 2) {
+                    fileInputRefs.current["image"]?.click();
+                  }
+                }}
+              >
+                <span className="text-sm truncate mr-2 text-gray-600">
+                  Upload Product Type Image
+                </span>
+                <Upload className="w-6 h-6 text-gray-400 group-hover:text-gray-600 mb-2" />
+              </div>
+              <ImageDialogShowcase>
+                <Button className="ml-auto" variant="outline">
+                  Image Reference
+                </Button>
+              </ImageDialogShowcase>
             </div>
 
             {/* Image List */}
@@ -621,6 +687,12 @@ function ProductTypeSheet({
             <p className="text-red-500 text-sm italic">{assigned}</p>
           )}
 
+          {imageValidationError && (
+            <p className="text-red-500 text-sm italic">
+              {imageValidationError}
+            </p>
+          )}
+
           {assets.length === 0 && (
             <p className="text-red-500 text-sm italic">
               *Product Type Image is required before saving.
@@ -662,7 +734,8 @@ function ProductTypeSheet({
               isLoading ||
               name.length === 0 ||
               assets.length === 0 ||
-              assigned.length > 0
+              assigned.length > 0 ||
+              imageValidationError.length > 0
             }
             className="w-full sm:w-auto"
           >
@@ -773,6 +846,43 @@ function DeleteDialog({
             {isLoading ? "Deleting..." : "Delete"}
           </Button>
         </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
+function ImageDialogShowcase({ children }: { children: React.ReactNode }) {
+  return (
+    <Dialog>
+      <DialogTrigger asChild>{children}</DialogTrigger>
+      <DialogContent className="max-w-[700px]!">
+        <DialogHeader>
+          <DialogTitle>Sample Accepted Image</DialogTitle>
+          <DialogDescription>
+            This is an example of an image that would be accepted for creating a
+            product type.
+          </DialogDescription>
+        </DialogHeader>
+        <figure className="size-[600px] mx-auto border">
+          <Image
+            src="https://tcxoekzhoslcfdotjgqg.supabase.co/storage/v1/object/public/product-images/mug.png"
+            alt="Mug Image"
+            width={600}
+            height={600}
+          />
+        </figure>
+        <div className="space-y-2">
+          <h3>Image Requirements</h3>
+          <ul className="list-disc list-inside space-y-1">
+            <li>Must be a PNG or JPG file</li>
+            <li>Must have a transparent background</li>
+            <li>Must be at least 500x500 pixels</li>
+            <li>
+              Image must be square (equal width and height) or near-square (at
+              least 85% match)
+            </li>
+          </ul>
+        </div>
       </DialogContent>
     </Dialog>
   );
