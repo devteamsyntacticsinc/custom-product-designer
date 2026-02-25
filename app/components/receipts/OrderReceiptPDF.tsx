@@ -1,4 +1,12 @@
-import { Document, Page, Text, View, Image, Font } from "@react-pdf/renderer";
+import {
+  Document,
+  Page,
+  Text,
+  View,
+  Image,
+  Font,
+  StyleSheet,
+} from "@react-pdf/renderer";
 import { OrderWithCustomer } from "@/types/order";
 import { receiptStyles as styles } from "./styles";
 
@@ -11,6 +19,40 @@ Font.register({
 interface OrderReceiptPDFProps {
   order: OrderWithCustomer;
 }
+
+interface CustomStyle {
+  top?: string | number;
+  left?: string | number;
+  width?: string | number;
+  height?: string | number;
+  [key: string]: any;
+}
+
+// Design area component for PDF
+const DesignAreaPDF = ({
+  placement,
+  imageUrl,
+  customStyle,
+}: {
+  placement: string;
+  imageUrl?: string;
+  customStyle: CustomStyle;
+}) => {
+  const normalizedImageUrl = imageUrl
+    ? normalizeImageUrlForPdf(imageUrl)
+    : undefined;
+  return (
+    <View style={[styles.designOverlay, customStyle]}>
+      {normalizedImageUrl ? (
+        <Image src={normalizedImageUrl} style={styles.designImage} />
+      ) : (
+        <Text style={{ fontSize: 6, color: "#9ca3af", textAlign: "center" }}>
+          {placement}
+        </Text>
+      )}
+    </View>
+  );
+};
 
 const blobToBase64 = (blob: Blob): Promise<string> => {
   return new Promise((resolve, reject) => {
@@ -129,32 +171,6 @@ export default function OrderReceiptPDF({ order }: OrderReceiptPDFProps) {
       hour: "2-digit",
       minute: "2-digit",
     });
-  };
-
-  // Design area component for PDF
-  const DesignAreaPDF = ({
-    placement,
-    imageUrl,
-    customStyle,
-  }: {
-    placement: string;
-    imageUrl?: string;
-    customStyle: any;
-  }) => {
-    const normalizedImageUrl = imageUrl
-      ? normalizeImageUrlForPdf(imageUrl)
-      : undefined;
-    return (
-      <View style={[styles.designOverlay, customStyle]}>
-        {normalizedImageUrl ? (
-          <Image src={normalizedImageUrl} style={styles.designImage} />
-        ) : (
-          <Text style={{ fontSize: 6, color: "#9ca3af", textAlign: "center" }}>
-            {placement}
-          </Text>
-        )}
-      </View>
-    );
   };
 
   return (
