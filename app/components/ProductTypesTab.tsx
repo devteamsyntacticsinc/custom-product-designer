@@ -44,6 +44,7 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 import { useToast } from "@/contexts/ToastContext";
+import Image from "next/image";
 
 export default function ProductTypesTab() {
   const [productTypes, setProductTypes] = useState<
@@ -480,10 +481,12 @@ function ProductTypeSheet({
                     className="flex items-center justify-between p-2 rounded-lg border border-gray-200 bg-white"
                   >
                     <div className="flex items-center space-x-3 min-w-0 flex-1">
-                      <div className="w-10 h-10 rounded border border-gray-100 flex-shrink-0 overflow-hidden flex items-center justify-center bg-gray-50">
-                        <img
+                      <div className="w-10 h-10 rounded border border-gray-100 shrink-0 overflow-hidden flex items-center justify-center bg-gray-50">
+                        <Image
                           src={URL.createObjectURL(item.file)}
                           alt="preview"
+                          width={40}
+                          height={40}
                           className="max-w-full max-h-full object-contain"
                         />
                       </div>
@@ -642,6 +645,12 @@ function DeleteDialog({
           <DialogDescription>
             This action cannot be undone. This will permanently delete your
             product type &quot;{productType.name}&quot;.
+            {productType.is_onlyType && (
+              <>
+                {" "}
+                Since this is an &quot;Only Type&quot; product, the system will also check for and remove any unused brand type associations.
+              </>
+            )}
           </DialogDescription>
         </DialogHeader>
         <DialogFooter>

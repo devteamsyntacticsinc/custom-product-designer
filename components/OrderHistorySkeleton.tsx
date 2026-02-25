@@ -5,9 +5,9 @@ export default function OrderHistorySkeleton() {
     return (
         <div className="grid gap-6">
             {[...Array(2)].map((_, i) => (
-                <div key={i} className="bg-white border rounded-xl overflow-hidden shadow-sm">
+                <div key={i} className="bg-white dark:bg-gray-800 border rounded-xl overflow-hidden shadow-sm">
                     {/* Order Header Skeleton */}
-                    <div className="bg-gray-50/50 px-4 py-3 border-b flex justify-between items-center">
+                    <div className="bg-gray-50/50 dark:bg-gray-800/50 px-4 py-3 border-b flex justify-between items-center">
                         <div className="flex items-center gap-3">
                             <Skeleton className="h-5 w-16" />
                             <div className="flex items-center gap-1.5">
@@ -34,7 +34,7 @@ export default function OrderHistorySkeleton() {
                         </div>
 
                         {/* Detailed Info Section Skeleton */}
-                        <div className="space-y-4 pt-4 border-t border-gray-100">
+                        <div className="space-y-4 pt-4 border-t border-gray-100 dark:border-gray-800">
                             <div className="flex flex-wrap items-center gap-3">
                                 <Skeleton className="h-6 w-20" />
                                 <Skeleton className="h-4 w-4 rounded-full" />

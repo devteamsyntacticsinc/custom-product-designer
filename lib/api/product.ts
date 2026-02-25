@@ -791,6 +791,84 @@ export class ProductService {
 
   static async deleteProductType(id: string): Promise<void> {
     try {
+      // First, get the product type details to check if it's is_onlyType
+      const { data: productType, error: fetchError } = await supabase
+        .from("product_type")
+        .select("id, name, is_onlyType")
+        .eq("id", id)
+        .single();
+
+      if (fetchError) {
+        throw fetchError;
+      }
+
+      if (!productType) {
+        throw new Error("Product type not found");
+      }
+
+      // If the product type has is_onlyType = true, handle brand_type cleanup
+      if (productType.is_onlyType) {
+        // Find the brand_type record with NULL brand_id for this type_id
+        const { data: nullBrandType, error: brandTypeError } = await supabase
+          .from("brand_type")
+          .select("id")
+          .is("brand_id", null)
+          .eq("type_id", id)
+          .maybeSingle();
+
+        if (brandTypeError) {
+          throw brandTypeError;
+        }
+
+        // If we found a brand_type with NULL brand_id, check if it's used in transactions
+        if (nullBrandType) {
+          const brandTypeId = nullBrandType.id;
+
+          // Check if this brand_type is used in size_product table
+          const { count: sizeProductCount, error: sizeProductError } = await supabase
+            .from("size_product")
+            .select("*", { count: "exact", head: true })
+            .eq("brandT_id", brandTypeId);
+
+          if (sizeProductError) {
+            throw sizeProductError;
+          }
+
+          // Check if this brand_type is used in color_products table
+          const { count: colorProductCount, error: colorProductError } = await supabase
+            .from("color_products")
+            .select("*", { count: "exact", head: true })
+            .eq("brandT_id", brandTypeId);
+
+          if (colorProductError) {
+            throw colorProductError;
+          }
+
+          // Check if this brand_type is used in product_orders table
+          const { count: productOrderCount, error: productOrderError } = await supabase
+            .from("product_orders")
+            .select("*", { count: "exact", head: true })
+            .eq("brandT_id", brandTypeId);
+
+          if (productOrderError) {
+            throw productOrderError;
+          }
+
+          // If the brand_type is not used in any transaction tables, delete it
+          if (sizeProductCount === 0 && colorProductCount === 0 && productOrderCount === 0) {
+            const { error: deleteBrandTypeError } = await supabase
+              .from("brand_type")
+              .delete()
+              .eq("id", brandTypeId);
+
+            if (deleteBrandTypeError) {
+              throw deleteBrandTypeError;
+            }
+          }
+        }
+      }
+
+      // Finally, delete the product type
       const { error } = await supabase
         .from("product_type")
         .delete()
