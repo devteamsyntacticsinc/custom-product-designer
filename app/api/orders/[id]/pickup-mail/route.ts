@@ -112,7 +112,7 @@ async function sendPickupEmail(order: OrderWithCustomer) {
                     <p style="margin: 0; color: #333; font-size: 15px; line-height: 1.5;">
                         <strong>We can't wait to see you!</strong><br>
                         Swing by Print Pro at your convenience to pick up your order — we’re excited to see you and share your custom creations!<br><br>
-                        Curious about what else we can make for you? Visit our website: <a href="https://print-pro-pi.vercel.app/" style="color: #0077cc; text-decoration: none;">https://print-pro-pi.vercel.app/</a> to explore more products, designs, and special offers.
+                        Curious about what else we can make for you? Visit our website: <a href="${process.env.NEXTAUTH_URL}" style="color: #0077cc; text-decoration: none;">${process.env.NEXTAUTH_URL}</a> to explore more products, designs, and special offers.
                     </p>
                 </div>
 
