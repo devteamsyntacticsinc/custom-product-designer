@@ -8,6 +8,7 @@ import {
   BrandType,
   ColorBrandTypeWithDetails,
   BrandTypeWithDetails,
+  ImageProducts,
 } from "@/types/product";
 
 export class ProductService {
@@ -627,11 +628,17 @@ export class ProductService {
     }
   }
 
-  static async getProductTypes(): Promise<ProductType[]> {
+  static async getProductTypes(): Promise<
+    (Omit<ProductType, "image_products"> & {
+      image_products?: Pick<ImageProducts, "filepath" | "is_hasBack" | "id">[];
+    })[]
+  > {
     try {
       const { data, error } = await supabase
         .from("product_type")
-        .select(`id, name, is_onlyType, is_Active, image_products(*)`)
+        .select(
+          "id, name, is_onlyType, is_Active, image_products(filepath, is_hasBack, id)",
+        )
         .order("name");
 
       if (error) {
@@ -660,6 +667,7 @@ export class ProductService {
     name: string,
     is_Active: boolean = true,
     is_onlyType: boolean = false,
+    images: { file: File; is_hasBack: boolean }[],
   ): Promise<ProductType> {
     try {
       // Check if product type already exists (case-insensitive)
@@ -704,6 +712,11 @@ export class ProductService {
         }
       }
 
+      // Upload images if provided
+      if (images && images.length > 0) {
+        await this.uploadImageProductType(productType.id.toString(), images);
+      }
+
       return productType;
     } catch (error) {
       console.error("Error creating product type:", error);
@@ -716,6 +729,8 @@ export class ProductService {
     name?: string,
     is_Active?: boolean,
     is_onlyType?: boolean,
+    images?: { file: File; is_hasBack: boolean }[],
+    imagesToDelete?: number[],
   ): Promise<ProductType> {
     try {
       const updateData: {
@@ -745,6 +760,7 @@ export class ProductService {
       if (is_Active !== undefined) updateData.is_Active = is_Active;
       if (is_onlyType !== undefined) updateData.is_onlyType = is_onlyType;
 
+      // Update product type
       const { data: productType, error } = await supabase
         .from("product_type")
         .update(updateData)
@@ -782,6 +798,16 @@ export class ProductService {
         }
       }
 
+      // Delete specified images first
+      if (imagesToDelete && imagesToDelete.length > 0) {
+        await this.deleteProductTypeImages(imagesToDelete);
+      }
+
+      // Upload images if provided
+      if (images && images.length > 0) {
+        await this.uploadImageProductType(id, images);
+      }
+
       return productType;
     } catch (error) {
       console.error("Error updating product type:", error);
@@ -789,7 +815,10 @@ export class ProductService {
     }
   }
 
-  static async deleteProductType(id: string): Promise<void> {
+  static async deleteProductType(
+    id: string,
+    imagesToDelete: number[],
+  ): Promise<void> {
     try {
       // First, get the product type details to check if it's is_onlyType
       const { data: productType, error: fetchError } = await supabase
@@ -804,6 +833,11 @@ export class ProductService {
 
       if (!productType) {
         throw new Error("Product type not found");
+      }
+
+      // Delete specified images first
+      if (imagesToDelete && imagesToDelete.length > 0) {
+        await this.deleteProductTypeImages(imagesToDelete);
       }
 
       // If the product type has is_onlyType = true, handle brand_type cleanup
@@ -825,37 +859,44 @@ export class ProductService {
           const brandTypeId = nullBrandType.id;
 
           // Check if this brand_type is used in size_product table
-          const { count: sizeProductCount, error: sizeProductError } = await supabase
-            .from("size_product")
-            .select("*", { count: "exact", head: true })
-            .eq("brandT_id", brandTypeId);
+          const { count: sizeProductCount, error: sizeProductError } =
+            await supabase
+              .from("size_product")
+              .select("*", { count: "exact", head: true })
+              .eq("brandT_id", brandTypeId);
 
           if (sizeProductError) {
             throw sizeProductError;
           }
 
           // Check if this brand_type is used in color_products table
-          const { count: colorProductCount, error: colorProductError } = await supabase
-            .from("color_products")
-            .select("*", { count: "exact", head: true })
-            .eq("brandT_id", brandTypeId);
+          const { count: colorProductCount, error: colorProductError } =
+            await supabase
+              .from("color_products")
+              .select("*", { count: "exact", head: true })
+              .eq("brandT_id", brandTypeId);
 
           if (colorProductError) {
             throw colorProductError;
           }
 
           // Check if this brand_type is used in product_orders table
-          const { count: productOrderCount, error: productOrderError } = await supabase
-            .from("product_orders")
-            .select("*", { count: "exact", head: true })
-            .eq("brandT_id", brandTypeId);
+          const { count: productOrderCount, error: productOrderError } =
+            await supabase
+              .from("product_orders")
+              .select("*", { count: "exact", head: true })
+              .eq("brandT_id", brandTypeId);
 
           if (productOrderError) {
             throw productOrderError;
           }
 
           // If the brand_type is not used in any transaction tables, delete it
-          if (sizeProductCount === 0 && colorProductCount === 0 && productOrderCount === 0) {
+          if (
+            sizeProductCount === 0 &&
+            colorProductCount === 0 &&
+            productOrderCount === 0
+          ) {
             const { error: deleteBrandTypeError } = await supabase
               .from("brand_type")
               .delete()
@@ -881,6 +922,100 @@ export class ProductService {
       console.error("Error deleting product type:", error);
       throw error;
     }
+  }
+
+  static async uploadImageProductType(
+    productTypeId: string,
+    assets: { file: File; is_hasBack: boolean }[],
+  ) {
+    try {
+      const imageInserts = [];
+      for (const asset of assets) {
+        if (asset && asset.file instanceof File) {
+          // Upload to Supabase Storage
+          const fileName = `${Date.now()}-${asset.file.name}`;
+
+          const { error: uploadError } = await supabase.storage
+            .from("product-images")
+            .upload(fileName, asset.file);
+
+          if (uploadError) {
+            console.error("Error uploading image:", uploadError);
+            continue;
+          }
+
+          // Get public URL
+          const { data: urlData } = supabase.storage
+            .from("product-images")
+            .getPublicUrl(fileName);
+
+          imageInserts.push({
+            productT_id: productTypeId,
+            filepath: urlData.publicUrl,
+            is_hasBack: asset.is_hasBack,
+          });
+        }
+      }
+
+      if (imageInserts.length > 0) {
+        const { error } = await supabase
+          .from("image_products")
+          .insert(imageInserts);
+
+        if (error) {
+          console.error("Error inserting product images:", error);
+          throw error;
+        }
+      }
+
+      return true;
+    } catch (error) {
+      console.error("Error uploading product images:", error);
+      throw error;
+    }
+  }
+
+  static async deleteProductTypeImages(imageIds: number[]): Promise<void> {
+    if (!imageIds.length) return;
+
+    // 1️⃣ Get file paths
+    const { data: images, error: fetchError } = await supabase
+      .from("image_products")
+      .select("filepath")
+      .in("id", imageIds);
+
+    if (fetchError) throw fetchError;
+
+    if (!images?.length) return;
+
+    // 2️⃣ Extract relative paths properly
+    const filePaths = images
+      .map((img) => {
+        const match = img.filepath.match(
+          /\/storage\/v1\/object\/public\/product-images\/(.+)$/,
+        );
+        return match ? match[1] : null;
+      })
+      .filter(Boolean) as string[];
+
+    console.log(filePaths);
+
+    // 3️⃣ Delete from storage FIRST
+    if (filePaths.length) {
+      const { error: storageError } = await supabase.storage
+        .from("product-images")
+        .remove(filePaths);
+
+      if (storageError) throw storageError;
+    }
+
+    // 4️⃣ Delete from database AFTER
+    const { error: deleteError } = await supabase
+      .from("image_products")
+      .delete()
+      .in("id", imageIds);
+
+    if (deleteError) throw deleteError;
   }
 
   static async getSizes(): Promise<Size[]> {
@@ -1147,12 +1282,16 @@ export class ProductService {
       ]);
 
       // Extract values from settled promises
-      const customersCount = customers.status === 'fulfilled' ? customers.value : 0;
-      const ordersCount = productOrders.status === 'fulfilled' ? productOrders.value : 0;
-      const brandsCount = brands.status === 'fulfilled' ? brands.value : 0;
-      const colorsCount = colors.status === 'fulfilled' ? colors.value : 0;
-      const typesCount = productTypes.status === 'fulfilled' ? productTypes.value : 0;
-      const sizesCount = productSizes.status === 'fulfilled' ? productSizes.value : 0;
+      const customersCount =
+        customers.status === "fulfilled" ? customers.value : 0;
+      const ordersCount =
+        productOrders.status === "fulfilled" ? productOrders.value : 0;
+      const brandsCount = brands.status === "fulfilled" ? brands.value : 0;
+      const colorsCount = colors.status === "fulfilled" ? colors.value : 0;
+      const typesCount =
+        productTypes.status === "fulfilled" ? productTypes.value : 0;
+      const sizesCount =
+        productSizes.status === "fulfilled" ? productSizes.value : 0;
 
       return {
         success: true,

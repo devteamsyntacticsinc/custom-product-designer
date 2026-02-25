@@ -49,6 +49,22 @@ export interface ImageProducts {
   is_hasBack: boolean;
 }
 
+// Image tracking for product type updates
+export interface ExistingImage {
+  id: number;
+  filepath: string;
+  is_hasBack: boolean;
+  _isExisting: true;
+}
+
+export interface NewImage {
+  file: File;
+  is_hasBack: boolean;
+  _isExisting: false;
+}
+
+export type ProductImage = ExistingImage | NewImage;
+
 export interface Size {
   id: number;
   value: string;
