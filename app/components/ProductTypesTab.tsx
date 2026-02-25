@@ -675,6 +675,14 @@ function ProductTypeSheet({
               </div>
             )}
           </div>
+          <p className="text-muted-foreground">
+            Need help? View a sample of an{" "}
+            <ImageDialogShowcase>
+              <span className="underline font-medium text-black cursor-pointer">
+                accepted image.{" "}
+              </span>
+            </ImageDialogShowcase>
+          </p>
 
           {assigned && assets.length !== 0 && (
             <p className="text-red-500 text-sm italic">{assigned}</p>
@@ -718,16 +726,6 @@ function ProductTypeSheet({
               {active ? "Active" : "Inactive"}
             </Label>
           </div>
-        </div>
-        <div>
-          <p className="text-muted-foreground">
-            Need help? View a sample of an{" "}
-            <ImageDialogShowcase>
-              <span className="underline font-medium text-black cursor-pointer">
-                accepted image.{" "}
-              </span>
-            </ImageDialogShowcase>
-          </p>
         </div>
 
         <SheetFooter className="mt-6">

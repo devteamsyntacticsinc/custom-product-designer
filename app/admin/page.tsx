@@ -684,7 +684,7 @@ function CustomerWithOrdersDetails({
 }: {
   customerOrders: CustomerWithOrdersForDashboard;
 }) {
-  const customer = customerOrders.customer;
+  const customer = customerOrders.customer ;
   const orders = customerOrders.orders;
 
   return (
@@ -697,10 +697,10 @@ function CustomerWithOrdersDetails({
           </div>
           <div>
             <CardTitle className="text-xl font-bold ">
-              {customer.name}
+              {customer?.name}
             </CardTitle>
             <CardDescription className="text-sm text-muted-foreground">
-              Customer ID: #{customer.id.toString().slice(-6)}
+              Customer ID: #{customer?.id.toString().slice(-6)}
             </CardDescription>
           </div>
         </CardHeader>
@@ -708,11 +708,11 @@ function CustomerWithOrdersDetails({
         <CardContent className="space-y-3 pt-2">
           <div className="flex items-center gap-3">
             <Mail className="h-4 w-4 text-muted-foreground" />
-            <span className="text-sm ">{customer.email}</span>
+            <span className="text-sm ">{customer?.email}</span>
           </div>
           <div className="flex items-center gap-3">
             <Phone className="h-4 w-4 text-muted-foreground" />
-            <span className="text-sm ">{customer.contact_number}</span>
+            <span className="text-sm ">{customer?.contact_number}</span>
           </div>
         </CardContent>
       </Card>
