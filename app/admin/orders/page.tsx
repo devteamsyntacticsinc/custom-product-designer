@@ -35,7 +35,7 @@ export default function OrdersPage() {
   const router = useRouter();
   const currentPath = usePathname();
   const { addToast } = useToast();
-  const [downloadedIds, setDownloadedIds] = useState<Set<string>>(new Set());
+  const [cooldownIds, setCooldownIds] = useState<Set<string>>(new Set());
   const [sendingEmailIds, setSendingEmailIds] = useState<Set<string>>(
     new Set(),
   );
@@ -102,15 +102,20 @@ export default function OrdersPage() {
   };
 
   const handleDownload = (orderId: string) => {
-    // Use setTimeout to defer state update until after download triggers
+    // Add to cooldown immediately
+    setCooldownIds((prev) => new Set(prev).add(orderId));
+
+    // Remove from cooldown after 3 seconds
     setTimeout(() => {
-      setDownloadedIds((prev) => {
+      setCooldownIds((prev) => {
         const next = new Set(prev);
-        next.add(orderId);
+        next.delete(orderId);
         return next;
       });
-      addToast("success", "Receipt downloaded successfully");
-    }, 0);
+    }, 3500);
+
+    // Show success message
+    addToast("success", "Receipt downloaded successfully");
   };
 
   useEffect(() => {
@@ -310,10 +315,11 @@ export default function OrdersPage() {
                             Product Design
                           </h3>
                           <div className="flex items-center gap-2">
-                            {downloadedIds.has(order.id) ? (
+                            {cooldownIds.has(order.id) ? (
                               <Button
                                 variant="outline"
                                 size="sm"
+                                disabled
                                 className=" h-10 w-fit sm:h-10 sm:w-fit shrink-0 gap-2 hover:bg-green-50 hover:text-green-500 cursor-not-allowed bg-green-50 border-green-500"
                               >
                                 <Check
@@ -324,7 +330,6 @@ export default function OrdersPage() {
                                 </span>
                               </Button>
                             ) : (
-                              // Then in JSX:
                               <PDFDownloadLink
                                 document={<OrderReceiptPDF order={order} />}
                                 fileName={`${customerName} - ${order.id}.pdf`}
