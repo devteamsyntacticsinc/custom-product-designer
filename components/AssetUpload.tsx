@@ -1,7 +1,7 @@
 "use client";
 
 import { useRef } from "react";
-import { Upload, X } from "lucide-react";
+import { Info, Upload, X } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { useAssets } from "@/contexts/AssetsContext";
 
@@ -28,7 +28,10 @@ export default function AssetUpload({
   const { selectedProductType } = useAssets();
   const fileInputRefs = useRef<Record<string, HTMLInputElement | null>>({});
 
-  const isHasBack = selectedProductType?.image_products?.find(img => img.is_hasBack);
+  const isHasBack = selectedProductType
+    ? (selectedProductType.image_products?.find(() => true) ?? false)
+    : undefined;
+
   const is_onlyType = selectedProductType?.is_onlyType;
 
   const handleFileChange = (slotId: string, file: File | null) => {
@@ -54,19 +57,29 @@ export default function AssetUpload({
           type="file"
           accept="image/*"
           className="hidden"
+          disabled={isDisabled}
           id={slot.id}
           ref={(el) => {
             fileInputRefs.current[slot.id] = el;
           }}
-          onChange={(e) => handleFileChange(slot.id, e.target.files?.[0] || null)}
+          onChange={(e) =>
+            handleFileChange(slot.id, e.target.files?.[0] || null)
+          }
         />
         <div
-          className={`group flex items-center justify-between p-3 rounded-xl border border-gray-200 bg-gray-50/50 hover:bg-gray-100 transition-colors cursor-pointer min-w-0 ${asset ? "bg-white border-gray-200" : ""
-            }`}
+          className={`group flex items-center justify-between p-3 rounded-xl border border-gray-200 bg-gray-50/50 hover:bg-gray-100 transition-colors cursor-pointer min-w-0 ${
+            asset ? "bg-white border-gray-200" : ""
+          }`}
           onClick={() => !asset && fileInputRefs.current[slot.id]?.click()}
         >
-          <span className={`text-sm truncate mr-2 ${asset ? "text-gray-900 font-medium" : "text-gray-600"}`}>
-            {asset ? asset.name : (!isHasBack && slot.id === "front-center" ? "Center" : slot.label)}
+          <span
+            className={`text-sm truncate mr-2 ${asset ? "text-gray-900 font-medium" : "text-gray-600"}`}
+          >
+            {asset
+              ? asset.name
+              : !isHasBack && slot.id === "front-center"
+                ? "Center"
+                : slot.label}
           </span>
           {asset ? (
             <button
@@ -86,18 +99,27 @@ export default function AssetUpload({
     );
   };
 
-  const sides: ("Front" | "Back")[] = !isHasBack ? ["Front"] : ["Front", "Back"];
+  const sides: ("Front" | "Back")[] = !isHasBack
+    ? ["Front"]
+    : ["Front", "Back"];
 
   return (
     <div className="space-y-6">
-      {sides.map((side) => (
-        <div key={side}>
-          <h4 className="text-sm font-semibold text-gray-900 mb-3">{side}</h4>
-          <div className="space-y-2">
-            {ASSET_SLOTS.filter((slot) => slot.side === side).map(renderSlot)}
-          </div>
+      {isHasBack === undefined ? (
+        <div className="font-medium text-xs text-amber-600 flex">
+          <Info className="w-4 h-4 mr-1" />
+          <span>Please select a product type to attach images </span>
         </div>
-      ))}
+      ) : (
+        sides.map((side) => (
+          <div key={side}>
+            <h4 className="text-sm font-semibold text-gray-900 mb-3">{side}</h4>
+            <div className="space-y-2">
+              {ASSET_SLOTS.filter((slot) => slot.side === side).map(renderSlot)}
+            </div>
+          </div>
+        ))
+      )}
     </div>
   );
 }
