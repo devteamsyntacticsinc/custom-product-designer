@@ -54,9 +54,6 @@ export default function ProductPreview() {
     (img) => img.is_hasBack === false,
   );
 
-  console.log("assets:", assets);
-  
-
   return (
     <div className="flex-1 p-4 lg:p-8 overflow-y-auto lg:overflow-hidden scrollbar-hide">
       <div className="max-w-7xl mx-auto h-full pt-15 md:pt-10 lg:pt-5">
