@@ -21,6 +21,8 @@ export function AssetsProvider({ children }: { children: ReactNode }) {
     "back-bottom": null,
   });
 
+  
+
   return (
     <AssetsContext.Provider value={{ assets, setAssets, selectedProductType, setSelectedProductType }}>
       {children}

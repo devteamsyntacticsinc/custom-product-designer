@@ -16,11 +16,13 @@ import SizingAndQuantity from "@/components/SizingAndQuantity";
 import AssetUpload from "./AssetUpload";
 import { useAssets } from "@/contexts/AssetsContext";
 import ContactInformation from "./ContactInformation";
-import ProductCustomizerSkeleton from "./ProductCustomizerSkeleton";
 import { CardTitle } from "@/components/ui/card";
+import ProductCustomizerSkeleton from "./ProductCustomizerSkeleton";
 
 export default function ProductCustomizer() {
-  const { assets, setAssets, selectedProductType, setSelectedProductType } = useAssets();
+  const { assets, setAssets, selectedProductType, setSelectedProductType } =
+    useAssets();
+
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [currentStep, setCurrentStep] = useState<"customize" | "contact">(
     "customize",
@@ -220,16 +222,16 @@ export default function ProductCustomizer() {
           />
         )}
 
-        <div className={`
+        <div
+          className={`
           fixed inset-y-0 left-0 z-50 w-80 bg-white shadow-lg p-6 overflow-y-auto scrollbar-hide flex flex-col h-full
           transform transition-transform duration-300 ease-in-out
           ${isMobileMenuOpen ? "translate-x-0" : "-translate-x-full"}
           lg:relative lg:translate-x-0 lg:flex lg:z-0
-        `}>
+        `}
+        >
           <div className="lg:hidden flex items-center justify-between mb-6">
-            <h2 className="text-2xl font-bold text-gray-900">
-              Print Pro
-            </h2>
+            <h2 className="text-2xl font-bold text-gray-900">Print Pro</h2>
             <button
               onClick={() => setIsMobileMenuOpen(false)}
               className="p-2 text-gray-500 hover:text-gray-700"
@@ -266,9 +268,12 @@ export default function ProductCustomizer() {
         >
           <div className="flex items-center content-center gap-3">
             <Menu className="h-6 w-6 text-gray-700" />
-            <CardTitle className="text-lg md:text-xl lg:text-2xl font-bold text-center">Print Pro</CardTitle>
+            <CardTitle className="text-lg md:text-xl lg:text-2xl font-bold text-center">
+              Print Pro
+            </CardTitle>
           </div>
         </button>
+        <ProductCustomizerSkeleton />
       </>
     );
   }
@@ -282,7 +287,9 @@ export default function ProductCustomizer() {
       >
         <div className="flex items-center content-center gap-3">
           <Menu className="h-6 w-6 text-gray-700" />
-          <CardTitle className="text-lg md:text-xl lg:text-2xl font-bold text-center">Print Pro</CardTitle>
+          <CardTitle className="text-lg md:text-xl lg:text-2xl font-bold text-center">
+            Print Pro
+          </CardTitle>
         </div>
       </button>
 
@@ -294,16 +301,16 @@ export default function ProductCustomizer() {
         />
       )}
 
-      <div className={`
+      <div
+        className={`
         fixed inset-y-0 left-0 z-50 w-80 bg-white shadow-lg p-6 overflow-y-auto scrollbar-hide flex flex-col h-full
         transform transition-transform duration-300 ease-in-out
         ${isMobileMenuOpen ? "translate-x-0" : "-translate-x-full"}
         lg:relative lg:translate-x-0 lg:flex lg:z-0
-      `}>
+      `}
+      >
         <div className="lg:hidden flex items-center justify-between mb-6">
-          <h2 className="text-2xl font-bold text-gray-900">
-            Print Pro
-          </h2>
+          <h2 className="text-2xl font-bold text-gray-900">Print Pro</h2>
           <button
             onClick={() => setIsMobileMenuOpen(false)}
             className="p-2 text-gray-500 hover:text-gray-700"
@@ -328,7 +335,9 @@ export default function ProductCustomizer() {
             value={productType}
             onValueChange={(value) => {
               setProductType(value);
-              const selected = productTypes.find(pt => pt.id.toString() === value);
+              const selected = productTypes.find(
+                (pt) => pt.id.toString() === value,
+              );
               setSelectedProductType(selected || null);
               // Reset brand and color when product type changes
               setBrand("");
@@ -366,17 +375,23 @@ export default function ProductCustomizer() {
         </div>
 
         {/* Brand */}
-        <div className={`mb-6 ${selectedProductType?.is_onlyType ? 'opacity-50 pointer-events-none' : ''}`}>
+        <div
+          className={`mb-6 ${selectedProductType?.is_onlyType ? "opacity-50 pointer-events-none" : ""}`}
+        >
           <Label
             htmlFor="brand"
             className="text-sm font-medium text-gray-700 mb-2 block"
           >
-            Brand {selectedProductType?.is_onlyType && '(Disabled)'}
+            Brand {selectedProductType?.is_onlyType && "(Disabled)"}
           </Label>
           <Select
             value={brand}
             onValueChange={setBrand}
-            disabled={loadingBrands || brands.length === 0 || selectedProductType?.is_onlyType}
+            disabled={
+              loadingBrands ||
+              brands.length === 0 ||
+              selectedProductType?.is_onlyType
+            }
           >
             <SelectTrigger id="brand">
               <SelectValue
@@ -409,17 +424,24 @@ export default function ProductCustomizer() {
         </div>
 
         {/* Select Color */}
-        <div className={`mb-6 ${selectedProductType?.is_onlyType ? 'opacity-50 pointer-events-none' : ''}`}>
+        <div
+          className={`mb-6 ${selectedProductType?.is_onlyType ? "opacity-50 pointer-events-none" : ""}`}
+        >
           <Label
             htmlFor="color"
             className="text-sm font-medium text-gray-700 mb-2 block"
           >
-            Select color {selectedProductType?.is_onlyType && '(Disabled)'}
+            Select color {selectedProductType?.is_onlyType && "(Disabled)"}
           </Label>
           <Select
             value={color}
             onValueChange={setColor}
-            disabled={loadingColors || colors.length === 0 || selectedProductType?.is_onlyType}
+            disabled={
+              loadingColors ||
+              colors.length === 0 ||
+              selectedProductType?.is_onlyType ||
+              !selectedProductType
+            }
           >
             <SelectTrigger id="color">
               <SelectValue

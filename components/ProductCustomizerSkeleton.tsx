@@ -1,4 +1,4 @@
-import { Skeleton } from '@/components/ui/skeleton'
+import { Skeleton } from "@/components/ui/skeleton";
 
 export default function ProductCustomizerSkeleton() {
   return (
@@ -39,12 +39,11 @@ export default function ProductCustomizerSkeleton() {
       {/* Sizing and Quantity */}
       <div className="mb-6">
         <Skeleton className="h-6 w-40 mb-4" />
-        <div className="space-y-3">
-          {[...Array(3)].map((_, i) => (
-            <div key={i} className="flex items-center gap-3">
-              <Skeleton className="h-10 w-16" />
-              <Skeleton className="h-10 w-20" />
-              <Skeleton className="h-10 w-10" />
+        <div className="space-y-2">
+          {Array.from({ length: 5 }).map((_, index) => (
+            <div className="grid grid-cols-2 gap-2" key={index}>
+              <div className="h-6 w-16 bg-muted rounded animate-pulse" />
+              <div className="h-10 w-full bg-muted rounded animate-pulse" />
             </div>
           ))}
         </div>
@@ -56,5 +55,5 @@ export default function ProductCustomizerSkeleton() {
         <Skeleton className="h-10 flex-1" />
       </div>
     </div>
-  )
+  );
 }
