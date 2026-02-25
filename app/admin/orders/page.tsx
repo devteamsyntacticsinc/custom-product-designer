@@ -327,7 +327,7 @@ export default function OrdersPage() {
                               // Then in JSX:
                               <PDFDownloadLink
                                 document={<OrderReceiptPDF order={order} />}
-                                fileName={`${customerName}.pdf`}
+                                fileName={`${customerName} - ${order.id}.pdf`}
                               >
                                 <Button
                                   variant="outline"
