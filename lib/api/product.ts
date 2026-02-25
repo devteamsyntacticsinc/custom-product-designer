@@ -631,7 +631,7 @@ export class ProductService {
     try {
       const { data, error } = await supabase
         .from("product_type")
-        .select("id, name, is_onlyType, is_Active")
+        .select(`id, name, is_onlyType, is_Active, image_products(*)`)
         .order("name");
 
       if (error) {
