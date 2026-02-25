@@ -17,12 +17,12 @@ import AssetUpload from "./AssetUpload";
 import { useAssets } from "@/contexts/AssetsContext";
 import ContactInformation from "./ContactInformation";
 import { CardTitle } from "@/components/ui/card";
+import ProductCustomizerSkeleton from "./ProductCustomizerSkeleton";
 
 export default function ProductCustomizer() {
   const { assets, setAssets, selectedProductType, setSelectedProductType } =
     useAssets();
 
-  
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [currentStep, setCurrentStep] = useState<"customize" | "contact">(
     "customize",
@@ -271,6 +271,7 @@ export default function ProductCustomizer() {
             </CardTitle>
           </div>
         </button>
+        <ProductCustomizerSkeleton />
       </>
     );
   }
