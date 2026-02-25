@@ -135,7 +135,9 @@ export default function OrderProductPreview({
                 {brandName}
               </span>
             )}
-            <span className={`text-xs lg:text-base text-gray-500 ${!shouldDisplayBrand ? 'font-semibold text-gray-900 dark:text-white text-sm lg:text-lg' : ''}`}>
+            <span
+              className={`text-xs lg:text-base text-gray-500 ${!shouldDisplayBrand ? "font-semibold text-gray-900 dark:text-white text-sm lg:text-lg" : ""}`}
+            >
               {productTypeName}
             </span>
           </div>
@@ -171,7 +173,7 @@ export default function OrderProductPreview({
 
       {/* T-shirt Mockup */}
       <div className="flex flex-col lg:flex-row w-full relative justify-center items-start">
-        {isOnlyType && imageIsBack && (
+        {isOnlyType && imageIsFront && (
           <div className="relative w-fit flex items-center justify-center rounded-lg max-w-lg">
             {imageIsFront && (
               <Image
