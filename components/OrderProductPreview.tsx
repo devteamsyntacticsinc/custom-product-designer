@@ -102,6 +102,9 @@ export default function OrderProductPreview({
   const productTypeName =
     brandType?.product_type?.name || "Unknown Product Type";
 
+  // Check if brand should be displayed
+  const shouldDisplayBrand = !isOnlyType && brandName !== "Unknown Brand";
+
   const handleDownload = async (url: string, filename: string) => {
     try {
       const response = await fetch(url);
@@ -127,10 +130,12 @@ export default function OrderProductPreview({
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 p-4 bg-white dark:bg-gray-700 border border-gray-100 dark:border-gray-800 rounded-xl shadow-sm">
         <div className="flex items-center gap-4 text-sm text-gray-600 dark:text-gray-400">
           <div className="flex flex-col">
-            <span className="font-semibold text-gray-900 dark:text-white text-sm lg:text-lg">
-              {brandName}
-            </span>
-            <span className="text-xs lg:text-base text-gray-500">
+            {shouldDisplayBrand && (
+              <span className="font-semibold text-gray-900 dark:text-white text-sm lg:text-lg">
+                {brandName}
+              </span>
+            )}
+            <span className={`text-xs lg:text-base text-gray-500 ${!shouldDisplayBrand ? 'font-semibold text-gray-900 dark:text-white text-sm lg:text-lg' : ''}`}>
               {productTypeName}
             </span>
           </div>

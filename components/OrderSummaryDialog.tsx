@@ -16,6 +16,7 @@ interface OrderSummaryDialogProps {
   productType: string;
   brand: string;
   color: string;
+  is_onlyType?: boolean;
   sizeSelection: { size: number; quantity: number }[];
   assets: Record<string, File | null>;
   contactInformation: {
@@ -34,6 +35,7 @@ export default function OrderSummaryDialog({
   productType,
   brand,
   color,
+  is_onlyType,
   sizeSelection,
   assets,
   contactInformation,
@@ -123,15 +125,23 @@ export default function OrderSummaryDialog({
               Product Details
             </h3>
 
-            <div className="grid grid-cols-2 gap-4 text-sm">
+            <div className="grid grid-cols-1 gap-4 text-sm">
               <div>
-                <Label className="text-gray-600">Brand:</Label>
-                <p className="font-medium">{brand}</p>
+                <Label className="text-gray-600">Product Type:</Label>
+                <p className="font-medium">{productType}</p>
               </div>
-              <div>
-                <Label className="text-gray-600">Shirt color:</Label>
-                <p className="font-medium">{color}</p>
-              </div>
+              {!is_onlyType && (
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <Label className="text-gray-600">Brand:</Label>
+                    <p className="font-medium">{brand}</p>
+                  </div>
+                  <div>
+                    <Label className="text-gray-600">Shirt color:</Label>
+                    <p className="font-medium">{color}</p>
+                  </div>
+                </div>
+              )}
             </div>
           </div>
 

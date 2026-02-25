@@ -12,6 +12,7 @@ interface ContactInformationProps {
   productType: string;
   brand: string;
   color: string;
+  is_onlyType?: boolean;
   sizeSelection: {
     size: number;
     quantity: number;
@@ -34,6 +35,7 @@ export default function ContactInformation({
   productType,
   brand,
   color,
+  is_onlyType,
   sizeSelection,
   assets,
   contactData,
@@ -164,6 +166,7 @@ export default function ContactInformation({
         productType={productType}
         brand={brand}
         color={color}
+        is_onlyType={is_onlyType}
         sizeSelection={sizeSelection}
         assets={assets}
         contactInformation={contactData}

@@ -57,7 +57,7 @@ export interface CustomerWithOrdersForDashboard {
     name: string;
     email: string;
     contact_number: string;
-  };
+  } | null;
   orders: Array<{
     id: string;
     created_at: string;

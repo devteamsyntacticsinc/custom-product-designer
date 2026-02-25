@@ -82,12 +82,13 @@ export default function ProductCustomizer() {
       const orderData = {
         // IDs for database insertion
         productTypeId: productType,
-        brandId: brand,
-        colorId: color,
+        brandId: selectedProductType?.is_onlyType ? null : brand,
+        colorId: selectedProductType?.is_onlyType ? null : color,
         // Display names for email
         productType: productTypeName,
         brand: brandName,
         color: colorName,
+        is_onlyType: selectedProductType?.is_onlyType,
         sizeSelection,
         contactInformation: contactData,
       };
@@ -242,6 +243,7 @@ export default function ProductCustomizer() {
             productType={productTypeName}
             brand={brandName}
             color={colorName}
+            is_onlyType={selectedProductType?.is_onlyType}
             sizeSelection={sizeSelection}
             assets={assets}
             contactData={contactData}

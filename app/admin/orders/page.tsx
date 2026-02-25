@@ -286,12 +286,12 @@ export default function OrdersPage() {
                             size="sm"
                             onClick={() => handleSendPickupEmail(order.id)}
                             disabled={sendingEmailIds.has(order.id)}
-                            className="rounded-full h-10 w-fit sm:h-10 sm:w-fit text-gray-900 hover:bg-gray-200 transition-colors shrink-0 gap-2"
+                            className="rounded-full h-10 w-fit sm:h-10 sm:w-fit text-gray-900 hover:bg-gray-200 transition-colors shrink-0 gap-2 cursor-pointer"
                           >
                             <Mail
                               className={`h-4 w-4 sm:h-5 sm:w-5 ${sendingEmailIds.has(order.id) ? "animate-pulse" : ""}`}
                             />
-                            <span>
+                            <span>  
                               {sendingEmailIds.has(order.id)
                                 ? "Sending..."
                                 : "Send Pickup Email"}
