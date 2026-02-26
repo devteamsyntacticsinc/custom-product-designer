@@ -1,8 +1,15 @@
+import { getServerSession } from 'next-auth/next'
 import { NextResponse } from 'next/server'
 import type { NextRequest } from 'next/server'
+import { authOptions } from '@/lib/auth'
 
-export function proxy(request: NextRequest) {
+export async function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl
+  
+  // Get session using NextAuth
+  const session = await getServerSession(authOptions)
+  const isLoggedIn = !!session?.user
+  const isAdmin = session?.user?.role === 'admin'
 
   // Protected routes that require authentication
   const protectedRoutes = ['/admin']
@@ -14,10 +21,8 @@ export function proxy(request: NextRequest) {
 
   // If it's a protected route, check for authentication
   if (isProtectedRoute) {
-    const userRole = request.cookies.get('user_role')?.value
-
-    // If no user role or not admin, redirect to login
-    if (!userRole || userRole !== 'admin') {
+    // If no session or not admin, redirect to login
+    if (!isLoggedIn || !isAdmin) {
       const loginUrl = new URL('/login', request.url)
       return NextResponse.redirect(loginUrl)
     }
@@ -25,10 +30,8 @@ export function proxy(request: NextRequest) {
 
   // If user is already logged in and tries to access login page, redirect appropriately
   if (pathname === '/login') {
-    const userRole = request.cookies.get('user_role')?.value
-
-    if (userRole) {
-      if (userRole === 'admin') {
+    if (isLoggedIn) {
+      if (isAdmin) {
         const adminUrl = new URL('/admin', request.url)
         return NextResponse.redirect(adminUrl)
       } else {

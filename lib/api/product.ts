@@ -8,6 +8,7 @@ import {
   BrandType,
   ColorBrandTypeWithDetails,
   BrandTypeWithDetails,
+  ImageProducts,
 } from "@/types/product";
 
 export class ProductService {
@@ -365,7 +366,7 @@ export class ProductService {
   ): Promise<Brand> {
     let brandRes;
     try {
-      // First, get existing brand-type associations for this brand
+      //Get existing brand-type associations for this brand
       const { data: existingAssociations, error: fetchError } = await supabase
         .from("brand_type")
         .select("type_id")
@@ -397,19 +398,58 @@ export class ProductService {
         }
       }
 
-      // Add new associations
+      // Add new associations with null brand claiming logic
       if (toAdd.length > 0) {
-        const newAssociations = toAdd.map((type_id) => ({
-          brand_id,
-          type_id,
-        }));
+        for (const type_id of toAdd) {
+          // Check if brand+type combination already exists
+          const { data: existingBrandType, error: checkError } = await supabase
+            .from("brand_type")
+            .select("id")
+            .eq("brand_id", brand_id)
+            .eq("type_id", type_id)
+            .maybeSingle();
 
-        const { error: insertError } = await supabase
-          .from("brand_type")
-          .insert(newAssociations);
+          if (checkError) {
+            throw checkError;
+          }
 
-        if (insertError) {
-          throw insertError;
+          if (existingBrandType) {
+            continue; // Skip if already exists
+          }
+
+          // Check for null brand record to claim
+          const { data: hasNullBrandType, error: checkNullError } =
+            await supabase
+              .from("brand_type")
+              .select("id")
+              .is("brand_id", null)
+              .eq("type_id", type_id)
+              .maybeSingle();
+
+          if (checkNullError) {
+            throw checkNullError;
+          }
+
+          if (hasNullBrandType) {
+            // Claim the existing null record
+            const { error: updateError } = await supabase
+              .from("brand_type")
+              .update({ brand_id })
+              .eq("id", hasNullBrandType.id);
+
+            if (updateError) {
+              throw updateError;
+            }
+          } else {
+            // Create new brand-type association
+            const { error: insertError } = await supabase
+              .from("brand_type")
+              .insert([{ brand_id, type_id }]);
+
+            if (insertError) {
+              throw insertError;
+            }
+          }
         }
       }
       if (name || is_Active) {
@@ -588,11 +628,17 @@ export class ProductService {
     }
   }
 
-  static async getProductTypes(): Promise<ProductType[]> {
+  static async getProductTypes(): Promise<
+    (Omit<ProductType, "image_products"> & {
+      image_products?: Pick<ImageProducts, "filepath" | "is_hasBack" | "id">[];
+    })[]
+  > {
     try {
       const { data, error } = await supabase
         .from("product_type")
-        .select("id, name, is_onlyType, is_Active")
+        .select(
+          "id, name, is_onlyType, is_Active, image_products(filepath, is_hasBack, id)",
+        )
         .order("name");
 
       if (error) {
@@ -621,6 +667,7 @@ export class ProductService {
     name: string,
     is_Active: boolean = true,
     is_onlyType: boolean = false,
+    images: { file: File; is_hasBack: boolean }[],
   ): Promise<ProductType> {
     try {
       // Check if product type already exists (case-insensitive)
@@ -653,18 +700,21 @@ export class ProductService {
       }
 
       if (productType.is_onlyType) {
-        const { error: brandError } = await supabase
-          .from("brand_type")
-          .insert([
-            {
-              brand_id: null,
-              type_id: productType.id
-            }
-          ]);
+        const { error: brandError } = await supabase.from("brand_type").insert([
+          {
+            brand_id: null,
+            type_id: productType.id,
+          },
+        ]);
 
         if (brandError) {
           console.error("Error inserting into brand_type:", brandError);
         }
+      }
+
+      // Upload images if provided
+      if (images && images.length > 0) {
+        await this.uploadImageProductType(productType.id.toString(), images);
       }
 
       return productType;
@@ -679,9 +729,15 @@ export class ProductService {
     name?: string,
     is_Active?: boolean,
     is_onlyType?: boolean,
+    images?: { file: File; is_hasBack: boolean }[],
+    imagesToDelete?: number[],
   ): Promise<ProductType> {
     try {
-      const updateData: { name?: string; is_Active?: boolean; is_onlyType?: boolean } = {};
+      const updateData: {
+        name?: string;
+        is_Active?: boolean;
+        is_onlyType?: boolean;
+      } = {};
       if (name !== undefined) {
         // Check if product type name already exists (excluding current product type, case-insensitive)
         const { data: existingProductType, error: checkError } = await supabase
@@ -704,6 +760,7 @@ export class ProductService {
       if (is_Active !== undefined) updateData.is_Active = is_Active;
       if (is_onlyType !== undefined) updateData.is_onlyType = is_onlyType;
 
+      // Update product type
       const { data: productType, error } = await supabase
         .from("product_type")
         .update(updateData)
@@ -733,12 +790,22 @@ export class ProductService {
             .insert([
               {
                 brand_id: null,
-                type_id: id
-              }
+                type_id: id,
+              },
             ]);
 
           if (insertError) throw insertError;
         }
+      }
+
+      // Delete specified images first
+      if (imagesToDelete && imagesToDelete.length > 0) {
+        await this.deleteProductTypeImages(imagesToDelete);
+      }
+
+      // Upload images if provided
+      if (images && images.length > 0) {
+        await this.uploadImageProductType(id, images);
       }
 
       return productType;
@@ -748,8 +815,101 @@ export class ProductService {
     }
   }
 
-  static async deleteProductType(id: string): Promise<void> {
+  static async deleteProductType(
+    id: string,
+    imagesToDelete: number[],
+  ): Promise<void> {
     try {
+      // First, get the product type details to check if it's is_onlyType
+      const { data: productType, error: fetchError } = await supabase
+        .from("product_type")
+        .select("id, name, is_onlyType")
+        .eq("id", id)
+        .single();
+
+      if (fetchError) {
+        throw fetchError;
+      }
+
+      if (!productType) {
+        throw new Error("Product type not found");
+      }
+
+      // Delete specified images first
+      if (imagesToDelete && imagesToDelete.length > 0) {
+        await this.deleteProductTypeImages(imagesToDelete);
+      }
+
+      // If the product type has is_onlyType = true, handle brand_type cleanup
+      if (productType.is_onlyType) {
+        // Find the brand_type record with NULL brand_id for this type_id
+        const { data: nullBrandType, error: brandTypeError } = await supabase
+          .from("brand_type")
+          .select("id")
+          .is("brand_id", null)
+          .eq("type_id", id)
+          .maybeSingle();
+
+        if (brandTypeError) {
+          throw brandTypeError;
+        }
+
+        // If we found a brand_type with NULL brand_id, check if it's used in transactions
+        if (nullBrandType) {
+          const brandTypeId = nullBrandType.id;
+
+          // Check if this brand_type is used in size_product table
+          const { count: sizeProductCount, error: sizeProductError } =
+            await supabase
+              .from("size_product")
+              .select("*", { count: "exact", head: true })
+              .eq("brandT_id", brandTypeId);
+
+          if (sizeProductError) {
+            throw sizeProductError;
+          }
+
+          // Check if this brand_type is used in color_products table
+          const { count: colorProductCount, error: colorProductError } =
+            await supabase
+              .from("color_products")
+              .select("*", { count: "exact", head: true })
+              .eq("brandT_id", brandTypeId);
+
+          if (colorProductError) {
+            throw colorProductError;
+          }
+
+          // Check if this brand_type is used in product_orders table
+          const { count: productOrderCount, error: productOrderError } =
+            await supabase
+              .from("product_orders")
+              .select("*", { count: "exact", head: true })
+              .eq("brandT_id", brandTypeId);
+
+          if (productOrderError) {
+            throw productOrderError;
+          }
+
+          // If the brand_type is not used in any transaction tables, delete it
+          if (
+            sizeProductCount === 0 &&
+            colorProductCount === 0 &&
+            productOrderCount === 0
+          ) {
+            const { error: deleteBrandTypeError } = await supabase
+              .from("brand_type")
+              .delete()
+              .eq("id", brandTypeId);
+
+            if (deleteBrandTypeError) {
+              throw deleteBrandTypeError;
+            }
+          }
+        }
+      }
+
+      // Finally, delete the product type
       const { error } = await supabase
         .from("product_type")
         .delete()
@@ -762,6 +922,100 @@ export class ProductService {
       console.error("Error deleting product type:", error);
       throw error;
     }
+  }
+
+  static async uploadImageProductType(
+    productTypeId: string,
+    assets: { file: File; is_hasBack: boolean }[],
+  ) {
+    try {
+      const imageInserts = [];
+      for (const asset of assets) {
+        if (asset && asset.file instanceof File) {
+          // Upload to Supabase Storage
+          const fileName = `${Date.now()}-${asset.file.name}`;
+
+          const { error: uploadError } = await supabase.storage
+            .from("product-images")
+            .upload(fileName, asset.file);
+
+          if (uploadError) {
+            console.error("Error uploading image:", uploadError);
+            continue;
+          }
+
+          // Get public URL
+          const { data: urlData } = supabase.storage
+            .from("product-images")
+            .getPublicUrl(fileName);
+
+          imageInserts.push({
+            productT_id: productTypeId,
+            filepath: urlData.publicUrl,
+            is_hasBack: asset.is_hasBack,
+          });
+        }
+      }
+
+      if (imageInserts.length > 0) {
+        const { error } = await supabase
+          .from("image_products")
+          .insert(imageInserts);
+
+        if (error) {
+          console.error("Error inserting product images:", error);
+          throw error;
+        }
+      }
+
+      return true;
+    } catch (error) {
+      console.error("Error uploading product images:", error);
+      throw error;
+    }
+  }
+
+  static async deleteProductTypeImages(imageIds: number[]): Promise<void> {
+    if (!imageIds.length) return;
+
+    // 1️⃣ Get file paths
+    const { data: images, error: fetchError } = await supabase
+      .from("image_products")
+      .select("filepath")
+      .in("id", imageIds);
+
+    if (fetchError) throw fetchError;
+
+    if (!images?.length) return;
+
+    // 2️⃣ Extract relative paths properly
+    const filePaths = images
+      .map((img) => {
+        const match = img.filepath.match(
+          /\/storage\/v1\/object\/public\/product-images\/(.+)$/,
+        );
+        return match ? match[1] : null;
+      })
+      .filter(Boolean) as string[];
+
+    console.log(filePaths);
+
+    // 3️⃣ Delete from storage FIRST
+    if (filePaths.length) {
+      const { error: storageError } = await supabase.storage
+        .from("product-images")
+        .remove(filePaths);
+
+      if (storageError) throw storageError;
+    }
+
+    // 4️⃣ Delete from database AFTER
+    const { error: deleteError } = await supabase
+      .from("image_products")
+      .delete()
+      .in("id", imageIds);
+
+    if (deleteError) throw deleteError;
   }
 
   static async getSizes(): Promise<Size[]> {
@@ -1012,7 +1266,7 @@ export class ProductService {
         colors,
         productTypes,
         productSizes,
-      ] = await Promise.all([
+      ] = await Promise.allSettled([
         // Get customers count
         OrderService.getCustomersCount(),
         // Get orders count
@@ -1027,21 +1281,29 @@ export class ProductService {
         this.getProductCombinationsCount(),
       ]);
 
-      // Get recent activity
-      const recentActivity = await OrderService.getRecentActivity();
+      // Extract values from settled promises
+      const customersCount =
+        customers.status === "fulfilled" ? customers.value : 0;
+      const ordersCount =
+        productOrders.status === "fulfilled" ? productOrders.value : 0;
+      const brandsCount = brands.status === "fulfilled" ? brands.value : 0;
+      const colorsCount = colors.status === "fulfilled" ? colors.value : 0;
+      const typesCount =
+        productTypes.status === "fulfilled" ? productTypes.value : 0;
+      const sizesCount =
+        productSizes.status === "fulfilled" ? productSizes.value : 0;
 
       return {
         success: true,
         data: {
           stats: {
-            totalOrders: productOrders,
-            totalUsers: customers,
-            activeProducts: productSizes, // Using product combinations as active products
-            totalBrands: brands,
-            totalColors: colors,
-            totalTypes: productTypes,
+            totalOrders: ordersCount,
+            totalUsers: customersCount,
+            activeProducts: sizesCount, // Using product combinations as active products
+            totalBrands: brandsCount,
+            totalColors: colorsCount,
+            totalTypes: typesCount,
           },
-          recentActivity,
         },
       };
     } catch (error) {
@@ -1058,7 +1320,6 @@ export class ProductService {
             totalColors: 0,
             totalTypes: 0,
           },
-          recentActivity: [],
         },
       };
     }
@@ -1284,6 +1545,8 @@ export class ProductService {
     brand_id: number,
     type_id: number,
   ): Promise<BrandType> {
+    let query;
+
     try {
       // Validate brand exists
       const { data: brand, error: brandError } = await supabase
@@ -1324,11 +1587,29 @@ export class ProductService {
         );
       }
 
-      const { data, error } = await supabase
+      // Check if the brand_type is null that is equal to type_id
+      const { data: hasNullBrandType, error: checkNullError } = await supabase
         .from("brand_type")
-        .insert([{ brand_id, type_id }])
-        .select()
-        .single();
+        .select("id")
+        .is("brand_id", null)
+        .eq("type_id", type_id)
+        .maybeSingle();
+
+      if (checkNullError) {
+        console.log(checkNullError);
+        throw checkNullError;
+      }
+      // if it has, then update that existing null brand_type else insert
+      if (hasNullBrandType) {
+        query = supabase
+          .from("brand_type")
+          .update({ brand_id })
+          .eq("id", hasNullBrandType.id);
+      } else {
+        query = supabase.from("brand_type").insert([{ brand_id, type_id }]);
+      }
+
+      const { data, error } = await query.select().single();
 
       if (error) {
         throw error;

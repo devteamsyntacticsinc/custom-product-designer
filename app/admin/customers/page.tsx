@@ -1,76 +1,32 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, usePathname } from "next/navigation";
+import { useSession, signOut } from "next-auth/react";
 import { Button } from "@/components/ui/button";
-import { User } from "@/types/login";
 import { RefreshCw, Menu } from "lucide-react";
 import AdminSidebar from '../../components/AdminSidebar'
 import CustomerPagePreview from '../../../components/CustomerPagePreview'
 
 export default function CustomersPage() {
-    const [user, setUser] = useState<User | null>(null);
+    const { data: session, status } = useSession();
     const [sidebarOpen, setSidebarOpen] = useState(false);
     const [isCollapsed, setIsCollapsed] = useState(false);
     const [refreshing, setRefreshing] = useState(false);
     const router = useRouter();
-    const currentPath =
-        typeof window !== "undefined"
-            ? window.location.pathname
-            : "/admin/customers";
-
+    const currentPath = usePathname();
 
     useEffect(() => {
-        const checkAuth = () => {
-            const userRole = document.cookie
-                .split("; ")
-                .find((row) => row.startsWith("user_role="))
-                ?.split("=")[1];
-
-            const userName = document.cookie
-                .split("; ")
-                .find((row) => row.startsWith("user_name="))
-                ?.split("=")[1];
-
-            const userEmail = document.cookie
-                .split("; ")
-                .find((row) => row.startsWith("user_email="))
-                ?.split("=")[1];
-
-            const userId = document.cookie
-                .split("; ")
-                .find((row) => row.startsWith("user_id="))
-                ?.split("=")[1];
-
-            if (userRole !== "admin") {
-                router.push("/login");
-                return;
-            }
-
-            if (userName && userEmail && userId) {
-                setUser({
-                    id: userId,
-                    name: userName,
-                    email: userEmail,
-                    role: userRole,
-                });
-            }
-        };
-
-        checkAuth();
-    }, [router]);
+        if (status === 'loading') return;
+        
+        if (!session || session.user?.role !== 'admin') {
+            router.push("/login");
+            return;
+        }
+    }, [session, status, router]);
 
     const handleLogout = async () => {
-        // Clear cookies by setting them to expire
-        document.cookie =
-            "user_id=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;";
-        document.cookie =
-            "user_name=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;";
-        document.cookie =
-            "user_email=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;";
-        document.cookie =
-            "user_role=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;";
-
+        await signOut({ redirect: false });
         router.push("/login");
     };
 
@@ -82,9 +38,9 @@ export default function CustomersPage() {
         setTimeout(() => setRefreshing(false), 1000);
     };
 
-    if (!user) {
+    if (status === 'loading' || !session) {
         return (
-            <div className="min-h-screen bg-gray-50 flex">
+            <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex">
                 <AdminSidebar
                     user={null}
                     sidebarOpen={false}
@@ -108,9 +64,14 @@ export default function CustomersPage() {
     }
 
     return (
-        <div className="min-h-screen bg-gray-50 flex">
+        <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex">
             <AdminSidebar
-                user={user}
+                user={{
+                    id: session.user.id,
+                    name: session.user.name || '',
+                    email: session.user.email || '',
+                    role: session.user.role || 'user'
+                }}
                 sidebarOpen={sidebarOpen}
                 setSidebarOpen={setSidebarOpen}
                 onLogout={handleLogout}
@@ -120,7 +81,7 @@ export default function CustomersPage() {
                 currentPath={currentPath}
             />
 
-            <header className="bg-white shadow-sm border-b lg:hidden fixed top-0 left-0 right-0 z-40 px-4">
+            <header className="bg-white dark:bg-gray-800 shadow-sm border-b lg:hidden fixed top-0 left-0 right-0 z-40 px-4">
                 <div className="relative flex items-center justify-center h-16">
                     <Button
                         variant="ghost"
@@ -140,9 +101,9 @@ export default function CustomersPage() {
                 <div className="p-4 sm:p-6 lg:p-8">
                     {/* Header */}
                     <div className="flex flex-row items-center justify-between gap-4 mb-6 sm:mb-8">
-                        <div>
-                            <h1 className="text-xl sm:text-3xl font-bold text-gray-900">Customers</h1>
-                            <p className="text-xs lg:text-base text-gray-600 mt-1 sm:mt-2">
+                        <div className="dark:text-gray-200">
+                            <h1 className="text-xl sm:text-3xl font-bold text-gray-900 dark:text-gray-200">Customers</h1>
+                            <p className="text-xs lg:text-base text-gray-600 mt-1 sm:mt-2 dark:text-gray-400">
                                 View customer accounts, contact information, and purchase history.
                             </p>
                         </div>
@@ -151,7 +112,7 @@ export default function CustomersPage() {
                             size="icon"
                             onClick={handleRefresh}
                             disabled={refreshing}
-                            className="rounded-full h-8 w-8 sm:h-10 sm:w-10 text-gray-400 hover:bg-gray-200 hover:text-gray-900 transition-colors shrink-0"
+                            className="rounded-full h-8 w-8 sm:h-10 sm:w-10 text-gray-400 hover:bg-gray-200 hover:text-gray-900 dark:text-gray-400 dark:hover:bg-gray-700 dark:hover:text-gray-200 transition-colors shrink-0"
                         >
                             <RefreshCw
                                 className={`h-4 w-4 sm:h-5 sm:w-5 ${refreshing ? "animate-spin" : ""}`}
