@@ -79,8 +79,10 @@ export default function CustomersTab() {
     try {
       setError(null);
       setIsFetchingCustomers(true);
-      const data = await CustomerService.getCustomers();
-      setCustomers(data || []);
+      const data = await axios.get("/api/customers");
+      const customers = data.data;
+
+      setCustomers(customers || []);
     } catch (error) {
       console.error("Fetch error:", error);
       setError(error instanceof Error ? error.message : "Something went wrong");
@@ -91,6 +93,7 @@ export default function CustomersTab() {
 
   const fetchCustomerOrders = async (customerId: string) => {
     const customer = customers.find((c) => c.id === customerId);
+
     if (!customer || customer.ordersLoaded || customer.isLoadingOrders) return;
 
     setCustomers((prev) =>
@@ -100,16 +103,28 @@ export default function CustomersTab() {
     );
 
     try {
-      const orders = await CustomerService.getCustomerOrders(customerId);
+      const orders = await axios.get(`/api/customers/${customerId.toString()}`);
+      const customerOrders = orders.data.data;
+      console.log(customerOrders);
+
       setCustomers((prev) =>
         prev.map((c) =>
           c.id === customerId
-            ? { ...c, orders, isLoadingOrders: false, ordersLoaded: true }
+            ? {
+                ...c,
+                orders: customerOrders,
+                isLoadingOrders: false,
+                ordersLoaded: true,
+              }
             : c,
         ),
       );
     } catch (error) {
       console.error("Error fetching customer orders:", error);
+      // axios error
+      if (axios.isAxiosError(error)) {
+        console.error("Axios error:", error.response?.data);
+      }
       setCustomers((prev) =>
         prev.map((c) =>
           c.id === customerId ? { ...c, isLoadingOrders: false } : c,
