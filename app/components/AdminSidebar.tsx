@@ -121,7 +121,7 @@ export default function AdminSidebar({
           )}
           <Button
             variant="outline"
-            className={`w-full ${isCollapsed ? "justify-center" : ""}`}
+            className={`w-full cursor-pointer ${isCollapsed ? "justify-center" : ""}`}
             onClick={onLogout}
             title={isCollapsed ? "Logout" : undefined}
           >

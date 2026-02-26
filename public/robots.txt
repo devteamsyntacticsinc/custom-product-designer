@@ -1,0 +1,20 @@
+# *
+User-agent: *
+Allow: /
+Disallow: /admin/
+Disallow: /login
+Disallow: /api/
+
+# Googlebot
+User-agent: Googlebot
+Allow: /
+Disallow: /admin/
+Disallow: /login
+Disallow: /api/
+Crawl-delay: 1
+
+# Host
+Host: https://print-pro-pi.vercel.app
+
+# Sitemaps
+Sitemap: https://print-pro-pi.vercel.app/sitemap.xml
