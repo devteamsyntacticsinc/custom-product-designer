@@ -8,24 +8,27 @@ export async function GET(request: Request) {
     const { searchParams } = new URL(request.url)
     const page = parseInt(searchParams.get('page') || '1')
     const limit = parseInt(searchParams.get('limit') || '10')
-    const from = searchParams.get('from') ?? undefined
-    const to = searchParams.get('to') ?? undefined
+    const ptfrom = searchParams.get('ptfrom') ?? undefined
+    const ptto = searchParams.get('ptto') ?? undefined
     const productType = searchParams.get('productType') ?? undefined
+    const obfrom = searchParams.get('obfrom') ?? undefined
+    const obto = searchParams.get('obto') ?? undefined
 
-    const [statsResult, activityResult, topCustomersResult, ordersByDayResult, ordersByProductTypeTimeSeriesResult] = await Promise.allSettled([
+
+    const [statsResult, activityResult, topCustomersResult, ordersByProductTypeTimeSeriesResult, mostOrderedBrandResult] = await Promise.allSettled([
       ProductService.getDashboardStats(),
       OrderService.getRecentActivity(page, limit),
-      ReportService.getTopCustomers(from, to, productType),
-      ReportService.getOrdersByDay(from, to),
-      ReportService.getOrdersByProductTypeTimeSeries(from, to),
+      ReportService.getTopCustomers(ptfrom, ptto, productType),
+      ReportService.getOrdersByProductTypeTimeSeries(ptfrom, ptto),
+      ReportService.getMostOrderedBrand(obfrom, obto),
     ])
 
     // Handle both results separately
     const stats = statsResult.status === 'fulfilled' ? statsResult.value : { success: false, data: null }
     const activity = activityResult.status === 'fulfilled' ? activityResult.value : { activities: [], total: 0, totalPages: 0, currentPage: page }
     const topCustomers = topCustomersResult.status === 'fulfilled' ? topCustomersResult.value : []
-    const ordersByDay = ordersByDayResult.status === 'fulfilled' ? ordersByDayResult.value : []
     const ordersByProductTypeTimeSeries = ordersByProductTypeTimeSeriesResult.status === 'fulfilled' ? ordersByProductTypeTimeSeriesResult.value : { data: [], types: [] }
+    const mostOrderedBrand = mostOrderedBrandResult.status === 'fulfilled' ? mostOrderedBrandResult.value : []
 
     // Always return success with available data
     return NextResponse.json({
@@ -41,8 +44,8 @@ export async function GET(request: Request) {
         },
         recentActivity: activity,
         topCustomers,
-        ordersByDay,
-        ordersByProductTypeTimeSeries
+        ordersByProductTypeTimeSeries,
+        mostOrderedBrand
       }
     })
   } catch (error) {
@@ -66,8 +69,8 @@ export async function GET(request: Request) {
           currentPage: 1
         },
         topCustomers: [],
-        ordersByDay: [],
-        ordersByProductTypeTimeSeries: { data: [], types: [] }
+        ordersByProductTypeTimeSeries: { data: [], types: [] },
+        mostOrderedBrand: []
       }
     })
   }

@@ -25,6 +25,7 @@ import {
 import { CalendarRange } from "@/components/ui/calendar-range";
 import { ChartAreaInteractive } from "@/components/ui/area-chart-interactive";
 import { ChartBarInteractive } from "@/components/ui/bar-chart";
+import { ChartPieLabel } from "@/components/ui/chart-pie-label";
 import { DateRange } from "react-day-picker";
 import AdminSidebar from "../components/AdminSidebar";
 import AdminDashboardSkeleton from "../components/AdminDashboardSkeleton";
@@ -61,13 +62,19 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 
+type ChartDataItem = {
+  date: string
+  [key: string]: string | number
+}
+
 export default function AdminDashboard() {
   const { data: session, status } = useSession();
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [isCollapsed, setIsCollapsed] = useState(false);
   const currentPath = usePathname();
-  const [productTypesData, setProductTypesData] = useState<{ data: Record<string, any>[]; types: string[] }>({ data: [], types: [] });
+  const [productTypesData, setProductTypesData] = useState<{ data: ChartDataItem[]; types: string[] }>({ data: [], types: [] });
   const [topCustomersList, setTopCustomersList] = useState<Array<{ id: string; name: string; email: string; count: number }>>([]);
+  const [mostOrderedBrand, setMostOrderedBrand] = useState<{ data: ChartDataItem[]; types: string[] }>({ data: [], types: [] });
   const [dashboardData, setDashboardData] = useState<{
     stats: {
       totalOrders: number;
@@ -98,7 +105,12 @@ export default function AdminDashboard() {
 
   const [productTypeLoading, setProductTypeLoading] = useState(false);
   const [topCustomersLoading, setTopCustomersLoading] = useState(false);
+  const [mostOrderedBrandLoading, setMostOrderedBrandLoading] = useState(false);
   const [ptDateRange, setPtDateRange] = useState<DateRange | undefined>({
+    from: undefined,
+    to: undefined,
+  });
+  const [obDateRange, setObDateRange] = useState<DateRange | undefined>({
     from: undefined,
     to: undefined,
   });
@@ -131,12 +143,12 @@ export default function AdminDashboard() {
   );
 
   const fetchProductTypes = useCallback(
-    async (from?: Date, to?: Date) => {
+    async (ptfrom?: Date, ptto?: Date) => {
       try {
         setProductTypeLoading(true);
         const params = new URLSearchParams();
-        if (from) params.set('from', from.toISOString());
-        if (to) params.set('to', to.toISOString());
+        if (ptfrom) params.set('ptfrom', ptfrom.toISOString());
+        if (ptto) params.set('ptto', ptto.toISOString());
         const response = await fetch(`/api/dashboard?${params.toString()}`);
         const data = await response.json();
         if (data.success) {
@@ -173,11 +185,34 @@ export default function AdminDashboard() {
     [],
   );
 
+  const fetchMostOrderedBrand = useCallback(
+    async (obfrom?: Date, obto?: Date) => {
+      try {
+        setMostOrderedBrandLoading(true);
+        const params = new URLSearchParams();
+        if (obfrom) params.set('obfrom', obfrom.toISOString());
+        if (obto) params.set('obto', obto.toISOString());
+        const response = await fetch(`/api/dashboard?${params.toString()}`);
+        const data = await response.json();
+        if (data.success) {
+          setMostOrderedBrand(data.data.mostOrderedBrand);
+        }
+      } catch (error) {
+        console.error("Error fetching most ordered brand:", error);
+      }
+      finally {
+        setMostOrderedBrandLoading(false);
+      }
+    },
+    [],
+  );
+
   const handleRefresh = () => {
     setRefreshing(true);
     fetchDashboardData(currentPage);
     fetchProductTypes(ptDateRange?.from, ptDateRange?.to);
     fetchTopCustomers(selectedProductTypeForCustomers);
+    fetchMostOrderedBrand(obDateRange?.from, obDateRange?.to);
   };
 
   // Effect to refetch when product type date range changes
@@ -195,6 +230,14 @@ export default function AdminDashboard() {
       fetchTopCustomers(selectedProductTypeForCustomers);
     }
   }, [selectedProductTypeForCustomers]);
+
+  useEffect(() => {
+    if (obDateRange?.from) {
+      fetchMostOrderedBrand(obDateRange.from, obDateRange.to);
+    } else if (hasFetchedRef.current) {
+      fetchMostOrderedBrand();
+    }
+  }, [obDateRange]);
 
   const handlePageChange = async (page: number) => {
     if (pageLoading || page === currentPage) return; // Prevent duplicate calls
@@ -217,6 +260,7 @@ export default function AdminDashboard() {
       fetchDashboardData(currentPage);
       fetchProductTypes(ptDateRange?.from, ptDateRange?.to);
       fetchTopCustomers(selectedProductTypeForCustomers);
+      fetchMostOrderedBrand(obDateRange?.from, obDateRange?.to);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [session, status, router]); // Remove currentPage and fetchDashboardData to prevent re-runs - we use ref instead
@@ -431,6 +475,7 @@ export default function AdminDashboard() {
                           color: "#3b82f6",
                         }
                       }), {})}
+                      types={productTypesData.types}
                     />
                   ) : (
                     <div className="h-[300px] w-full flex items-center justify-center text-muted-foreground">
@@ -502,6 +547,52 @@ export default function AdminDashboard() {
                   ) : (
                     <div className="h-[200px] w-full flex items-center justify-center text-muted-foreground">
                       No customer data available
+                    </div>
+                  )}
+                </CardContent>
+              </Card >
+
+              {/* Orders by Brand */}
+              <Card className="p-6">
+                <CardHeader className="px-0 pt-0 flex flex-row items-center justify-between space-y-0 flex-wrap gap-4">
+                  <div>
+                    <CardTitle className="text-sm lg:text-base font-medium">Most Ordered Brands</CardTitle>
+                    <CardDescription className="text-xs lg:text-sm">Distribution of orders by brand</CardDescription>
+                  </div>
+                  <div className="flex items-center gap-4 flex-wrap">
+                    <div className="flex flex-col gap-1">
+                      <span className="text-[10px] text-muted-foreground font-medium uppercase">Date Range</span>
+                      <CalendarRange
+                        date={obDateRange}
+                        onSelect={setObDateRange}
+                      />
+                    </div>
+
+                    {(obDateRange?.from || obDateRange?.to) && (
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className="h-8 px-2 mt-5 text-[11px]"
+                        onClick={() => setObDateRange({ from: undefined, to: undefined })}
+                      >
+                        Clear
+                      </Button>
+                    )}
+                  </div>
+                </CardHeader>
+                <CardContent className="px-0 pb-0">
+                  {mostOrderedBrandLoading ? (
+                    <div className="h-[300px] w-full">
+                      <Skeleton className="h-full w-full rounded-md" />
+                    </div>
+                  ) : (mostOrderedBrand?.data?.length ?? 0) > 0 ? (
+                    <ChartPieLabel
+                      data={mostOrderedBrand.data}
+                      types={mostOrderedBrand.types}
+                    />
+                  ) : (
+                    <div className="h-[200px] w-full flex items-center justify-center text-muted-foreground">
+                      No ordered brands data available
                     </div>
                   )}
                 </CardContent>
