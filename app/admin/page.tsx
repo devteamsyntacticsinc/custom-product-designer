@@ -4,6 +4,7 @@ import { useState, useEffect, useCallback, useRef } from "react";
 import { useRouter, usePathname } from "next/navigation";
 import { useSession, signOut } from "next-auth/react";
 import { Button } from "@/components/ui/button";
+import { Skeleton } from "@/components/ui/skeleton";
 import {
   Card,
   CardContent,
@@ -21,6 +22,10 @@ import {
   Phone,
   Package,
 } from "lucide-react";
+import { CalendarRange } from "@/components/ui/calendar-range";
+import { ChartAreaInteractive } from "@/components/ui/area-chart-interactive";
+import { ChartBarInteractive } from "@/components/ui/bar-chart";
+import { DateRange } from "react-day-picker";
 import AdminSidebar from "../components/AdminSidebar";
 import AdminDashboardSkeleton from "../components/AdminDashboardSkeleton";
 import ActivitySkeleton from "@/components/ActivitySkeleton";
@@ -48,12 +53,21 @@ import {
   PaginationEllipsis,
 } from "@/components/ui/pagination";
 import Link from "next/link";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
 export default function AdminDashboard() {
   const { data: session, status } = useSession();
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [isCollapsed, setIsCollapsed] = useState(false);
   const currentPath = usePathname();
+  const [productTypesData, setProductTypesData] = useState<{ data: Record<string, any>[]; types: string[] }>({ data: [], types: [] });
+  const [topCustomersList, setTopCustomersList] = useState<Array<{ id: string; name: string; email: string; count: number }>>([]);
   const [dashboardData, setDashboardData] = useState<{
     stats: {
       totalOrders: number;
@@ -81,6 +95,14 @@ export default function AdminDashboard() {
   const [refreshing, setRefreshing] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
   const [pageLoading, setPageLoading] = useState(false);
+
+  const [productTypeLoading, setProductTypeLoading] = useState(false);
+  const [topCustomersLoading, setTopCustomersLoading] = useState(false);
+  const [ptDateRange, setPtDateRange] = useState<DateRange | undefined>({
+    from: undefined,
+    to: undefined,
+  });
+  const [selectedProductTypeForCustomers, setSelectedProductTypeForCustomers] = useState<string>("all");
   const itemsPerPage = 10; // Make it a constant instead of state
   const hasFetchedRef = useRef(false); // Use ref to track if we've already fetched
   const router = useRouter();
@@ -108,10 +130,71 @@ export default function AdminDashboard() {
     [], // Remove itemsPerPage since it's a constant
   );
 
+  const fetchProductTypes = useCallback(
+    async (from?: Date, to?: Date) => {
+      try {
+        setProductTypeLoading(true);
+        const params = new URLSearchParams();
+        if (from) params.set('from', from.toISOString());
+        if (to) params.set('to', to.toISOString());
+        const response = await fetch(`/api/dashboard?${params.toString()}`);
+        const data = await response.json();
+        if (data.success) {
+          setProductTypesData(data.data.ordersByProductTypeTimeSeries);
+        }
+      } catch (error) {
+        console.error("Error fetching product types:", error);
+      }
+      finally {
+        setProductTypeLoading(false);
+      }
+    },
+    [],
+  );
+
+  const fetchTopCustomers = useCallback(
+    async (productType: string) => {
+      try {
+        setTopCustomersLoading(true);
+        const params = new URLSearchParams();
+        if (productType && productType !== 'all') params.set('productType', productType);
+        const response = await fetch(`/api/dashboard?${params.toString()}`);
+        const data = await response.json();
+        if (data.success) {
+          setTopCustomersList(data.data.topCustomers);
+        }
+      } catch (error) {
+        console.error("Error fetching top customers:", error);
+      }
+      finally {
+        setTopCustomersLoading(false);
+      }
+    },
+    [],
+  );
+
   const handleRefresh = () => {
     setRefreshing(true);
     fetchDashboardData(currentPage);
+    fetchProductTypes(ptDateRange?.from, ptDateRange?.to);
+    fetchTopCustomers(selectedProductTypeForCustomers);
   };
+
+  // Effect to refetch when product type date range changes
+  useEffect(() => {
+    if (ptDateRange?.from) {
+      fetchProductTypes(ptDateRange.from, ptDateRange.to);
+    } else if (hasFetchedRef.current) {
+      fetchProductTypes();
+    }
+  }, [ptDateRange]);
+
+  // Effect to refetch when selected product type for customers changes
+  useEffect(() => {
+    if (hasFetchedRef.current) {
+      fetchTopCustomers(selectedProductTypeForCustomers);
+    }
+  }, [selectedProductTypeForCustomers]);
 
   const handlePageChange = async (page: number) => {
     if (pageLoading || page === currentPage) return; // Prevent duplicate calls
@@ -132,6 +215,8 @@ export default function AdminDashboard() {
     // Only fetch on initial load when we haven't fetched yet
     if (!hasFetchedRef.current) {
       fetchDashboardData(currentPage);
+      fetchProductTypes(ptDateRange?.from, ptDateRange?.to);
+      fetchTopCustomers(selectedProductTypeForCustomers);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [session, status, router]); // Remove currentPage and fetchDashboardData to prevent re-runs - we use ref instead
@@ -147,11 +232,11 @@ export default function AdminDashboard() {
         <AdminSidebar
           user={null}
           sidebarOpen={false}
-          setSidebarOpen={() => {}}
-          onLogout={() => {}}
-          onNavigate={() => {}}
+          setSidebarOpen={() => { }}
+          onLogout={() => { }}
+          onNavigate={() => { }}
           isCollapsed={false}
-          onToggleCollapse={() => {}}
+          onToggleCollapse={() => { }}
           currentPath="/admin"
         />
         <div className="flex-1 lg:ml-64">
@@ -252,7 +337,7 @@ export default function AdminDashboard() {
             <Card className="p-6">
               <div className="flex flex-row items-center justify-between space-y-0 pb-2">
                 <CardTitle className="text-sm lg:text-base font-medium">
-                  Total Orders
+                  Total Ordersh
                 </CardTitle>
                 <ShoppingBag className="h-4 w-4 text-muted-foreground" />
               </div>
@@ -301,161 +386,288 @@ export default function AdminDashboard() {
             </Card>
           </div>
 
-          {/* Recent Activity */}
-          <Card className="p-6">
-            <div>
-              <CardTitle className="mb-2 text-sm lg:text-base">
-                Recent Activity
-              </CardTitle>
-              <CardDescription className="mb-4 text-xs lg:text-sm">
-                Latest actions in system
-              </CardDescription>
-            </div>
-            <div className="space-y-4">
-              {pageLoading ? (
-                <ActivitySkeleton />
-              ) : dashboardData?.recentActivity.activities.length ? (
-                dashboardData.recentActivity.activities.map((activity) => {
-                  const getActivityColor = (type: string) => {
-                    switch (type) {
-                      case "order":
-                        return "bg-blue-500";
-                      case "user":
-                        return "bg-green-500";
-                      case "product":
-                        return "bg-yellow-500";
-                      default:
-                        return "bg-gray-500";
-                    }
-                  };
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
+            {/* Charts */}
+            <div className="flex flex-col gap-6">
+              <Card className="p-6">
+                <CardHeader className="px-0 pt-0 flex flex-row items-center justify-between space-y-0 flex-wrap gap-4">
+                  <div>
+                    <CardTitle className="text-sm lg:text-base font-medium">Most Ordered Products</CardTitle>
+                    <CardDescription className="text-xs lg:text-sm">Distribution by product type</CardDescription>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <div className="flex flex-col gap-1">
+                      <span className="text-[10px] text-muted-foreground font-medium uppercase">Date Range</span>
+                      <CalendarRange
+                        date={ptDateRange}
+                        onSelect={setPtDateRange}
+                      />
+                    </div>
 
-                  const getTimeAgo = (timestamp: string) => {
-                    const now = new Date();
-                    const activityTime = new Date(timestamp);
-                    const diffMins = Math.floor(
-                      (now.getTime() - activityTime.getTime()) / 60000,
-                    );
-
-                    if (diffMins < 1) {
-                      return "Just now";
-                    } else if (diffMins < 60) {
-                      return `${diffMins} minute${diffMins > 1 ? "s" : ""} ago`;
-                    } else if (diffMins < 1440) {
-                      return `${Math.floor(diffMins / 60)} hour${Math.floor(diffMins / 60) > 1 ? "s" : ""} ago`;
-                    } else {
-                      return `${Math.floor(diffMins / 1440)} day${Math.floor(diffMins / 1440) > 1 ? "s" : ""} ago`;
-                    }
-                  };
-
-                  return (
-                    <CustomerDrawer
-                      key={activity.id}
-                      activity={activity}
-                      getActivityColor={getActivityColor}
-                    >
-                      <div
-                        key={activity.id}
-                        className="flex items-center space-x-4 cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-800 p-4 rounded-md"
+                    {(ptDateRange?.from || ptDateRange?.to) && (
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className="h-8 px-2 mt-5 text-[11px]"
+                        onClick={() => setPtDateRange({ from: undefined, to: undefined })}
                       >
-                        <div
-                          className={`w-2 h-2 ${getActivityColor(activity.type)} rounded-full`}
-                        ></div>
-                        <div className="flex-1">
-                          <p className="text-sm lg:text-base font-medium">
-                            {activity.title}
-                          </p>
-                          <p className="text-xs lg:text-sm text-muted-foreground">
-                            {activity.description}
-                          </p>
-                        </div>
-                        <span className="text-xs lg:text-sm text-muted-foreground">
-                          {getTimeAgo(activity.timestamp)}
-                        </span>
-                      </div>
-                    </CustomerDrawer>
-                  );
-                })
-              ) : (
-                <div className="text-center text-muted-foreground py-4">
-                  No recent activity
-                </div>
-              )}
+                        Clear
+                      </Button>
+                    )}
+                  </div>
+                </CardHeader>
+                <CardContent className="px-0 pb-0">
+                  {productTypeLoading ? (
+                    <div className="h-[300px] w-full">
+                      <Skeleton className="h-full w-full rounded-md" />
+                    </div>
+                  ) : (productTypesData.data.length) > 0 ? (
+                    <ChartAreaInteractive
+                      data={productTypesData.data}
+                      config={productTypesData.types.reduce((acc: any, type: string, index: number) => ({
+                        ...acc,
+                        [type]: {
+                          label: type,
+                          color: "#3b82f6",
+                        }
+                      }), {})}
+                    />
+                  ) : (
+                    <div className="h-[300px] w-full flex items-center justify-center text-muted-foreground">
+                      No product type data available
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
+
+              {/* Top Customers */}
+              <Card className="p-6">
+                <CardHeader className="px-0 pt-0 flex flex-row items-center justify-between space-y-0 flex-wrap gap-4">
+                  <div>
+                    <CardTitle className="text-sm lg:text-base font-medium">Top Customers</CardTitle>
+                    <CardDescription className="text-xs lg:text-sm">Customers with the most orders</CardDescription>
+                  </div>
+                  <div className="flex items-center gap-4 flex-wrap">
+                    <div className="flex flex-col gap-1">
+                      <span className="text-[10px] text-muted-foreground font-medium uppercase">Type</span>
+                      <Select
+                        value={selectedProductTypeForCustomers}
+                        onValueChange={setSelectedProductTypeForCustomers}
+                      >
+                        <SelectTrigger className="w-[150px] h-8 text-[11px]">
+                          <SelectValue placeholder="All Types" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="all" className="text-xs">All Types</SelectItem>
+                          {(productTypesData.types ?? []).map((type) => (
+                            <SelectItem key={type} value={type} className="text-xs">
+                              {type}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+
+                    {selectedProductTypeForCustomers !== "all" && (
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className="h-8 px-2 mt-5 text-[11px]"
+                        onClick={() => {
+                          setSelectedProductTypeForCustomers("all");
+                        }}
+                      >
+                        Clear Filter
+                      </Button>
+                    )}
+                  </div>
+                </CardHeader>
+                <CardContent className="px-0 pb-0">
+                  {topCustomersLoading ? (
+                    <div className="h-[300px] w-full">
+                      <Skeleton className="h-full w-full rounded-md" />
+                    </div>
+                  ) : (topCustomersList?.length ?? 0) > 0 ? (
+                    <ChartBarInteractive
+                      data={topCustomersList}
+                      config={{
+                        count: {
+                          label: "Orders",
+                          color: "#3b82f6",
+                        },
+                      }}
+                      dataKey="count"
+                      labelKey="name"
+                    />
+                  ) : (
+                    <div className="h-[200px] w-full flex items-center justify-center text-muted-foreground">
+                      No customer data available
+                    </div>
+                  )}
+                </CardContent>
+              </Card >
             </div>
 
-            {/* Pagination */}
-            {dashboardData?.recentActivity.totalPages &&
-              dashboardData.recentActivity.totalPages > 1 && (
-                <div className="mt-6 flex justify-center">
-                  <Pagination>
-                    <PaginationContent>
-                      <PaginationItem>
-                        <PaginationPrevious
-                          onClick={() => handlePageChange(currentPage - 1)}
-                          className={
-                            currentPage === 1 || pageLoading
-                              ? "pointer-events-none opacity-50"
-                              : "cursor-pointer"
-                          }
-                        />
-                      </PaginationItem>
-
-                      {Array.from(
-                        { length: dashboardData.recentActivity.totalPages },
-                        (_, i) => i + 1,
-                      ).map((page) => {
-                        if (
-                          page === 1 ||
-                          page === dashboardData.recentActivity.totalPages ||
-                          (page >= currentPage - 1 && page <= currentPage + 1)
-                        ) {
-                          return (
-                            <PaginationItem key={page}>
-                              <PaginationLink
-                                onClick={() => handlePageChange(page)}
-                                isActive={currentPage === page}
-                                className={
-                                  pageLoading
-                                    ? "pointer-events-none"
-                                    : "cursor-pointer"
-                                }
-                              >
-                                {page}
-                              </PaginationLink>
-                            </PaginationItem>
-                          );
-                        } else if (
-                          page === currentPage - 2 ||
-                          page === currentPage + 2
-                        ) {
-                          return (
-                            <PaginationItem key={page}>
-                              <PaginationEllipsis />
-                            </PaginationItem>
-                          );
-                        }
-                        return null;
-                      })}
-
-                      <PaginationItem>
-                        <PaginationNext
-                          onClick={() => handlePageChange(currentPage + 1)}
-                          className={
-                            currentPage ===
-                              dashboardData.recentActivity.totalPages ||
-                            pageLoading
-                              ? "pointer-events-none opacity-50"
-                              : "cursor-pointer"
-                          }
-                        />
-                      </PaginationItem>
-                    </PaginationContent>
-                  </Pagination>
+            {/* Recent Activity */}
+            <div className="h-fit">
+              < Card className="p-6" >
+                <div>
+                  <CardTitle className="mb-2 text-sm lg:text-base">
+                    Recent Activity
+                  </CardTitle>
+                  <CardDescription className="mb-4 text-xs lg:text-sm">
+                    Latest actions in system
+                  </CardDescription>
                 </div>
-              )}
-          </Card>
-        </main>
-      </div>
-    </div>
+                <div className="space-y-4">
+                  {pageLoading ? (
+                    <ActivitySkeleton />
+                  ) : dashboardData?.recentActivity.activities.length ? (
+                    dashboardData.recentActivity.activities.map((activity) => {
+                      const getActivityColor = (type: string) => {
+                        switch (type) {
+                          case "order":
+                            return "bg-blue-500";
+                          case "user":
+                            return "bg-green-500";
+                          case "product":
+                            return "bg-yellow-500";
+                          default:
+                            return "bg-gray-500";
+                        }
+                      };
+
+                      const getTimeAgo = (timestamp: string) => {
+                        const now = new Date();
+                        const activityTime = new Date(timestamp);
+                        const diffMins = Math.floor(
+                          (now.getTime() - activityTime.getTime()) / 60000,
+                        );
+
+                        if (diffMins < 1) {
+                          return "Just now";
+                        } else if (diffMins < 60) {
+                          return `${diffMins} minute${diffMins > 1 ? "s" : ""} ago`;
+                        } else if (diffMins < 1440) {
+                          return `${Math.floor(diffMins / 60)} hour${Math.floor(diffMins / 60) > 1 ? "s" : ""} ago`;
+                        } else {
+                          return `${Math.floor(diffMins / 1440)} day${Math.floor(diffMins / 1440) > 1 ? "s" : ""} ago`;
+                        }
+                      };
+
+                      return (
+                        <CustomerDrawer
+                          key={activity.id}
+                          activity={activity}
+                          getActivityColor={getActivityColor}
+                        >
+                          <div
+                            key={activity.id}
+                            className="flex items-center space-x-4 cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-800 p-4 rounded-md"
+                          >
+                            <div
+                              className={`w-2 h-2 ${getActivityColor(activity.type)} rounded-full`}
+                            ></div>
+                            <div className="flex-1">
+                              <p className="text-sm lg:text-base font-medium">
+                                {activity.title}
+                              </p>
+                              <p className="text-xs lg:text-sm text-muted-foreground">
+                                {activity.description}
+                              </p>
+                            </div>
+                            <span className="text-xs lg:text-sm text-muted-foreground">
+                              {getTimeAgo(activity.timestamp)}
+                            </span>
+                          </div>
+                        </CustomerDrawer>
+                      );
+                    })
+                  ) : (
+                    <div className="text-center text-muted-foreground py-4">
+                      No recent activity
+                    </div>
+                  )}
+                </div>
+
+                {/* Pagination */}
+                {
+                  dashboardData?.recentActivity.totalPages &&
+                  dashboardData.recentActivity.totalPages > 1 && (
+                    <div className="mt-6 flex justify-center">
+                      <Pagination>
+                        <PaginationContent>
+                          <PaginationItem>
+                            <PaginationPrevious
+                              onClick={() => handlePageChange(currentPage - 1)}
+                              className={
+                                currentPage === 1 || pageLoading
+                                  ? "pointer-events-none opacity-50"
+                                  : "cursor-pointer"
+                              }
+                            />
+                          </PaginationItem>
+
+                          {Array.from(
+                            { length: dashboardData.recentActivity.totalPages },
+                            (_, i) => i + 1,
+                          ).map((page) => {
+                            if (
+                              page === 1 ||
+                              page === dashboardData.recentActivity.totalPages ||
+                              (page >= currentPage - 1 && page <= currentPage + 1)
+                            ) {
+                              return (
+                                <PaginationItem key={page}>
+                                  <PaginationLink
+                                    onClick={() => handlePageChange(page)}
+                                    isActive={currentPage === page}
+                                    className={
+                                      pageLoading
+                                        ? "pointer-events-none"
+                                        : "cursor-pointer"
+                                    }
+                                  >
+                                    {page}
+                                  </PaginationLink>
+                                </PaginationItem>
+                              );
+                            } else if (
+                              page === currentPage - 2 ||
+                              page === currentPage + 2
+                            ) {
+                              return (
+                                <PaginationItem key={page}>
+                                  <PaginationEllipsis />
+                                </PaginationItem>
+                              );
+                            }
+                            return null;
+                          })}
+
+                          <PaginationItem>
+                            <PaginationNext
+                              onClick={() => handlePageChange(currentPage + 1)}
+                              className={
+                                currentPage ===
+                                  dashboardData.recentActivity.totalPages ||
+                                  pageLoading
+                                  ? "pointer-events-none opacity-50"
+                                  : "cursor-pointer"
+                              }
+                            />
+                          </PaginationItem>
+                        </PaginationContent>
+                      </Pagination>
+                    </div>
+                  )
+                }
+              </Card >
+            </div>
+          </div>
+        </main >
+      </div >
+    </div >
   );
 }
 
@@ -684,7 +896,7 @@ function CustomerWithOrdersDetails({
 }: {
   customerOrders: CustomerWithOrdersForDashboard;
 }) {
-  const customer = customerOrders.customer ;
+  const customer = customerOrders.customer;
   const orders = customerOrders.orders;
 
   return (

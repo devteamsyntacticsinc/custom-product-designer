@@ -72,7 +72,7 @@ export default function LoginPage() {
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 required
-                className="h-11 sm:h-12 border-gray-300 focus:ring-primary focus:border-primary transition-all"
+                className="pr-12 h-10 lg:h-10 border-gray-300 focus:ring-primary focus:border-primary transition-all"
               />
             </div>
             <div className="space-y-2">
@@ -87,7 +87,7 @@ export default function LoginPage() {
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   required
-                  className="pr-12 h-11 sm:h-12 border-gray-300 focus:ring-primary focus:border-primary transition-all"
+                  className="pr-12 h-10 lg:h-10 border-gray-300 focus:ring-primary focus:border-primary transition-all"
                 />
                 <Button
                   type="button"

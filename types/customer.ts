@@ -49,6 +49,7 @@ export interface CustomerWithOrders {
       place: string;
     }>;
   }[];
+  hasBrands: boolean;
 }
 
 export interface CustomerWithOrdersForDashboard {
@@ -95,5 +96,31 @@ export interface CustomerWithOrdersForDashboard {
       url: string;
       place: string;
     }>;
+  }>;
+}
+
+export interface FilteredOrder {
+  customer_id: string;
+  brand_type: {
+    id: string;
+    brands: {
+      id: string;
+      name: string;
+    } | null;
+    product_type: {
+      id: string;
+      name: string;
+    };
+  };
+  product_sizes?: Array<{
+    productO_id: string;
+    sizes: {
+      id: string;
+      value: string;
+    };
+  }>;
+  colors?: Array<{
+    id: string;
+    value: string;
   }>;
 }
