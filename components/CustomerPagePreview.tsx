@@ -225,7 +225,7 @@ export default function CustomersTab() {
     filterValues.color,
   ]);
 
-  // Reset ordersLoaded when filters change to force refetch with new filters
+  // Reset ordersLoaded and close expanded rows when filters change to force refetch with new filters
   useEffect(() => {
     setCustomers((prev) =>
       prev.map((c) => ({
@@ -234,6 +234,8 @@ export default function CustomersTab() {
         orders: [],
       })),
     );
+    // Close all expanded rows when filters change
+    setExpandedRows(new Set());
   }, [
     filterValues.product_type,
     filterValues.brand,
