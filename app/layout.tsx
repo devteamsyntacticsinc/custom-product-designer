@@ -79,12 +79,10 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en" suppressHydrationWarning>
-      <head>
-        <StructuredData type="website" />
-      </head>
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
+        <StructuredData type="website" />
         <Providers>{children}</Providers>
       </body>
     </html>
