@@ -27,25 +27,16 @@ import CustomerPageSkeleton from "./CustomerPageSkeleton";
 import OrderHistorySkeleton from "./OrderHistorySkeleton";
 import { CustomerService } from "@/lib/api/customer";
 import { Button } from "./ui/button";
-import {
-  Combobox,
-  ComboboxChips,
-  ComboboxChipsInput,
-  ComboboxContent,
-  ComboboxEmpty,
-  ComboboxItem,
-  ComboboxList,
-  ComboboxValue,
-  useComboboxAnchor,
-} from "@/components/ui/combobox";
+import { Combobox } from "@/components/ui/combobox";
 import { Label } from "./ui/label";
 import axios from "axios";
+import { cn } from "@/lib/utils";
 
 type FilterValues = {
-  product_type: string;
-  brand: string;
-  size: string;
-  color: string;
+  product_type: { id: number; name: string } | null;
+  brand: { id: number; name: string } | null;
+  size: { id: number; value: string } | null;
+  color: { id: number; value: string } | null;
   date_range: string;
 };
 
@@ -60,26 +51,43 @@ export default function CustomersTab() {
   const [error, setError] = useState<string | null>(null);
   const [expandedRows, setExpandedRows] = useState<Set<string>>(new Set());
   const [filterValues, setFilterValues] = useState<FilterValues>({
-    product_type: "",
-    brand: "",
-    size: "",
-    color: "",
+    product_type: null,
+    brand: null,
+    size: null,
+    color: null,
     date_range: "",
   });
   const [filtersDataIsLoading, setFiltersDataIsLoading] = useState(false);
   const [filterData, setFilterData] = useState({
-    product_type: [],
-    brand: [],
-    size: [],
-    color: [],
-    date_range: [],
+    product_type: [] as { id: number; name: string }[],
+    brand: [] as { id: number; name: string }[],
+    size: [] as { id: number; value: string }[],
+    color: [] as { id: number; value: string }[],
+    date_range: [] as string[],
   });
 
   const fetchCustomers = async () => {
     try {
       setError(null);
       setIsFetchingCustomers(true);
-      const data = await axios.get("/api/customers");
+
+      // Build query string from filter values
+      const queryParams = new URLSearchParams();
+      if (filterValues.product_type)
+        queryParams.append("product_type", filterValues.product_type.name);
+      if (filterValues.brand)
+        queryParams.append("brand", filterValues.brand.name);
+      if (filterValues.size)
+        queryParams.append("size", filterValues.size.value);
+      if (filterValues.color)
+        queryParams.append("color", filterValues.color.value);
+
+      const queryString = queryParams.toString();
+      const url = queryString
+        ? `/api/customers?${queryString}`
+        : "/api/customers";
+
+      const data = await axios.get(url);
       const customers = data.data;
 
       setCustomers(customers || []);
@@ -90,6 +98,11 @@ export default function CustomersTab() {
       setIsFetchingCustomers(false);
     }
   };
+
+  const hasBrands =
+    filterValues.product_type && filterValues.product_type.id
+      ? customers.some((customer) => customer.hasBrands)
+      : true;
 
   const fetchCustomerOrders = async (customerId: string) => {
     const customer = customers.find((c) => c.id === customerId);
@@ -105,7 +118,6 @@ export default function CustomersTab() {
     try {
       const orders = await axios.get(`/api/customers/${customerId.toString()}`);
       const customerOrders = orders.data.data;
-      console.log(customerOrders);
 
       setCustomers((prev) =>
         prev.map((c) =>
@@ -162,12 +174,21 @@ export default function CustomersTab() {
     fetchFilterData();
   }, []);
 
+  useEffect(() => {
+    fetchCustomers();
+  }, [
+    filterValues.product_type,
+    filterValues.brand,
+    filterValues.size,
+    filterValues.color,
+  ]);
+
   if (isFetchingCustomers) {
     return <CustomerPageSkeleton />;
   }
   return (
     <Card className="overflow-hidden">
-      <CardHeader className="py-4 sm:py-6 ">
+      <CardHeader className="max-sm:py-4 sm:py-6 ">
         <div className="flex items-center justify-between">
           <CardTitle className="text-lg sm:text-2xl">
             Customer Management
@@ -176,83 +197,147 @@ export default function CustomersTab() {
             <File className="mr-2 h-4 w-4" /> Download PDF
           </Button>
         </div>
-        <div className="flex items-center gap-2 w-full mt-4 overflow-y-auto pb-2">
-          {/* Product type */}
+        {filtersDataIsLoading ? (
+          <div className="flex items-center gap-2 w-full mt-4 overflow-y-auto p-2">
+            {[1, 2, 3, 4].map((i) => (
+              <div key={i} className="flex flex-col gap-1 min-w-[150px]">
+                <div className="h-4 w-20 bg-gray-200 dark:bg-gray-700 rounded animate-pulse"></div>
+                <div className="h-10 w-full bg-gray-200 dark:bg-gray-700 rounded animate-pulse"></div>
+              </div>
+            ))}
+            <div className="ml-auto mt-auto">
+              <div className="h-10 w-20 bg-gray-200 dark:bg-gray-700 rounded animate-pulse"></div>
+            </div>
+          </div>
+        ) : (
+          <div className="flex items-center gap-2 w-full mt-4 overflow-y-auto p-2">
+            {/* Product type */}
+            <div className="gap-2 flex flex-col">
+              <Label className="">Product Type</Label>
+              <Combobox
+                placeholder="Product Type"
+                value={filterValues.product_type?.name || ""}
+                onValueChange={(value) =>
+                  setFilterValues((prev) => ({
+                    ...prev,
+                    product_type:
+                      filterData.product_type.find(
+                        (item) => item.name === value,
+                      ) || null,
+                  }))
+                }
+                options={filterData.product_type.map((item) => ({
+                  value: item.name,
+                  label: item.name,
+                }))}
+                className="w-42"
+              />
+            </div>
 
-          <ComboboxComponent
-            placeholder="Product Type"
-            label="Product Type"
-            filterKey="product_type"
-            data={filterData.product_type}
-            filterValues={filterValues}
-            setFilterValues={setFilterValues}
-          />
+            {/* brand */}
+            <div className="gap-2 flex flex-col">
+              <Label className="">Brand</Label>
+              <Combobox
+                placeholder="Brand"
+                value={filterValues.brand?.name || ""}
+                onValueChange={(value) =>
+                  setFilterValues((prev) => ({
+                    ...prev,
+                    brand:
+                      filterData.brand.find((item) => item.name === value) ||
+                      null,
+                  }))
+                }
+                options={filterData.brand.map((item) => ({
+                  value: item.name,
+                  label: item.name,
+                }))}
+                className="w-42"
+                disabled={!hasBrands}
+              />
+            </div>
 
-          {/* brand */}
-          <ComboboxComponent
-            placeholder="Brand"
-            label="Brand"
-            filterKey="brand"
-            data={filterData.brand}
-            filterValues={filterValues}
-            setFilterValues={setFilterValues}
-          />
+            {/* size */}
+            <div className="gap-2 flex flex-col">
+              <Label className="">Size</Label>
+              <Combobox
+                placeholder="Size"
+                value={filterValues.size?.value || ""}
+                onValueChange={(value) =>
+                  setFilterValues((prev) => ({
+                    ...prev,
+                    size:
+                      filterData.size.find((item) => item.value === value) ||
+                      null,
+                  }))
+                }
+                options={filterData.size.map((item) => ({
+                  value: item.value,
+                  label: item.value,
+                }))}
+                className="w-42"
+              />
+            </div>
 
-          {/* size */}
-          <ComboboxComponent
-            placeholder="Size"
-            label="Size"
-            filterKey="size"
-            data={filterData.size}
-            filterValues={filterValues}
-            setFilterValues={setFilterValues}
-          />
+            {/* Color */}
+            <div className="gap-2 flex flex-col">
+              <Label className="">Color</Label>
+              <Combobox
+                placeholder="Color"
+                value={filterValues.color?.value || ""}
+                onValueChange={(value) =>
+                  setFilterValues((prev) => ({
+                    ...prev,
+                    color:
+                      filterData.color.find((item) => item.value === value) ||
+                      null,
+                  }))
+                }
+                options={filterData.color.map((item) => ({
+                  value: item.value,
+                  label: item.value,
+                }))}
+                className="w-42"
+                disabled={!hasBrands}
+              />
+            </div>
 
-          {/* Color */}
-          <ComboboxComponent
-            placeholder="Color"
-            label="Color"
-            filterKey="color"
-            data={filterData.color}
-            filterValues={filterValues}
-            setFilterValues={setFilterValues}
-          />
-
-          {/* Date Range */}
-          <ComboboxComponent
+            {/* Date Range */}
+            {/* <Combobox
             placeholder="Date Range"
             label="Date Range"
             filterKey="date_range"
             data={["Next.js", "SvelteKit", "Nuxt.js", "Remix", "Astro"]}
             filterValues={filterValues}
             setFilterValues={setFilterValues}
-          />
+          /> */}
 
-          <Button
-            className="ml-auto mt-auto"
-            variant="outline"
-            disabled={
-              filterValues.product_type === "" &&
-              filterValues.brand === "" &&
-              filterValues.size === "" &&
-              filterValues.color === "" &&
-              filterValues.date_range === ""
-            }
-            onClick={() =>
-              setFilterValues({
-                product_type: "",
-                brand: "",
-                size: "",
-                color: "",
-                date_range: "",
-              })
-            }
-          >
-            <X className="mr-2 h-4 w-4" /> Reset
-          </Button>
-        </div>
+            <Button
+              className="ml-auto mt-auto"
+              variant="outline"
+              disabled={
+                filterValues.product_type === null &&
+                filterValues.brand === null &&
+                filterValues.size === null &&
+                filterValues.color === null &&
+                filterValues.date_range === ""
+              }
+              onClick={() =>
+                setFilterValues({
+                  product_type: null,
+                  brand: null,
+                  size: null,
+                  color: null,
+                  date_range: "",
+                })
+              }
+            >
+              <X className="mr-2 h-4 w-4" /> Reset
+            </Button>
+          </div>
+        )}
       </CardHeader>
-      <CardContent className="p-0 sm:p-6">
+      <CardContent className="max-sm:p-0">
         <div className="overflow-x-auto">
           <Table>
             <TableHeader>
@@ -440,7 +525,7 @@ export default function CustomersTab() {
                                           {/* Sizes & Quantities */}
                                           {order.product_sizes &&
                                             order.product_sizes.length > 0 && (
-                                              <div className="space-y-2">
+                                              <div className="gap-2 flex flex-col">
                                                 <div className="flex items-center gap-1.5 text-[11px] font-bold text-gray-400 dark:text-gray-500 uppercase tracking-wider">
                                                   <Ruler className="h-3 w-3" />
                                                   Sizes & Quantities
@@ -484,57 +569,5 @@ export default function CustomersTab() {
         </div>
       </CardContent>
     </Card>
-  );
-}
-
-function ComboboxComponent({
-  placeholder,
-  label,
-  filterKey,
-  filterValues,
-  data,
-  setFilterValues,
-}: {
-  placeholder: string;
-  label: string;
-  filterKey: keyof FilterValues;
-  filterValues: FilterValues;
-  data: string[];
-  setFilterValues: React.Dispatch<React.SetStateAction<FilterValues>>;
-}) {
-  const anchor = useComboboxAnchor();
-
-  return (
-    <div>
-      <Label className="">{label}</Label>
-      <Combobox
-        autoHighlight
-        items={data}
-        value={filterValues[filterKey]}
-        onValueChange={(value) =>
-          setFilterValues((prev: FilterValues) => ({
-            ...prev,
-            [filterKey]: value,
-          }))
-        }
-      >
-        <ComboboxChips ref={anchor} className="w-full max-w-xs relative mt-2">
-          <ComboboxValue>
-            <ComboboxChipsInput placeholder={`Select ${placeholder}`} />
-            <ChevronDown className="size-4 absolute right-2" />
-          </ComboboxValue>
-        </ComboboxChips>
-        <ComboboxContent anchor={anchor}>
-          <ComboboxEmpty>No items found.</ComboboxEmpty>
-          <ComboboxList>
-            {data.map((item) => (
-              <ComboboxItem key={item} value={item}>
-                {item}
-              </ComboboxItem>
-            ))}
-          </ComboboxList>
-        </ComboboxContent>
-      </Combobox>
-    </div>
   );
 }

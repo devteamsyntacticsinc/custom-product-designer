@@ -11,9 +11,9 @@ export async function GET() {
   ]);
 
   return NextResponse.json({
-    product_type: productTypes.map((pt) => pt.name),
-    brand: brands.map((b) => b.name),
-    size: sizes.map((s) => s.value),
-    color: colors.map((c) => c.value),
+    product_type: productTypes.map((pt) => ({ id: pt.id, name: pt.name })),
+    brand: brands.map((b) => ({ id: b.id, name: b.name })),
+    size: sizes.map((s) => ({ id: s.id, value: s.value })),
+    color: colors.map((c) => ({ id: c.id, value: c.value })),
   });
 }
