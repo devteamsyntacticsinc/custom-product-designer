@@ -100,24 +100,28 @@ export default function OrdersPage() {
       });
     }
   };
-
   const handleDownload = (orderId: string) => {
-    // Add to cooldown immediately
-    setCooldownIds((prev) => new Set(prev).add(orderId));
-
-    // Remove from cooldown after 3 seconds
     setTimeout(() => {
+      // Add to cooldown
       setCooldownIds((prev) => {
         const next = new Set(prev);
-        next.delete(orderId);
+        next.add(orderId);
         return next;
       });
-    }, 3500);
 
-    // Show success message
-    addToast("success", "Receipt downloaded successfully");
+      // Remove from cooldown after 3 seconds
+      setTimeout(() => {
+        setCooldownIds((prev) => {
+          const next = new Set(prev);
+          next.delete(orderId);
+          return next;
+        });
+      }, 3000);
+
+      // Show success message
+      addToast("success", "Receipt downloaded successfully");
+    }, 100); // small delay so react-pdf can trigger first
   };
-
   useEffect(() => {
     // Check if user is authenticated and is admin
     if (status === "loading") return; // Still loading session
