@@ -58,7 +58,8 @@ export interface ExistingImage {
 }
 
 export interface NewImage {
-  file: File;
+  file?: File;
+  filepath?: string;
   is_hasBack: boolean;
   _isExisting: false;
 }
