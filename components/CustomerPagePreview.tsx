@@ -1,5 +1,3 @@
-"use client";
-
 import { useEffect, useState, Fragment } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
@@ -31,6 +29,22 @@ import { Combobox } from "@/components/ui/combobox";
 import { Label } from "./ui/label";
 import axios from "axios";
 import { cn } from "@/lib/utils";
+import { PDFDownloadLink } from "@react-pdf/renderer";
+import CustomerTableReceipt from "@/app/components/receipts/CustomerTableReceipt";
+import { useToast } from "@/contexts/ToastContext";
+
+interface ProcessedOrderRow {
+  customerId: string;
+  customerName: string;
+  customerEmail: string;
+  customerContact: string;
+  orderId: string;
+  productType: string;
+  brand: string;
+  size: string;
+  color: string;
+  date: string;
+}
 
 type FilterValues = {
   product_type: { id: number; name: string } | null;
@@ -50,6 +64,12 @@ export default function CustomersTab() {
   const [isFetchingCustomers, setIsFetchingCustomers] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [expandedRows, setExpandedRows] = useState<Set<string>>(new Set());
+  const [processedOrders, setProcessedOrders] = useState<ProcessedOrderRow[]>(
+    [],
+  );
+  const [isGeneratingPdf, setIsGeneratingPdf] = useState(false);
+  const [cooldownIds, setCooldownIds] = useState<Set<string>>(new Set());
+  const { addToast } = useToast();
   const [filterValues, setFilterValues] = useState<FilterValues>({
     product_type: null,
     brand: null,
@@ -96,6 +116,118 @@ export default function CustomersTab() {
       setError(error instanceof Error ? error.message : "Something went wrong");
     } finally {
       setIsFetchingCustomers(false);
+    }
+  };
+
+  const handleDownload = () => {
+    const pdfId = "customer-table-pdf";
+
+    // Check if this PDF is on cooldown
+    if (cooldownIds.has(pdfId)) {
+      return;
+    }
+
+    // Add to cooldown immediately
+    setCooldownIds((prev) => {
+      const next = new Set(prev);
+      next.add(pdfId);
+      return next;
+    });
+
+    // Remove from cooldown after 3 seconds
+    setTimeout(() => {
+      setCooldownIds((prev) => {
+        const next = new Set(prev);
+        next.delete(pdfId);
+        return next;
+      });
+    }, 3000);
+
+    // Show success message
+    addToast("success", "Customer report downloaded successfully");
+  };
+
+  const fetchOrdersForPdf = async () => {
+    setIsGeneratingPdf(true);
+    const allOrderRows: ProcessedOrderRow[] = [];
+
+    try {
+      // Only process customers that are already filtered and displayed in the table
+      for (const customer of customers) {
+        try {
+          // Fetch orders for this customer
+          const response = await axios.get(
+            `/api/customers/${customer.id.toString()}`,
+          );
+          const customerOrders = response.data.data;
+
+          // Apply the same filtering logic as the table
+          const filteredOrders = filterOrdersByValues(customerOrders);
+
+          // Process each filtered order to create individual rows
+          filteredOrders.forEach((order: any) => {
+            const brandType = order.brand_type?.[0];
+
+            allOrderRows.push({
+              customerId: customer.id,
+              customerName: customer.name,
+              customerEmail: customer.email,
+              customerContact: customer.contact_number,
+              orderId: order.id,
+              productType: brandType?.product_type?.name || "N/A",
+              brand: brandType?.brands?.name || "N/A",
+              size: order.product_sizes?.[0]?.sizes?.value || "N/A",
+              color: order.colors?.[0]?.value || "N/A",
+              date: new Date(order.created_at).toLocaleDateString("en-US", {
+                year: "numeric",
+                month: "short",
+                day: "numeric",
+              }),
+            });
+          });
+
+          // If customer has no filtered orders but exists in the filtered table,
+          // add a row with N/A values to show the customer was included
+          if (filteredOrders.length === 0) {
+            allOrderRows.push({
+              customerId: customer.id,
+              customerName: customer.name,
+              customerEmail: customer.email,
+              customerContact: customer.contact_number,
+              orderId: "N/A",
+              productType: "N/A",
+              brand: "N/A",
+              size: "N/A",
+              color: "N/A",
+              date: "N/A",
+            });
+          }
+        } catch (error) {
+          console.error(
+            `Error fetching orders for customer ${customer.id}:`,
+            error,
+          );
+          // Still add customer row even if orders fail to load
+          allOrderRows.push({
+            customerId: customer.id,
+            customerName: customer.name,
+            customerEmail: customer.email,
+            customerContact: customer.contact_number,
+            orderId: "N/A",
+            productType: "N/A",
+            brand: "N/A",
+            size: "N/A",
+            color: "N/A",
+            date: "N/A",
+          });
+        }
+      }
+
+      setProcessedOrders(allOrderRows);
+    } catch (error) {
+      console.error("Error processing orders for PDF:", error);
+    } finally {
+      setIsGeneratingPdf(false);
     }
   };
 
@@ -236,6 +368,8 @@ export default function CustomersTab() {
     );
     // Close all expanded rows when filters change
     setExpandedRows(new Set());
+    // Reset processed orders to force PDF refresh
+    setProcessedOrders([]);
   }, [
     filterValues.product_type,
     filterValues.brand,
@@ -253,9 +387,39 @@ export default function CustomersTab() {
           <CardTitle className="text-lg sm:text-2xl">
             Customer Management
           </CardTitle>
-          <Button className="" variant="outline">
-            <File className="mr-2 h-4 w-4" /> Download PDF
-          </Button>
+          {isGeneratingPdf ? (
+            <Button className="" variant="outline" disabled>
+              <File className="mr-2 h-4 w-4 animate-spin" /> Generating PDF...
+            </Button>
+          ) : processedOrders.length > 0 ? (
+            <PDFDownloadLink
+              document={
+                <CustomerTableReceipt
+                  processedOrders={processedOrders}
+                  filterValues={filterValues}
+                />
+              }
+              fileName="customer-table.pdf"
+            >
+              {({ loading }) => (
+                <Button
+                  className=""
+                  variant="outline"
+                  disabled={loading || cooldownIds.has("customer-table-pdf")}
+                  onClick={handleDownload}
+                >
+                  <File className="mr-2 h-4 w-4" />
+                  {cooldownIds.has("customer-table-pdf")
+                    ? "Please wait..."
+                    : "Download PDF"}
+                </Button>
+              )}
+            </PDFDownloadLink>
+          ) : (
+            <Button className="" variant="outline" onClick={fetchOrdersForPdf}>
+              <File className="mr-2 h-4 w-4" /> Prepare PDF
+            </Button>
+          )}
         </div>
         {filtersDataIsLoading ? (
           <div className="flex items-center gap-2 w-full mt-4 overflow-y-auto p-2">
