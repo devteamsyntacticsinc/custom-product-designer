@@ -11,6 +11,8 @@ export async function GET(request: NextRequest) {
       brand: searchParams.get("brand") || undefined,
       size: searchParams.get("size") || undefined,
       color: searchParams.get("color") || undefined,
+      date_from: searchParams.get("date_from") || undefined,
+      date_to: searchParams.get("date_to") || undefined,
     };
 
     // Remove undefined filters
