@@ -68,8 +68,7 @@ export const metadata: Metadata = {
     },
   },
   verification: {
-    google: "your-google-verification-code",
-    yandex: "your-yandex-verification-code",
+    google: "E_Mk4NTicvxyywFWUHl4QX6gXeT0BcvxxNr8uVsMFdo",
   },
 };
 
