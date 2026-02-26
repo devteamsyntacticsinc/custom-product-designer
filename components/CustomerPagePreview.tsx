@@ -39,6 +39,7 @@ import {
   useComboboxAnchor,
 } from "@/components/ui/combobox";
 import { Label } from "./ui/label";
+import axios from "axios";
 
 type FilterValues = {
   product_type: string;
@@ -65,7 +66,14 @@ export default function CustomersTab() {
     color: "",
     date_range: "",
   });
-  console.log(filterValues);
+  const [filtersDataIsLoading, setFiltersDataIsLoading] = useState(false);
+  const [filterData, setFilterData] = useState({
+    product_type: [],
+    brand: [],
+    size: [],
+    color: [],
+    date_range: [],
+  });
 
   const fetchCustomers = async () => {
     try {
@@ -110,9 +118,18 @@ export default function CustomersTab() {
     }
   };
 
-  useEffect(() => {
-    fetchCustomers();
-  }, []);
+  const fetchFilterData = async () => {
+    try {
+      setFiltersDataIsLoading(true);
+      const productTypeRes = await axios.get("/api/filters");
+      const data = productTypeRes.data;
+      setFilterData(data);
+    } catch (error) {
+      console.error("Error fetching filter data:", error);
+    } finally {
+      setFiltersDataIsLoading(false);
+    }
+  };
 
   const toggleRow = (id: string) => {
     const newExpandedRows = new Set(expandedRows);
@@ -124,6 +141,11 @@ export default function CustomersTab() {
     }
     setExpandedRows(newExpandedRows);
   };
+
+  useEffect(() => {
+    fetchCustomers();
+    fetchFilterData();
+  }, []);
 
   if (isFetchingCustomers) {
     return <CustomerPageSkeleton />;
@@ -139,13 +161,14 @@ export default function CustomersTab() {
             <File className="mr-2 h-4 w-4" /> Download PDF
           </Button>
         </div>
-        <div className="flex items-center gap-2 w-full mt-4 overflow-y-auto">
+        <div className="flex items-center gap-2 w-full mt-4 overflow-y-auto pb-2">
           {/* Product type */}
 
           <ComboboxComponent
             placeholder="Product Type"
             label="Product Type"
             filterKey="product_type"
+            data={filterData.product_type}
             filterValues={filterValues}
             setFilterValues={setFilterValues}
           />
@@ -155,6 +178,7 @@ export default function CustomersTab() {
             placeholder="Brand"
             label="Brand"
             filterKey="brand"
+            data={filterData.brand}
             filterValues={filterValues}
             setFilterValues={setFilterValues}
           />
@@ -164,6 +188,7 @@ export default function CustomersTab() {
             placeholder="Size"
             label="Size"
             filterKey="size"
+            data={filterData.size}
             filterValues={filterValues}
             setFilterValues={setFilterValues}
           />
@@ -173,6 +198,7 @@ export default function CustomersTab() {
             placeholder="Color"
             label="Color"
             filterKey="color"
+            data={filterData.color}
             filterValues={filterValues}
             setFilterValues={setFilterValues}
           />
@@ -182,6 +208,7 @@ export default function CustomersTab() {
             placeholder="Date Range"
             label="Date Range"
             filterKey="date_range"
+            data={["Next.js", "SvelteKit", "Nuxt.js", "Remix", "Astro"]}
             filterValues={filterValues}
             setFilterValues={setFilterValues}
           />
@@ -450,21 +477,16 @@ function ComboboxComponent({
   label,
   filterKey,
   filterValues,
+  data,
   setFilterValues,
 }: {
   placeholder: string;
   label: string;
   filterKey: keyof FilterValues;
   filterValues: FilterValues;
+  data: string[];
   setFilterValues: React.Dispatch<React.SetStateAction<FilterValues>>;
 }) {
-  const frameworks = [
-    "Next.js",
-    "SvelteKit",
-    "Nuxt.js",
-    "Remix",
-    "Astro",
-  ] as const;
   const anchor = useComboboxAnchor();
 
   return (
@@ -472,7 +494,7 @@ function ComboboxComponent({
       <Label className="">{label}</Label>
       <Combobox
         autoHighlight
-        items={frameworks}
+        items={data}
         value={filterValues[filterKey]}
         onValueChange={(value) =>
           setFilterValues((prev: FilterValues) => ({
@@ -490,7 +512,7 @@ function ComboboxComponent({
         <ComboboxContent anchor={anchor}>
           <ComboboxEmpty>No items found.</ComboboxEmpty>
           <ComboboxList>
-            {frameworks.map((item) => (
+            {data.map((item) => (
               <ComboboxItem key={item} value={item}>
                 {item}
               </ComboboxItem>
