@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Menu, X } from "lucide-react";
 import { Combobox } from "@/components/ui/combobox";
 import { Label } from "@/components/ui/label";
-import { ProductType, Brand, Color } from "@/types/product";
+import { ProductType, Brand, Color, ColorProduct } from "@/types/product";
 import SizingAndQuantity from "@/components/SizingAndQuantity";
 import AssetUpload from "./AssetUpload";
 import { useAssets } from "@/contexts/AssetsContext";
@@ -43,6 +43,7 @@ export default function ProductCustomizer() {
   const [brands, setBrands] = useState<Brand[]>([]);
   const [loadingColors, setLoadingColors] = useState(false);
   const [colors, setColors] = useState<Color[]>([]);
+  const [loadingBrandColors, setLoadingBrandColors] = useState(false);
 
   const handleNext = () => {
     setCurrentStep("contact");
@@ -169,20 +170,48 @@ export default function ProductCustomizer() {
   }, [productType]);
 
   useEffect(() => {
-    const fetchColors = async () => {
+    // Clear colors when no brand is selected or is_onlyType is true
+    if (!brand || selectedProductType?.is_onlyType) {
+      setColors([]);
+      setColor("");
+      return;
+    }
+
+    const fetchBrandColors = async () => {
       try {
-        setLoadingColors(true);
-        const res = await fetch("/api/colors");
-        const data = await res.json();
-        setColors(Array.isArray(data) ? data : []);
+        setLoadingBrandColors(true);
+
+        // Fetch all color-brand relationships
+        const colorProductsRes = await fetch("/api/color-products");
+        const colorProducts = await colorProductsRes.json();
+
+        // Filter colors for the selected brand
+        const brandColorIds = colorProducts
+          .filter(
+            (item: ColorProduct) => item.brand_type.brand_id === Number(brand),
+          )
+          .map((item: ColorProduct) => item.color_id);
+
+        console.log("brandColorIds", brandColorIds);
+
+        // Fetch all colors and filter by brand-specific IDs
+        const colorsRes = await fetch("/api/colors");
+        const allColors = await colorsRes.json();
+        const filteredColors = allColors.filter((color: Color) =>
+          brandColorIds.includes(color.id),
+        );
+
+        setColors(filteredColors);
       } catch (error) {
-        console.error("Failed to fetch colors:", error);
+        console.error("Failed to fetch brand colors:", error);
+        setColors([]);
       } finally {
-        setLoadingColors(false);
+        setLoadingBrandColors(false);
       }
     };
-    fetchColors();
-  }, []);
+
+    fetchBrandColors();
+  }, [brand, selectedProductType?.is_onlyType]);
 
   // Render Contact Information step
   if (currentStep === "contact") {
@@ -365,7 +394,11 @@ export default function ProductCustomizer() {
           <Combobox
             placeholder={loadingBrands ? "Loading brands..." : "Select brand"}
             value={brand}
-            onValueChange={setBrand}
+            onValueChange={(value) => {
+              setBrand(value);
+              // Clear color selection when brand changes
+              setColor("");
+            }}
             options={brands.map((b) => ({
               value: String(b.id),
               label: b.name,
@@ -394,7 +427,9 @@ export default function ProductCustomizer() {
             Select color {selectedProductType?.is_onlyType && "(Disabled)"}
           </Label>
           <Combobox
-            placeholder={loadingColors ? "Loading colors..." : "Select color"}
+            placeholder={
+              loadingBrandColors ? "Loading colors..." : "Select color"
+            }
             value={color}
             onValueChange={setColor}
             options={colors.map((c) => ({
@@ -403,14 +438,18 @@ export default function ProductCustomizer() {
             }))}
             className="w-full"
             disabled={
-              loadingColors ||
+              loadingBrandColors ||
               colors.length === 0 ||
               selectedProductType?.is_onlyType ||
-              !selectedProductType
+              !brand
             }
-            loading={loadingColors}
+            loading={loadingBrandColors}
             emptyText={
-              colors.length === 0 ? "No colors available" : "No color found."
+              !brand
+                ? "Select a brand first"
+                : colors.length === 0
+                  ? "No colors available for this brand"
+                  : "No color found."
             }
           />
         </div>
