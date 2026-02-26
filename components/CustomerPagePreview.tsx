@@ -104,6 +104,45 @@ export default function CustomersTab() {
       ? customers.some((customer) => customer.hasBrands)
       : true;
 
+  const filterOrdersByValues = (orders: any[]) => {
+    return orders.filter((order) => {
+      const brandType = order.brand_type?.[0];
+
+      // Check product type filter
+      if (filterValues.product_type && brandType?.product_type?.name) {
+        if (brandType.product_type.name !== filterValues.product_type.name) {
+          return false;
+        }
+      }
+
+      // Check brand filter
+      if (filterValues.brand && brandType?.brands?.name) {
+        if (brandType.brands.name !== filterValues.brand.name) {
+          return false;
+        }
+      }
+
+      // Check color filter
+      if (filterValues.color && order.colors?.[0]?.value) {
+        if (order.colors[0].value !== filterValues.color.value) {
+          return false;
+        }
+      }
+
+      // Check size filter
+      if (filterValues.size && order.product_sizes) {
+        const hasMatchingSize = order.product_sizes.some(
+          (ps: any) => ps.sizes?.value === filterValues.size?.value,
+        );
+        if (!hasMatchingSize) {
+          return false;
+        }
+      }
+
+      return true;
+    });
+  };
+
   const fetchCustomerOrders = async (customerId: string) => {
     const customer = customers.find((c) => c.id === customerId);
 
@@ -119,12 +158,15 @@ export default function CustomersTab() {
       const orders = await axios.get(`/api/customers/${customerId.toString()}`);
       const customerOrders = orders.data.data;
 
+      // Filter orders based on current filter values
+      const filteredOrders = filterOrdersByValues(customerOrders);
+
       setCustomers((prev) =>
         prev.map((c) =>
           c.id === customerId
             ? {
                 ...c,
-                orders: customerOrders,
+                orders: filteredOrders,
                 isLoadingOrders: false,
                 ordersLoaded: true,
               }
@@ -176,6 +218,22 @@ export default function CustomersTab() {
 
   useEffect(() => {
     fetchCustomers();
+  }, [
+    filterValues.product_type,
+    filterValues.brand,
+    filterValues.size,
+    filterValues.color,
+  ]);
+
+  // Reset ordersLoaded when filters change to force refetch with new filters
+  useEffect(() => {
+    setCustomers((prev) =>
+      prev.map((c) => ({
+        ...c,
+        ordersLoaded: false,
+        orders: [],
+      })),
+    );
   }, [
     filterValues.product_type,
     filterValues.brand,
