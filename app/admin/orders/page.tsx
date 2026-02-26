@@ -14,13 +14,16 @@ import {
   Package,
   RefreshCw,
   Phone,
+  Download,
+  Check,
 } from "lucide-react";
 import AdminSidebar from "../../components/AdminSidebar";
 import OrdersPageSkeleton from "../../../components/OrdersPageSkeleton";
 import OrderProductPreview from "../../../components/OrderProductPreview";
 import axios from "axios";
 import { useToast } from "@/contexts/ToastContext";
-
+import { PDFDownloadLink } from "@react-pdf/renderer";
+import OrderReceiptPDF from "@/app/components/receipts/OrderReceiptPDF";
 
 export default function OrdersPage() {
   const { data: session, status } = useSession();
@@ -32,24 +35,29 @@ export default function OrdersPage() {
   const router = useRouter();
   const currentPath = usePathname();
   const { addToast } = useToast();
-  const [sendingEmailIds, setSendingEmailIds] = useState<Set<string>>(new Set());
-
+  const [cooldownIds, setCooldownIds] = useState<Set<string>>(new Set());
+  const [sendingEmailIds, setSendingEmailIds] = useState<Set<string>>(
+    new Set(),
+  );
 
   // Initialize theme on component mount
   useEffect(() => {
-    const savedTheme = localStorage.getItem('admin-theme') as 'light' | 'dark' | 'system';
+    const savedTheme = localStorage.getItem("admin-theme") as
+      | "light"
+      | "dark"
+      | "system";
     const root = document.documentElement;
 
-    if (savedTheme === 'dark') {
-      root.classList.add('dark');
-    } else if (savedTheme === 'light') {
-      root.classList.remove('dark');
+    if (savedTheme === "dark") {
+      root.classList.add("dark");
+    } else if (savedTheme === "light") {
+      root.classList.remove("dark");
     } else {
       // System theme
-      if (window.matchMedia('(prefers-color-scheme: dark)').matches) {
-        root.classList.add('dark');
+      if (window.matchMedia("(prefers-color-scheme: dark)").matches) {
+        root.classList.add("dark");
       } else {
-        root.classList.remove('dark');
+        root.classList.remove("dark");
       }
     }
   }, []);
@@ -92,7 +100,28 @@ export default function OrdersPage() {
       });
     }
   };
+  const handleDownload = (orderId: string) => {
+    setTimeout(() => {
+      // Add to cooldown
+      setCooldownIds((prev) => {
+        const next = new Set(prev);
+        next.add(orderId);
+        return next;
+      });
 
+      // Remove from cooldown after 3 seconds
+      setTimeout(() => {
+        setCooldownIds((prev) => {
+          const next = new Set(prev);
+          next.delete(orderId);
+          return next;
+        });
+      }, 3000);
+
+      // Show success message
+      addToast("success", "Receipt downloaded successfully");
+    }, 100); // small delay so react-pdf can trigger first
+  };
   useEffect(() => {
     // Check if user is authenticated and is admin
     if (status === "loading") return; // Still loading session
@@ -146,11 +175,11 @@ export default function OrdersPage() {
         <AdminSidebar
           user={null}
           sidebarOpen={false}
-          setSidebarOpen={() => { }}
-          onLogout={() => { }}
-          onNavigate={() => { }}
+          setSidebarOpen={() => {}}
+          onLogout={() => {}}
+          onNavigate={() => {}}
           isCollapsed={false}
-          onToggleCollapse={() => { }}
+          onToggleCollapse={() => {}}
           currentPath="/admin/orders"
         />
         <div className="flex-1 lg:ml-64 lg:pt-0 pt-16">
@@ -243,7 +272,7 @@ export default function OrdersPage() {
               size="icon"
               onClick={handleRefresh}
               disabled={refreshing}
-              className="rounded-full h-8 w-8 sm:h-10 sm:w-10 text-gray-400 hover:bg-gray-200 hover:text-gray-900 transition-colors shrink-0"
+              className=" h-8 w-8 sm:h-10 sm:w-10 text-gray-400 hover:bg-gray-200 hover:text-gray-900 transition-colors shrink-0"
             >
               <RefreshCw
                 className={`h-4 w-4 sm:h-5 sm:w-5 ${refreshing ? "animate-spin" : ""}`}
@@ -268,6 +297,14 @@ export default function OrdersPage() {
               orders.map((order) => {
                 const customer = getCustomerInfo(order.customers);
                 const totalQuantity = getTotalQuantity(order);
+                const customerName =
+                  customer?.name
+                    ?.trim()
+                    .toLowerCase()
+                    .replace(/\s+/g, "-") // replace ALL spaces (1 or more) with single -
+                    .replace(/[^a-z0-9-]/g, "") // remove special characters
+                    .replace(/-+/g, "-") // remove duplicate dashes
+                    .replace(/^-|-$/g, "") || "unknown-customer"; // remove leading/trailing dash
 
                 return (
                   <Card
@@ -281,22 +318,54 @@ export default function OrdersPage() {
                           <h3 className="text-base lg:text-lg font-semibold text-gray-900 dark:text-white mb-3 sm:mb-4">
                             Product Design
                           </h3>
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={() => handleSendPickupEmail(order.id)}
-                            disabled={sendingEmailIds.has(order.id)}
-                            className="rounded-full h-10 w-fit sm:h-10 sm:w-fit text-gray-900 hover:bg-gray-200 transition-colors shrink-0 gap-2 cursor-pointer"
-                          >
-                            <Mail
-                              className={`h-4 w-4 sm:h-5 sm:w-5 ${sendingEmailIds.has(order.id) ? "animate-pulse" : ""}`}
-                            />
-                            <span>  
-                              {sendingEmailIds.has(order.id)
-                                ? "Sending..."
-                                : "Send Pickup Email"}
-                            </span>
-                          </Button>
+                          <div className="flex items-center gap-2">
+                            {cooldownIds.has(order.id) ? (
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                disabled
+                                className=" h-10 w-fit sm:h-10 sm:w-fit shrink-0 gap-2 hover:bg-green-50 hover:text-green-500 cursor-not-allowed bg-green-50 border-green-500"
+                              >
+                                <Check
+                                  className={`h-4 w-4 sm:h-5 sm:w-5 text-green-500`}
+                                />
+                                <span className="text-green-500">
+                                  Downloaded
+                                </span>
+                              </Button>
+                            ) : (
+                              <PDFDownloadLink
+                                document={<OrderReceiptPDF order={order} />}
+                                fileName={`${customerName} - ${order.id}.pdf`}
+                              >
+                                <Button
+                                  variant="outline"
+                                  size="sm"
+                                  onClick={() => handleDownload(order.id)}
+                                  className="h-10 w-fit sm:h-10 sm:w-fit text-gray-900 hover:bg-gray-200 transition-colors shrink-0 gap-2 cursor-pointer"
+                                >
+                                  <Download className="h-4 w-4 sm:h-5 sm:w-5" />
+                                  <span>Download Receipt</span>
+                                </Button>
+                              </PDFDownloadLink>
+                            )}
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={() => handleSendPickupEmail(order.id)}
+                              disabled={sendingEmailIds.has(order.id)}
+                              className=" h-10 w-fit sm:h-10 sm:w-fit text-gray-900 hover:bg-gray-200 transition-colors shrink-0 gap-2 cursor-pointer"
+                            >
+                              <Mail
+                                className={`h-4 w-4 sm:h-5 sm:w-5 ${sendingEmailIds.has(order.id) ? "animate-pulse" : ""}`}
+                              />
+                              <span>
+                                {sendingEmailIds.has(order.id)
+                                  ? "Sending..."
+                                  : "Send Pickup Email"}
+                              </span>
+                            </Button>
+                          </div>
                         </div>
                         <OrderProductPreview order={order} />
                       </div>
