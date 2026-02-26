@@ -17,6 +17,7 @@ import {
   ImageIcon,
   File,
   X,
+  Download,
 } from "lucide-react";
 import { CustomerWithOrders } from "@/types/customer";
 import { Badge } from "@/components/ui/badge";
@@ -69,6 +70,8 @@ export default function CustomersTab() {
   );
   const [isGeneratingPdf, setIsGeneratingPdf] = useState(false);
   const [cooldownIds, setCooldownIds] = useState<Set<string>>(new Set());
+  const [isGeneratingCsv, setIsGeneratingCsv] = useState(false);
+  const [csvCooldownIds, setCsvCooldownIds] = useState<Set<string>>(new Set());
   const { addToast } = useToast();
   const [filterValues, setFilterValues] = useState<FilterValues>({
     product_type: null,
@@ -145,6 +148,75 @@ export default function CustomersTab() {
 
     // Show success message
     addToast("success", "Customer report downloaded successfully");
+  };
+
+  const handleCsvDownload = () => {
+    const csvId = "customer-table-csv";
+
+    // Check if this CSV is on cooldown
+    if (csvCooldownIds.has(csvId)) {
+      return;
+    }
+
+    // Add to cooldown immediately
+    setCsvCooldownIds((prev) => {
+      const next = new Set(prev);
+      next.add(csvId);
+      return next;
+    });
+
+    // Remove from cooldown after 3 seconds
+    setTimeout(() => {
+      setCsvCooldownIds((prev) => {
+        const next = new Set(prev);
+        next.delete(csvId);
+        return next;
+      });
+    }, 3000);
+
+    // Generate CSV content
+    const headers = [
+      "Name",
+      "Email",
+      "Contact",
+      "Order ID",
+      "Product Type",
+      "Brand",
+      "Size",
+      "Color",
+      "Date",
+    ];
+
+    const csvContent = [
+      headers.join(","),
+      ...processedOrders.map((order) =>
+        [
+          `"${order.customerName}"`,
+          `"${order.customerEmail}"`,
+          `"${order.customerContact}"`,
+          `"${order.orderId !== "N/A" ? `#${order.orderId.toString().slice(-6)}` : "N/A"}"`,
+          `"${order.productType}"`,
+          `"${order.brand}"`,
+          `"${order.size}"`,
+          `"${order.color}"`,
+          `"${order.date}"`,
+        ].join(","),
+      ),
+    ].join("\n");
+
+    // Create and download CSV file
+    const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
+    const link = document.createElement("a");
+    const url = URL.createObjectURL(blob);
+    link.setAttribute("href", url);
+    link.setAttribute("download", "customer-table.csv");
+    link.style.visibility = "hidden";
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+
+    // Show success message
+    addToast("success", "Customer CSV downloaded successfully");
   };
 
   const fetchOrdersForPdf = async () => {
@@ -387,39 +459,59 @@ export default function CustomersTab() {
           <CardTitle className="text-lg sm:text-2xl">
             Customer Management
           </CardTitle>
-          {isGeneratingPdf ? (
-            <Button className="" variant="outline" disabled>
-              <File className="mr-2 h-4 w-4 animate-spin" /> Generating PDF...
-            </Button>
-          ) : processedOrders.length > 0 ? (
-            <PDFDownloadLink
-              document={
-                <CustomerTableReceipt
-                  processedOrders={processedOrders}
-                  filterValues={filterValues}
-                />
-              }
-              fileName="customer-table.pdf"
-            >
-              {({ loading }) => (
-                <Button
-                  className=""
-                  variant="outline"
-                  disabled={loading || cooldownIds.has("customer-table-pdf")}
-                  onClick={handleDownload}
-                >
-                  <File className="mr-2 h-4 w-4" />
-                  {cooldownIds.has("customer-table-pdf")
-                    ? "Please wait..."
-                    : "Download PDF"}
-                </Button>
-              )}
-            </PDFDownloadLink>
-          ) : (
-            <Button className="" variant="outline" onClick={fetchOrdersForPdf}>
-              <File className="mr-2 h-4 w-4" /> Prepare PDF
-            </Button>
-          )}
+          <div className="flex gap-2">
+            {isGeneratingPdf ? (
+              <Button className="" variant="outline" disabled>
+                <File className="mr-2 h-4 w-4 animate-spin" /> Generating PDF...
+              </Button>
+            ) : processedOrders.length > 0 ? (
+              <PDFDownloadLink
+                document={
+                  <CustomerTableReceipt
+                    processedOrders={processedOrders}
+                    filterValues={filterValues}
+                  />
+                }
+                fileName="customer-table.pdf"
+              >
+                {({ loading }) => (
+                  <Button
+                    className=""
+                    variant="outline"
+                    disabled={loading || cooldownIds.has("customer-table-pdf")}
+                    onClick={handleDownload}
+                  >
+                    <File className="mr-2 h-4 w-4" />
+                    {cooldownIds.has("customer-table-pdf")
+                      ? "Please wait..."
+                      : "Download PDF"}
+                  </Button>
+                )}
+              </PDFDownloadLink>
+            ) : (
+              <Button
+                className=""
+                variant="outline"
+                onClick={fetchOrdersForPdf}
+              >
+                <File className="mr-2 h-4 w-4" /> Prepare PDF & CSV
+              </Button>
+            )}
+
+            {processedOrders.length > 0 && (
+              <Button
+                className=""
+                variant="outline"
+                disabled={csvCooldownIds.has("customer-table-csv")}
+                onClick={handleCsvDownload}
+              >
+                <Download className="mr-2 h-4 w-4" />
+                {csvCooldownIds.has("customer-table-csv")
+                  ? "Please wait..."
+                  : "Download CSV"}
+              </Button>
+            )}
+          </div>
         </div>
         {filtersDataIsLoading ? (
           <div className="flex items-center gap-2 w-full mt-4 overflow-y-auto p-2">
