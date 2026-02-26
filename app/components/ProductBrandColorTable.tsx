@@ -207,6 +207,7 @@ export default function ProductBrandColorTable({
             id: brandType.id,
             brands: { name: brandName },
             product_type: { name: productTypeName },
+            brand_id: brandType.brand_id,
           },
           colorId: 0, // Will be set when colors are added
         });
@@ -299,6 +300,8 @@ export default function ProductBrandColorTable({
               brand_type: brandTypeRef,
               brandT_id: brand.brandTypeId,
               color_id: colorId,
+              brand_name: brandTypeRef.brands?.name || "Unknown",
+              color_name: value,
             });
           }
         });
@@ -366,6 +369,8 @@ export default function ProductBrandColorTable({
             brand_type: brandTypeRef,
             brandT_id: brandTypeId,
             color_id: colorId, // Use the actual colorId passed from the checkbox
+            brand_name: brandTypeRef.brands?.name || "Unknown",
+            color_name: color,
           },
         ];
       }

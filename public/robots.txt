@@ -11,6 +11,7 @@ Allow: /
 Disallow: /admin/
 Disallow: /login
 Disallow: /api/
+Crawl-delay: 1
 
 # Host
 Host: https://print-pro-pi.vercel.app
