@@ -3,13 +3,7 @@
 import React, { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Menu, X } from "lucide-react";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
+import { Combobox } from "@/components/ui/combobox";
 import { Label } from "@/components/ui/label";
 import { ProductType, Brand, Color } from "@/types/product";
 import SizingAndQuantity from "@/components/SizingAndQuantity";
@@ -331,7 +325,12 @@ export default function ProductCustomizer() {
           >
             Product Type
           </Label>
-          <Select
+          <Combobox
+            placeholder={
+              loadingProductTypes
+                ? "Loading product types..."
+                : "Select product type"
+            }
             value={productType}
             onValueChange={(value) => {
               setProductType(value);
@@ -343,35 +342,14 @@ export default function ProductCustomizer() {
               setBrand("");
               setColor("");
             }}
+            options={productTypes.map((type) => ({
+              value: type.id.toString(),
+              label: type.name,
+            }))}
+            className="w-full"
             disabled={loadingProductTypes}
-          >
-            <SelectTrigger id="product-type">
-              <SelectValue
-                placeholder={
-                  loadingProductTypes
-                    ? "Loading product types..."
-                    : "Select product type"
-                }
-              />
-            </SelectTrigger>
-            <SelectContent>
-              {loadingProductTypes ? (
-                <div className="p-2">
-                  <div className="flex items-center space-x-2">
-                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-gray-900"></div>
-                    <span className="text-sm">Loading...</span>
-                  </div>
-                </div>
-              ) : (
-                Array.isArray(productTypes) &&
-                productTypes.map((type) => (
-                  <SelectItem key={type.id} value={type.id.toString()}>
-                    {type.name}
-                  </SelectItem>
-                ))
-              )}
-            </SelectContent>
-          </Select>
+            loading={loadingProductTypes}
+          />
         </div>
 
         {/* Brand */}
@@ -384,43 +362,25 @@ export default function ProductCustomizer() {
           >
             Brand {selectedProductType?.is_onlyType && "(Disabled)"}
           </Label>
-          <Select
+          <Combobox
+            placeholder={loadingBrands ? "Loading brands..." : "Select brand"}
             value={brand}
             onValueChange={setBrand}
+            options={brands.map((b) => ({
+              value: String(b.id),
+              label: b.name,
+            }))}
+            className="w-full"
             disabled={
               loadingBrands ||
               brands.length === 0 ||
               selectedProductType?.is_onlyType
             }
-          >
-            <SelectTrigger id="brand">
-              <SelectValue
-                placeholder={
-                  loadingBrands ? "Loading brands..." : "Select brand"
-                }
-              />
-            </SelectTrigger>
-            <SelectContent>
-              {loadingBrands ? (
-                <div className="p-2">
-                  <div className="flex items-center space-x-2">
-                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-gray-900"></div>
-                    <span className="text-sm">Loading brands...</span>
-                  </div>
-                </div>
-              ) : brands.length === 0 ? (
-                <SelectItem value="none" disabled>
-                  No brands available
-                </SelectItem>
-              ) : (
-                brands.map((b) => (
-                  <SelectItem key={b.id} value={String(b.id)}>
-                    {b.name}
-                  </SelectItem>
-                ))
-              )}
-            </SelectContent>
-          </Select>
+            loading={loadingBrands}
+            emptyText={
+              brands.length === 0 ? "No brands available" : "No brand found."
+            }
+          />
         </div>
 
         {/* Select Color */}
@@ -433,44 +393,26 @@ export default function ProductCustomizer() {
           >
             Select color {selectedProductType?.is_onlyType && "(Disabled)"}
           </Label>
-          <Select
+          <Combobox
+            placeholder={loadingColors ? "Loading colors..." : "Select color"}
             value={color}
             onValueChange={setColor}
+            options={colors.map((c) => ({
+              value: String(c.id),
+              label: c.value,
+            }))}
+            className="w-full"
             disabled={
               loadingColors ||
               colors.length === 0 ||
               selectedProductType?.is_onlyType ||
               !selectedProductType
             }
-          >
-            <SelectTrigger id="color">
-              <SelectValue
-                placeholder={
-                  loadingColors ? "Loading colors..." : "Select color"
-                }
-              />
-            </SelectTrigger>
-            <SelectContent>
-              {loadingColors ? (
-                <div className="p-2">
-                  <div className="flex items-center space-x-2">
-                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-gray-900"></div>
-                    <span className="text-sm">Loading colors...</span>
-                  </div>
-                </div>
-              ) : colors.length === 0 ? (
-                <SelectItem value="none" disabled>
-                  No colors available
-                </SelectItem>
-              ) : (
-                colors.map((c) => (
-                  <SelectItem key={c.id} value={String(c.id)}>
-                    {c.value}
-                  </SelectItem>
-                ))
-              )}
-            </SelectContent>
-          </Select>
+            loading={loadingColors}
+            emptyText={
+              colors.length === 0 ? "No colors available" : "No color found."
+            }
+          />
         </div>
 
         {/* Place Your Assets */}
