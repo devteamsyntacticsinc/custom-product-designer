@@ -20,7 +20,10 @@ export default function OrdersPageSkeleton() {
             <div className="space-y-6">
               {/* Product Preview Skeleton */}
               <div>
-                <Skeleton className="h-6 w-32 mb-4" />
+                <div className="flex items-center justify-between gap-2">
+                  <Skeleton className="h-6 w-32 mb-4" />
+                  <Skeleton className="h-6 w-32 mb-4" />
+                </div>
                 <div className="relative w-full aspect-square sm:h-96 bg-muted rounded-lg overflow-hidden">
                   <Skeleton className="w-full h-full" />
                 </div>

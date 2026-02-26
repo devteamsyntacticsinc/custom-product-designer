@@ -39,7 +39,31 @@ export interface ProductType {
   name: string;
   is_Active?: boolean;
   is_onlyType?: boolean;
+  image_products?: ImageProducts[];
 }
+
+export interface ImageProducts {
+  id: number;
+  producT_id: number;
+  filepath: string;
+  is_hasBack: boolean;
+}
+
+// Image tracking for product type updates
+export interface ExistingImage {
+  id: number;
+  filepath: string;
+  is_hasBack: boolean;
+  _isExisting: true;
+}
+
+export interface NewImage {
+  file: File;
+  is_hasBack: boolean;
+  _isExisting: false;
+}
+
+export type ProductImage = ExistingImage | NewImage;
 
 export interface Size {
   id: number;
@@ -50,12 +74,13 @@ export interface Size {
 export interface OrderData {
   // IDs for database operations
   productTypeId: string;
-  brandId: string;
-  colorId: string;
+  brandId: string | null;
+  colorId: string | null;
   // Display names for email
   productType: string;
   brand: string;
   color: string;
+  is_onlyType?: boolean;
   sizeSelection: { size: string; quantity: number }[];
   assets: Record<string, File | null>;
   contactInformation: {

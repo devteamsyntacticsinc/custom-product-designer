@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -31,8 +31,8 @@ import {
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
-import { Edit, Trash2, Plus } from "lucide-react";
-import { ProductType } from "@/types/product";
+import { Edit, Trash2, Plus, Upload, X } from "lucide-react";
+import { ProductType, ProductImage } from "@/types/product";
 import {
   Dialog,
   DialogClose,
@@ -44,10 +44,54 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 import { useToast } from "@/contexts/ToastContext";
+import axios from "axios";
+import Image from "next/image";
+
+export const validateImageClient = (file: File): Promise<void> => {
+  const MIN_RATIO = 0.85;
+  const MAX_RATIO = 1.15;
+  const MIN_SIZE = 200;
+
+  return new Promise((resolve, reject) => {
+    const img = document.createElement("img");
+    const objectUrl = URL.createObjectURL(file);
+
+    img.onload = () => {
+      const { width, height } = img;
+      const ratio = width / height;
+
+      URL.revokeObjectURL(objectUrl);
+
+      if (width < MIN_SIZE || height < MIN_SIZE) {
+        reject(
+          new Error("Image must have at least 200 width x 200 height pixels."),
+        );
+        return;
+      }
+
+      if (ratio < MIN_RATIO || ratio > MAX_RATIO) {
+        reject(
+          new Error(
+            "Image must be square (equal width and height) or near-square (at least 85% match).",
+          ),
+        );
+        return;
+      }
+
+      resolve();
+    };
+
+    img.onerror = () => {
+      reject(new Error("Invalid image file."));
+    };
+
+    img.src = objectUrl;
+  });
+};
 
 export default function ProductTypesTab() {
   const [productTypes, setProductTypes] = useState<
-    (ProductType & { is_Active: boolean; is_onlyType: boolean })[]
+    (ProductType & { images: { file: File; is_hasBack: boolean }[] })[]
   >([]);
   const [isFetchingProductTypes, setIsFetchingProductTypes] = useState(false);
   const [isMutating, setIsMutating] = useState(false);
@@ -59,21 +103,13 @@ export default function ProductTypesTab() {
       setError(null);
       setIsFetchingProductTypes(true);
 
-      // Add cache-busting timestamp to prevent stale data
-      const timestamp = Date.now();
-      const response = await fetch(`/api/product-types?t=${timestamp}`, {
-        cache: "no-store", // Prevent browser caching
-        headers: {
-          "Cache-Control": "no-cache",
-          Pragma: "no-cache",
-        },
-      });
+      const response = await axios.get(`/api/product-types`);
 
-      if (!response.ok) {
+      if (!response.data) {
         throw new Error("Failed to fetch product types");
       }
 
-      const productTypes = await response.json();
+      const productTypes = response.data;
       setProductTypes(productTypes);
     } catch (error) {
       console.log(error);
@@ -88,50 +124,74 @@ export default function ProductTypesTab() {
   }, []);
 
   const handleSubmitProductType = async (
-    payload: ProductType & { is_Active: boolean; is_onlyType: boolean },
+    payload: ProductType & {
+      images: { file: File; is_hasBack: boolean }[];
+      imagesToDelete?: number[];
+      existingImages?: { id: number; filepath: string; is_hasBack: boolean }[];
+    },
   ) => {
     setIsMutating(true);
     try {
+      const formData = new FormData();
+
+      // Append basic product type data
+      formData.append("id", payload.id.toString());
+      formData.append("name", payload.name);
+      formData.append("is_Active", (payload.is_Active ?? true).toString());
+      formData.append("is_onlyType", (payload.is_onlyType ?? false).toString());
+
+      // Append images with their metadata
+      payload.images.forEach((imageData, index) => {
+        formData.append(`images[${index}].file`, imageData.file);
+        formData.append(
+          `images[${index}].is_hasBack`,
+          imageData.is_hasBack.toString(),
+        );
+      });
+
+      // Append images to delete
+      if (payload.imagesToDelete && payload.imagesToDelete.length > 0) {
+        payload.imagesToDelete.forEach((imageId, index) => {
+          formData.append(`imagesToDelete[${index}]`, imageId.toString());
+        });
+      }
+
       if (payload.id) {
         // UPDATE
-        const res = await fetch(`/api/product-types`, {
-          method: "PUT",
+        const response = await axios.put("/api/product-types", formData, {
           headers: {
-            "Content-Type": "application/json",
+            "Content-Type": "multipart/form-data",
           },
-          body: JSON.stringify({ ...payload, id: payload.id.toString() }),
         });
-
-        // Check HTTP status
-        if (!res.ok) {
-          const errorData = await res.json();
-          throw new Error(errorData?.error || "Failed to update product type");
+        if (!response.data) {
+          throw new Error("Failed to update product type");
         }
+
         addToast("success", "Product type updated successfully");
       } else {
         // SAVE
-        const res = await fetch("/api/product-types", {
-          method: "POST",
+        const response = await axios.post("/api/product-types", formData, {
           headers: {
-            "Content-Type": "application/json",
+            "Content-Type": "multipart/form-data",
           },
-          body: JSON.stringify(payload),
         });
-        // Check HTTP status
-        if (!res.ok) {
-          const errorData = await res.json();
-          throw new Error(errorData?.error || "Failed to save product type");
+        if (!response.data) {
+          throw new Error("Failed to save product type");
         }
+
         addToast("success", "Product type saved successfully");
       }
 
       await fetchProductTypes();
     } catch (error) {
       console.error(error);
-      addToast(
-        "error",
-        error instanceof Error ? error.message : "Failed to save product type",
-      );
+      const errorMessage = axios.isAxiosError(error)
+        ? error.response?.data?.error || error.message
+        : error instanceof Error
+          ? error.message
+          : "Failed to save product type";
+
+      addToast("error", errorMessage);
     } finally {
       setIsMutating(false);
     }
@@ -307,14 +367,103 @@ function ProductTypeSheet({
 }: {
   children: React.ReactNode;
   mode: "create" | "edit";
-  initialData?: ProductType & { is_Active: boolean; is_onlyType: boolean };
-  onSubmit: (data: ProductType & { is_Active: boolean; is_onlyType: boolean }) => Promise<void>;
+  initialData?: ProductType & {
+    image_products?: { id: number; filepath: string; is_hasBack: boolean }[];
+  };
+  onSubmit: (
+    data: ProductType & {
+      images: { file: File; is_hasBack: boolean }[];
+      imagesToDelete?: number[];
+      existingImages?: { id: number; filepath: string; is_hasBack: boolean }[];
+    },
+  ) => Promise<void>;
   isLoading: boolean;
 }) {
   const [name, setName] = useState("");
   const [open, onOpenChange] = useState(false);
   const [active, setActive] = useState(true);
   const [onlyType, setOnlyType] = useState(false);
+  const [assigned, setAssigned] = useState("");
+  const [imageValidationError, setImageValidationError] = useState("");
+  const [assets, setAssets] = useState<ProductImage[]>([]);
+  const [imagesToDelete, setImagesToDelete] = useState<number[]>([]);
+  const fileInputRefs = useRef<Record<string, HTMLInputElement | null>>({});
+
+  const handleFileChange = async (slotId: string, file: File | null) => {
+    if (file) {
+      if (assets.length >= 2) {
+        alert("Maximum of 2 images allowed.");
+        if (fileInputRefs.current[slotId]) {
+          fileInputRefs.current[slotId]!.value = "";
+        }
+        return;
+      }
+
+      // Validate image before processing
+      try {
+        await validateImageClient(file);
+        setImageValidationError(""); // Clear any previous validation errors
+      } catch (error) {
+        const errorMessage =
+          error instanceof Error ? error.message : "Invalid image file.";
+        setImageValidationError(errorMessage);
+        if (fileInputRefs.current[slotId]) {
+          fileInputRefs.current[slotId]!.value = "";
+        }
+        return;
+      }
+
+      const isFrontTaken = assets.some((a) => !a.is_hasBack);
+      const isBackTaken = assets.some((a) => a.is_hasBack);
+
+      let is_hasBack = false;
+      if (isFrontTaken && !isBackTaken) {
+        is_hasBack = true;
+      } else if (isFrontTaken && isBackTaken) {
+        if (fileInputRefs.current[slotId]) {
+          fileInputRefs.current[slotId]!.value = "";
+        }
+        return;
+      }
+
+      setAssets((prev) => [...prev, { file, is_hasBack, _isExisting: false }]);
+      if (fileInputRefs.current[slotId]) {
+        fileInputRefs.current[slotId]!.value = "";
+      }
+    }
+  };
+
+  const removeAsset = (index: number) => {
+    const assetToRemove = assets[index];
+
+    // If it's an existing image, add to delete list
+    if (assetToRemove._isExisting) {
+      setImagesToDelete((prev) => [...prev, assetToRemove.id]);
+    }
+
+    setAssets((prev) => prev.filter((_, i) => i !== index));
+  };
+
+  const togglePlacement = (index: number) => {
+    const nextIsBack = !assets[index].is_hasBack;
+
+    const updatedAssets = assets.map((a, i) =>
+      i === index ? { ...a, is_hasBack: nextIsBack } : a,
+    );
+
+    const frontCount = updatedAssets.filter((a) => !a.is_hasBack).length;
+    const backCount = updatedAssets.filter((a) => a.is_hasBack).length;
+
+    if (frontCount > 1 || backCount > 1) {
+      setAssigned(
+        "*Only one image should be assigned to the front or the back.",
+      );
+    } else {
+      setAssigned("");
+    }
+
+    setAssets(updatedAssets);
+  };
 
   const handleOpenChange = (nextOpen: boolean) => {
     onOpenChange(nextOpen);
@@ -323,20 +472,50 @@ function ProductTypeSheet({
       setName(initialData?.name ?? "");
       setActive(initialData?.is_Active ?? true);
       setOnlyType(initialData?.is_onlyType ?? false);
+      setImageValidationError(""); // Reset validation error when opening
+
+      // Load existing images for edit mode
+      if (mode === "edit" && initialData?.image_products) {
+        const existingImages: ProductImage[] = initialData.image_products.map(
+          (img) => ({
+            id: img.id || 0, // Fallback for safety
+            filepath: img.filepath,
+            is_hasBack: img.is_hasBack,
+            _isExisting: true,
+          }),
+        );
+        setAssets(existingImages);
+      } else {
+        setAssets([]);
+      }
+
+      setImagesToDelete([]);
     } else {
       setName("");
       setActive(true);
       setOnlyType(false);
+      setImageValidationError(""); // Reset validation error when closing
+      setAssets([]);
+      setImagesToDelete([]);
     }
   };
 
   const handleSubmit = async () => {
     try {
+      // Separate new images from existing ones
+      const newImages = assets.filter((asset) => !asset._isExisting) as {
+        file: File;
+        is_hasBack: boolean;
+      }[];
+
       await onSubmit({
         id: initialData?.id ?? 0,
         name,
         is_Active: active,
         is_onlyType: onlyType,
+        images: newImages,
+        imagesToDelete,
+        existingImages: assets.filter((asset) => asset._isExisting),
       });
       setName("");
       onOpenChange(false);
@@ -377,6 +556,150 @@ function ProductTypeSheet({
             />
           </div>
 
+          {name.length === 0 && (
+            <p className="text-red-500 text-sm italic">
+              *Product Type Name is required before saving.
+            </p>
+          )}
+
+          <div className="space-y-4">
+            <Label htmlFor="product-type-image" className="text-sm font-medium">
+              Product Type Images
+            </Label>
+            <Input
+              type="file"
+              accept="image/*"
+              className="hidden"
+              id="product-type-image-input"
+              ref={(el) => {
+                fileInputRefs.current["image"] = el;
+              }}
+              onChange={(e) =>
+                handleFileChange("image", e.target.files?.[0] || null)
+              }
+            />
+            <div
+              className={`group flex items-center justify-between p-3 rounded-xl border border-gray-200 transition-colors min-w-0 bg-gray-50/50 cursor-pointer ${assets.length < 2 ? "" : "hidden"}`}
+              onClick={() => {
+                if (assets.length < 2) {
+                  fileInputRefs.current["image"]?.click();
+                }
+              }}
+            >
+              <span className="text-sm truncate mr-2 text-gray-600">
+                Upload Product Type Image
+              </span>
+              <Upload className="w-6 h-6 text-gray-400 group-hover:text-gray-600 mb-2" />
+            </div>
+
+            {/* Image List */}
+            {assets.length > 0 && (
+              <div className="space-y-2 mt-4 max-h-[250px] overflow-y-auto pr-2 custom-scrollbar">
+                {assets.map((item, index) => (
+                  <div
+                    key={index}
+                    className="flex items-center justify-between p-2 rounded-lg border border-gray-200 bg-white"
+                  >
+                    <div className="flex items-center space-x-3 min-w-0 flex-1">
+                      <div className="w-10 h-10 rounded border border-gray-100 shrink-0 overflow-hidden flex items-center justify-center bg-gray-50">
+                        {item._isExisting ? (
+                          <Image
+                            src={item.filepath}
+                            alt="preview"
+                            width={40}
+                            height={40}
+                            className="max-w-full max-h-full object-contain"
+                          />
+                        ) : (
+                          <Image
+                            src={URL.createObjectURL(item.file)}
+                            alt="preview"
+                            width={40}
+                            height={40}
+                            className="max-w-full max-h-full object-contain"
+                          />
+                        )}
+                      </div>
+                      <div className="flex flex-col min-w-0">
+                        <span className="text-xs font-semibold text-gray-900 truncate">
+                          {item._isExisting
+                            ? `Existing ${item.is_hasBack ? "Back" : "Front"} Image`
+                            : item.file.name}
+                        </span>
+                        <div className="flex items-center space-x-1 mt-0.5">
+                          <span
+                            className={`text-[9px] px-1.5 py-0.5 rounded-full ${item.is_hasBack ? "bg-orange-50 text-orange-600 font-medium" : "bg-blue-50 text-blue-600 font-medium"}`}
+                          >
+                            {item.is_hasBack ? "Back" : "Front"}
+                          </span>
+                          {item._isExisting && (
+                            <span className="text-[9px] px-1.5 py-0.5 rounded-full bg-gray-100 text-gray-600 font-medium">
+                              Existing
+                            </span>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="flex items-center space-x-4 ml-4">
+                      <div className="flex items-center space-x-2">
+                        <span
+                          className={`text-[10px] ${!item.is_hasBack ? "text-gray-900 font-bold" : "text-gray-400"}`}
+                        >
+                          F
+                        </span>
+                        <Switch
+                          checked={item.is_hasBack}
+                          onCheckedChange={() => togglePlacement(index)}
+                          className="scale-75 data-[state=unchecked]:bg-primary"
+                        />
+                        <span
+                          className={`text-[10px] ${item.is_hasBack ? "text-gray-900 font-bold" : "text-gray-400"}`}
+                        >
+                          B
+                        </span>
+                      </div>
+
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          removeAsset(index);
+                        }}
+                        className="p-1 rounded-full hover:bg-red-50 text-red-500 transition-colors"
+                      >
+                        <X className="w-4 h-4" />
+                      </button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+          <p className="text-muted-foreground">
+            Need help? View a sample of an{" "}
+            <ImageDialogShowcase>
+              <span className="underline font-medium text-black cursor-pointer">
+                accepted image.{" "}
+              </span>
+            </ImageDialogShowcase>
+          </p>
+
+          {assigned && assets.length !== 0 && (
+            <p className="text-red-500 text-sm italic">{assigned}</p>
+          )}
+
+          {imageValidationError && (
+            <p className="text-red-500 text-sm italic">
+              {imageValidationError}
+            </p>
+          )}
+
+          {assets.length === 0 && (
+            <p className="text-red-500 text-sm italic">
+              *Product Type Image is required before saving.
+            </p>
+          )}
+
           <div className="flex flex-col">
             <Label htmlFor="product-type-name" className="text-sm">
               Is only Type
@@ -405,10 +728,16 @@ function ProductTypeSheet({
           </div>
         </div>
 
-        <SheetFooter className="mt-6 sm:mt-0">
+        <SheetFooter className="mt-6">
           <Button
             onClick={handleSubmit}
-            disabled={isLoading}
+            disabled={
+              isLoading ||
+              name.length === 0 ||
+              assets.length === 0 ||
+              assigned.length > 0 ||
+              imageValidationError.length > 0
+            }
             className="w-full sm:w-auto"
           >
             {isLoading
@@ -435,7 +764,9 @@ function DeleteDialog({
   children: React.ReactNode;
   isLoading: boolean;
   setIsLoading: (value: boolean) => void;
-  productType: ProductType & { is_Active: boolean; is_onlyType: boolean };
+  productType: ProductType & {
+    image_products?: { id: number; filepath: string; is_hasBack: boolean }[];
+  };
   fetchProductTypes: () => Promise<void>;
 }) {
   const { addToast } = useToast();
@@ -446,25 +777,38 @@ function DeleteDialog({
 
     setIsLoading(true);
     try {
-      const res = await fetch(`/api/product-types?id=${productType.id}`, {
-        method: "DELETE",
+      const formData = new FormData();
+      formData.append("id", productType.id.toString());
+
+      // If there are images to delete, add them to FormData
+      if (productType.image_products && productType.image_products.length > 0) {
+        productType.image_products.forEach((image, index) => {
+          formData.append(`imagesToDelete[${index}]`, image.id.toString());
+        });
+      }
+
+      const res = await axios.delete("/api/product-types", {
+        data: formData,
+        headers: {
+          "Content-Type": "multipart/form-data",
+        },
       });
 
-      if (!res.ok) {
-        const errorData = await res.json();
-        throw new Error(errorData?.error || "Failed to delete product type");
+      if (!res.data) {
+        throw new Error("Failed to delete product type");
       }
       await fetchProductTypes();
       addToast("success", "Product type deleted successfully");
       setOpen(false);
     } catch (error) {
       console.error(error);
-      addToast(
-        "error",
-        error instanceof Error
+      const errorMessage = axios.isAxiosError(error)
+        ? error.response?.data?.error || error.message
+        : error instanceof Error
           ? error.message
-          : "Failed to delete product type",
-      );
+          : "Failed to delete product type";
+
+      addToast("error", errorMessage);
       // Close dialog on error as well
       setOpen(false);
     } finally {
@@ -481,6 +825,13 @@ function DeleteDialog({
           <DialogDescription>
             This action cannot be undone. This will permanently delete your
             product type &quot;{productType.name}&quot;.
+            {productType.is_onlyType && (
+              <>
+                {" "}
+                Since this is an &quot;Only Type&quot; product, the system will
+                also check for and remove any unused brand type associations.
+              </>
+            )}
           </DialogDescription>
         </DialogHeader>
         <DialogFooter>
@@ -496,6 +847,43 @@ function DeleteDialog({
             {isLoading ? "Deleting..." : "Delete"}
           </Button>
         </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
+function ImageDialogShowcase({ children }: { children: React.ReactNode }) {
+  return (
+    <Dialog>
+      <DialogTrigger asChild>{children}</DialogTrigger>
+      <DialogContent className="max-w-[700px]!">
+        <DialogHeader>
+          <DialogTitle>Sample Accepted Image</DialogTitle>
+          <DialogDescription>
+            This is an example of an image that would be accepted for creating a
+            product type.
+          </DialogDescription>
+        </DialogHeader>
+        <figure className="size-[600px] mx-auto border">
+          <Image
+            src="https://tcxoekzhoslcfdotjgqg.supabase.co/storage/v1/object/public/product-images/mug.png"
+            alt="Mug Image"
+            width={600}
+            height={600}
+          />
+        </figure>
+        <div className="space-y-2">
+          <h3>Image Requirements</h3>
+          <ul className="list-disc list-inside space-y-1">
+            <li>Must be a PNG or JPG file</li>
+            <li>Must have a transparent background</li>
+            <li>Must be at least 200 x 200 pixels</li>
+            <li>
+              Image must be square (equal width and height) or near-square (at
+              least 85% match)
+            </li>
+          </ul>
+        </div>
       </DialogContent>
     </Dialog>
   );

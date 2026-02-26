@@ -56,11 +56,11 @@ export default function AdminSidebar({
         onClick={() => setSidebarOpen(false)}
       />
       <div
-        className={`${sidebarOpen ? "translate-x-0" : "-translate-x-full"} fixed inset-y-0 left-0 z-40 ${isCollapsed ? "w-16" : "w-64"} bg-white shadow-lg transform transition-all duration-300 ease-in-out lg:translate-x-0 lg:fixed lg:inset-0 lg:top-0 lg:left-0`}
+        className={`${sidebarOpen ? "translate-x-0" : "-translate-x-full"} fixed inset-y-0 left-0 z-40 ${isCollapsed ? "w-16" : "w-64"} bg-white dark:bg-gray-900 shadow-lg transform transition-all duration-300 ease-in-out lg:translate-x-0 lg:fixed lg:inset-0 lg:top-0 lg:left-0`}
       >
-        <div className="flex items-center justify-between h-16 px-6 border-b">
+        <div className="flex items-center justify-between h-16 px-6 border-b border-gray-200 dark:border-gray-700">
           {!isCollapsed && (
-            <h1 className="text-xl font-bold text-gray-900">Print Pro Admin</h1>
+            <h1 className="text-xl font-bold text-gray-900 dark:text-white">Print Pro Admin</h1>
           )}
           <div className="flex items-center gap-2">
             <Button
@@ -95,7 +95,7 @@ export default function AdminSidebar({
                 <Button
                   key={item.label}
                   variant={isActive ? "secondary" : "ghost"}
-                  className={`w-full cursor-pointer ${isCollapsed ? "justify-center" : "justify-start"} ${isActive ? "bg-gray-100 text-gray-900" : ""}`}
+                  className={`w-full cursor-pointer ${isCollapsed ? "justify-center" : "justify-start"} ${isActive ? "bg-gray-100 dark:bg-gray-800 text-gray-900 dark:text-white" : "text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800"}`}
                   onClick={() => onNavigate(item.href)}
                   title={isCollapsed ? item.label : undefined}
                 >
@@ -109,11 +109,11 @@ export default function AdminSidebar({
           </div>
         </nav>
 
-        <div className="absolute bottom-0 left-0 right-0 p-4 border-t">
+        <div className="absolute bottom-0 left-0 right-0 p-4 border-t border-gray-200 dark:border-gray-700">
           {!isCollapsed && user && (
             <div className="mb-4">
-              <p className="text-sm font-medium text-gray-900">{user.name}</p>
-              <p className="text-xs text-gray-500">{user.email}</p>
+              <p className="text-sm font-medium text-gray-900 dark:text-white">{user.name}</p>
+              <p className="text-xs text-gray-500 dark:text-gray-400">{user.email}</p>
               <Badge variant="secondary" className="mt-1">
                 Admin
               </Badge>
