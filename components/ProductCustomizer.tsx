@@ -3,15 +3,9 @@
 import React, { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Menu, X } from "lucide-react";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
+import { Combobox } from "@/components/ui/combobox";
 import { Label } from "@/components/ui/label";
-import { ProductType, Brand, Color } from "@/types/product";
+import { ProductType, Brand, Color, ColorProduct } from "@/types/product";
 import SizingAndQuantity from "@/components/SizingAndQuantity";
 import AssetUpload from "./AssetUpload";
 import { useAssets } from "@/contexts/AssetsContext";
@@ -49,6 +43,7 @@ export default function ProductCustomizer() {
   const [brands, setBrands] = useState<Brand[]>([]);
   const [loadingColors, setLoadingColors] = useState(false);
   const [colors, setColors] = useState<Color[]>([]);
+  const [loadingBrandColors, setLoadingBrandColors] = useState(false);
 
   const handleNext = () => {
     setCurrentStep("contact");
@@ -175,20 +170,48 @@ export default function ProductCustomizer() {
   }, [productType]);
 
   useEffect(() => {
-    const fetchColors = async () => {
+    // Clear colors when no brand is selected or is_onlyType is true
+    if (!brand || selectedProductType?.is_onlyType) {
+      setColors([]);
+      setColor("");
+      return;
+    }
+
+    const fetchBrandColors = async () => {
       try {
-        setLoadingColors(true);
-        const res = await fetch("/api/colors");
-        const data = await res.json();
-        setColors(Array.isArray(data) ? data : []);
+        setLoadingBrandColors(true);
+
+        // Fetch all color-brand relationships
+        const colorProductsRes = await fetch("/api/color-products");
+        const colorProducts = await colorProductsRes.json();
+
+        // Filter colors for the selected brand
+        const brandColorIds = colorProducts
+          .filter(
+            (item: ColorProduct) => item.brand_type.brand_id === Number(brand),
+          )
+          .map((item: ColorProduct) => item.color_id);
+
+        console.log("brandColorIds", brandColorIds);
+
+        // Fetch all colors and filter by brand-specific IDs
+        const colorsRes = await fetch("/api/colors");
+        const allColors = await colorsRes.json();
+        const filteredColors = allColors.filter((color: Color) =>
+          brandColorIds.includes(color.id),
+        );
+
+        setColors(filteredColors);
       } catch (error) {
-        console.error("Failed to fetch colors:", error);
+        console.error("Failed to fetch brand colors:", error);
+        setColors([]);
       } finally {
-        setLoadingColors(false);
+        setLoadingBrandColors(false);
       }
     };
-    fetchColors();
-  }, []);
+
+    fetchBrandColors();
+  }, [brand, selectedProductType?.is_onlyType]);
 
   // Render Contact Information step
   if (currentStep === "contact") {
@@ -331,7 +354,12 @@ export default function ProductCustomizer() {
           >
             Product Type
           </Label>
-          <Select
+          <Combobox
+            placeholder={
+              loadingProductTypes
+                ? "Loading product types..."
+                : "Select product type"
+            }
             value={productType}
             onValueChange={(value) => {
               setProductType(value);
@@ -343,35 +371,14 @@ export default function ProductCustomizer() {
               setBrand("");
               setColor("");
             }}
+            options={productTypes.map((type) => ({
+              value: type.id.toString(),
+              label: type.name,
+            }))}
+            className="w-full"
             disabled={loadingProductTypes}
-          >
-            <SelectTrigger id="product-type">
-              <SelectValue
-                placeholder={
-                  loadingProductTypes
-                    ? "Loading product types..."
-                    : "Select product type"
-                }
-              />
-            </SelectTrigger>
-            <SelectContent>
-              {loadingProductTypes ? (
-                <div className="p-2">
-                  <div className="flex items-center space-x-2">
-                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-gray-900"></div>
-                    <span className="text-sm">Loading...</span>
-                  </div>
-                </div>
-              ) : (
-                Array.isArray(productTypes) &&
-                productTypes.map((type) => (
-                  <SelectItem key={type.id} value={type.id.toString()}>
-                    {type.name}
-                  </SelectItem>
-                ))
-              )}
-            </SelectContent>
-          </Select>
+            loading={loadingProductTypes}
+          />
         </div>
 
         {/* Brand */}
@@ -384,43 +391,29 @@ export default function ProductCustomizer() {
           >
             Brand {selectedProductType?.is_onlyType && "(Disabled)"}
           </Label>
-          <Select
+          <Combobox
+            placeholder={loadingBrands ? "Loading brands..." : "Select brand"}
             value={brand}
-            onValueChange={setBrand}
+            onValueChange={(value) => {
+              setBrand(value);
+              // Clear color selection when brand changes
+              setColor("");
+            }}
+            options={brands.map((b) => ({
+              value: String(b.id),
+              label: b.name,
+            }))}
+            className="w-full"
             disabled={
               loadingBrands ||
               brands.length === 0 ||
               selectedProductType?.is_onlyType
             }
-          >
-            <SelectTrigger id="brand">
-              <SelectValue
-                placeholder={
-                  loadingBrands ? "Loading brands..." : "Select brand"
-                }
-              />
-            </SelectTrigger>
-            <SelectContent>
-              {loadingBrands ? (
-                <div className="p-2">
-                  <div className="flex items-center space-x-2">
-                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-gray-900"></div>
-                    <span className="text-sm">Loading brands...</span>
-                  </div>
-                </div>
-              ) : brands.length === 0 ? (
-                <SelectItem value="none" disabled>
-                  No brands available
-                </SelectItem>
-              ) : (
-                brands.map((b) => (
-                  <SelectItem key={b.id} value={String(b.id)}>
-                    {b.name}
-                  </SelectItem>
-                ))
-              )}
-            </SelectContent>
-          </Select>
+            loading={loadingBrands}
+            emptyText={
+              brands.length === 0 ? "No brands available" : "No brand found."
+            }
+          />
         </div>
 
         {/* Select Color */}
@@ -433,44 +426,32 @@ export default function ProductCustomizer() {
           >
             Select color {selectedProductType?.is_onlyType && "(Disabled)"}
           </Label>
-          <Select
+          <Combobox
+            placeholder={
+              loadingBrandColors ? "Loading colors..." : "Select color"
+            }
             value={color}
             onValueChange={setColor}
+            options={colors.map((c) => ({
+              value: String(c.id),
+              label: c.value,
+            }))}
+            className="w-full"
             disabled={
-              loadingColors ||
+              loadingBrandColors ||
               colors.length === 0 ||
               selectedProductType?.is_onlyType ||
-              !selectedProductType
+              !brand
             }
-          >
-            <SelectTrigger id="color">
-              <SelectValue
-                placeholder={
-                  loadingColors ? "Loading colors..." : "Select color"
-                }
-              />
-            </SelectTrigger>
-            <SelectContent>
-              {loadingColors ? (
-                <div className="p-2">
-                  <div className="flex items-center space-x-2">
-                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-gray-900"></div>
-                    <span className="text-sm">Loading colors...</span>
-                  </div>
-                </div>
-              ) : colors.length === 0 ? (
-                <SelectItem value="none" disabled>
-                  No colors available
-                </SelectItem>
-              ) : (
-                colors.map((c) => (
-                  <SelectItem key={c.id} value={String(c.id)}>
-                    {c.value}
-                  </SelectItem>
-                ))
-              )}
-            </SelectContent>
-          </Select>
+            loading={loadingBrandColors}
+            emptyText={
+              !brand
+                ? "Select a brand first"
+                : colors.length === 0
+                  ? "No colors available for this brand"
+                  : "No color found."
+            }
+          />
         </div>
 
         {/* Place Your Assets */}

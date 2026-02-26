@@ -44,8 +44,9 @@ export default function SettingsPage() {
       items: [
         { name: "Next.js", version: "16.1.6", description: "React framework" },
         { name: "React", version: "19.2.3", description: "UI library" },
-        { name: "TypeScript", version: "5.x", description: "Type safety" },
-        { name: "Tailwind CSS", version: "4.x", description: "Styling framework" },
+        { name: "React DOM", version: "19.2.3", description: "DOM renderer" },
+        { name: "TypeScript", version: "^5", description: "Type safety" },
+        { name: "Tailwind CSS", version: "4", description: "Styling framework" },
       ]
     },
     {
@@ -53,9 +54,14 @@ export default function SettingsPage() {
       icon: Palette,
       color: "text-purple-600",
       items: [
-        { name: "Radix UI", version: "1.x", description: "Headless components" },
+        { name: "Radix UI", version: "1.4.3", description: "Headless components" },
+        { name: "@radix-ui/react-dialog", version: "1.1.15", description: "Dialog components" },
+        { name: "@radix-ui/react-popover", version: "1.1.15", description: "Popover components" },
         { name: "Lucide React", version: "0.563.0", description: "Icon library" },
         { name: "shadcn/ui", version: "3.8.4", description: "Component library" },
+        { name: "class-variance-authority", version: "0.7.1", description: "Component variants" },
+        { name: "cmdk", version: "1.1.1", description: "Command menu" },
+        { name: "vaul", version: "1.1.2", description: "Drawer/modal" },
       ]
     },
     {
@@ -66,12 +72,22 @@ export default function SettingsPage() {
         { name: "NextAuth.js", version: "4.24.13", description: "Authentication" },
         { name: "Supabase", version: "2.95.3", description: "Database & Auth" },
         { name: "bcryptjs", version: "3.0.3", description: "Password hashing" },
+        { name: "nodemailer", version: "7.0.7", description: "Email sending" },
+      ]
+    },
+    {
+      category: "PDF & Media",
+      icon: Zap,
+      color: "text-orange-600",
+      items: [
+        { name: "@react-pdf/renderer", version: "4.3.2", description: "PDF generation" },
+        { name: "tw-animate-css", version: "1.4.0", description: "Tailwind animations" },
       ]
     },
     {
       category: "Utilities",
       icon: Zap,
-      color: "text-orange-600",
+      color: "text-indigo-600",
       items: [
         { name: "Axios", version: "1.13.5", description: "HTTP client" },
         { name: "clsx", version: "2.1.1", description: "Utility classes" },
@@ -188,36 +204,36 @@ export default function SettingsPage() {
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                   <Button
                     variant={theme === "light" ? "default" : "outline"}
-                    className="flex items-center gap-2 h-20 p-4"
+                    className="flex items-center gap-2 h-12 p-3"
                     onClick={() => handleThemeChange("light")}
                   >
-                    <Sun className="h-6 w-6" />
+                    <Sun className="h-4 w-4" />
                     <div className="text-left">
-                      <div className="font-medium">Light</div>
+                      <div className="font-medium text-sm">Light</div>
                       <div className="text-xs text-muted-foreground">Bright and clean</div>
                     </div>
                   </Button>
                   
                   <Button
                     variant={theme === "dark" ? "default" : "outline"}
-                    className="flex items-center gap-2 h-20 p-4"
+                    className="flex items-center gap-2 h-12 p-3"
                     onClick={() => handleThemeChange("dark")}
                   >
-                    <Moon className="h-6 w-6" />
+                    <Moon className="h-4 w-4" />
                     <div className="text-left">
-                      <div className="font-medium">Dark</div>
+                      <div className="font-medium text-sm">Dark</div>
                       <div className="text-xs text-muted-foreground">Easy on the eyes</div>
                     </div>
                   </Button>
                   
                   <Button
                     variant={theme === "system" ? "default" : "outline"}
-                    className="flex items-center gap-2 h-20 p-4"
+                    className="flex items-center gap-2 h-12 p-3"
                     onClick={() => handleThemeChange("system")}
                   >
-                    <Monitor className="h-6 w-6" />
+                    <Monitor className="h-4 w-4" />
                     <div className="text-left">
-                      <div className="font-medium">System</div>
+                      <div className="font-medium text-sm">System</div>
                       <div className="text-xs text-muted-foreground">Follow OS preference</div>
                     </div>
                   </Button>
@@ -246,7 +262,7 @@ export default function SettingsPage() {
                           {category.category}
                         </h3>
                       </div>
-                      <div className="space-y-2">
+                      <div className="space-y-2 max-h-90 overflow-y-auto scrollbar-hide ">
                         {category.items.map((item) => (
                           <div
                             key={item.name}

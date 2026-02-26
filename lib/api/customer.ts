@@ -1,10 +1,17 @@
 import { supabase } from "@/lib/supabase";
-import { CustomerWithOrders } from "@/types/customer";
+import { Customer, CustomerWithOrders, FilteredOrder } from "@/types/customer";
 
 export class CustomerService {
-  static async getCustomers(): Promise<CustomerWithOrders[]> {
+  static async getCustomers(filters?: {
+    product_type?: string;
+    brand?: string;
+    size?: string;
+    color?: string;
+    date_from?: string;
+    date_to?: string;
+  }): Promise<CustomerWithOrders[]> {
     try {
-      const { data, error } = await supabase
+      let query = supabase
         .from("customers")
         .select(
           `
@@ -17,6 +24,107 @@ export class CustomerService {
         )
         .order("name");
 
+      let filterData: FilteredOrder[];
+
+      // If filters are applied, we need to join with orders and filter
+      if (
+        filters &&
+        (filters.product_type ||
+          filters.brand ||
+          filters.size ||
+          filters.color ||
+          filters.date_from ||
+          filters.date_to)
+      ) {
+        // Build a single query with all necessary joins
+        const brandJoin = filters.brand
+          ? "brands!inner(id, name)"
+          : "brands(id, name)";
+        let selectQuery = `
+          customer_id,
+          brand_type!inner(
+            id,
+            ${brandJoin},
+            product_type!inner(id, name)
+          )
+        `;
+
+        // Add sizes join if size filter is present
+        if (filters.size) {
+          selectQuery += `,
+            product_sizes!inner(
+              productO_id,
+              sizes!inner(id, value)
+            )
+          `;
+        }
+
+        // Add colors join if color filter is present
+        if (filters.color) {
+          selectQuery += `,
+            colors!inner(id, value)
+          `;
+        }
+
+        // Add created_at to select for date filtering
+        if (filters.date_from || filters.date_to) {
+          selectQuery += `,
+            created_at
+          `;
+        }
+
+        let orderQuery = supabase.from("product_orders").select(selectQuery);
+
+        // Apply filter conditions
+        if (filters.product_type) {
+          orderQuery = orderQuery.eq(
+            "brand_type.product_type.name",
+            filters.product_type,
+          );
+        }
+        if (filters.brand) {
+          orderQuery = orderQuery.eq("brand_type.brands.name", filters.brand);
+        }
+        if (filters.size) {
+          orderQuery = orderQuery.eq("product_sizes.sizes.value", filters.size);
+        }
+        if (filters.color) {
+          orderQuery = orderQuery.eq("colors.value", filters.color);
+        }
+        if (filters.date_from) {
+          orderQuery = orderQuery.gte("created_at", filters.date_from);
+        }
+        if (filters.date_to) {
+          orderQuery = orderQuery.lte("created_at", filters.date_to);
+        }
+
+        const { data: filteredOrders, error: filterError } = await orderQuery;
+
+        if (filterError) {
+          console.error("Error filtering customers:", filterError);
+          return [];
+        }
+        if (!filteredOrders || filteredOrders.length === 0) {
+          return [];
+        }
+        filterData = filteredOrders as unknown as FilteredOrder[];
+        // Get unique customer IDs from filtered orders
+        const customerIds = [
+          ...new Set(
+            (filteredOrders as any[])?.map((o) => o.customer_id) || [],
+          ),
+        ];
+
+        if (customerIds.length === 0) {
+          return [];
+        }
+
+        // Fetch only customers who have matching orders
+        query = query.in("id", customerIds);
+      }
+
+      const { data, error } = await query;
+
       if (error) {
         console.error("Error fetching customers:", error);
         return [];
@@ -25,6 +133,9 @@ export class CustomerService {
       return (data || []).map((customer) => ({
         ...customer,
         orders: Array(customer.orders?.[0]?.count || 0).fill({}),
+        hasBrands: filterData?.some(
+          (order) => order.brand_type?.brands !== null,
+        ),
       })) as CustomerWithOrders[];
     } catch (error) {
       console.error("Error in getCustomers:", error);
