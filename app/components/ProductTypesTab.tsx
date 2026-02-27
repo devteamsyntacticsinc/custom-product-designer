@@ -598,7 +598,7 @@ function ProductTypeSheet({
                 {assets.map((item, index) => (
                   <div
                     key={index}
-                    className="flex items-center justify-between p-2 rounded-lg border border-gray-200 bg-white"
+                    className="flex items-center justify-between p-2 rounded-lg border border-gray-200 bg-background"
                   >
                     <div className="flex items-center space-x-3 min-w-0 flex-1">
                       <div className="w-10 h-10 rounded border border-gray-100 shrink-0 overflow-hidden flex items-center justify-center bg-gray-50">

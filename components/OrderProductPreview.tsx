@@ -49,7 +49,7 @@ const DesignArea = ({
 }: DesignAreaProps) => {
   return (
     <div
-      className={`absolute ${customClass} border-2 border-dashed border-gray-400 rounded flex items-center justify-center transform -translate-x-1/2 -translate-y-1/2 overflow-hidden bg-white/50 z-10 transition-all duration-200 ${imageUrl ? "cursor-pointer hover:border-primary hover:bg-white group" : ""}`}
+      className={`absolute ${customClass} border-2 border-dashed border-gray-400 rounded flex items-center justify-center transform -translate-x-1/2 -translate-y-1/2 overflow-hidden bg-background/50 z-10 transition-all duration-200 ${imageUrl ? "cursor-pointer hover:border-primary hover:bg-background group" : ""}`}
       onClick={() =>
         imageUrl &&
         onDownload(imageUrl, `${orderId}_${placement.replace(/\s+/g, "_")}.png`)
@@ -127,7 +127,7 @@ export default function OrderProductPreview({
   return (
     <div className="space-y-4">
       {/* Product Info & Actions */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 p-4 bg-white dark:bg-gray-700 border border-gray-100 dark:border-gray-800 rounded-xl shadow-sm">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 p-4 bg-background dark:bg-gray-700 border border-gray-100 dark:border-gray-800 rounded-xl shadow-sm">
         <div className="flex items-center gap-4 text-sm text-gray-600 dark:text-gray-400">
           <div className="flex flex-col">
             {shouldDisplayBrand && (

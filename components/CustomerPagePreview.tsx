@@ -1056,14 +1056,14 @@ export default function CustomersTab() {
                                     return (
                                       <div
                                         key={order.id}
-                                        className="bg-white dark:bg-gray-800 border dark:border-gray-700 rounded-xl overflow-hidden shadow-sm hover:shadow-md transition-shadow"
+                                        className="bg-background dark:bg-gray-800 border dark:border-gray-700 rounded-xl overflow-hidden shadow-sm hover:shadow-md transition-shadow"
                                       >
                                         {/* Order Header */}
                                         <div className="bg-gray-50/50 dark:bg-gray-700/50 px-4 py-3 border-b dark:border-gray-600 flex flex-wrap justify-between items-center gap-2">
                                           <div className="flex items-center gap-3">
                                             <Badge
                                               variant="outline"
-                                              className="text-[10px] sm:text-xs font-bold bg-white dark:bg-gray-800"
+                                              className="text-[10px] sm:text-xs font-bold bg-background dark:bg-gray-800"
                                             >
                                               #{String(order.id).slice(-6)}
                                             </Badge>
@@ -1172,7 +1172,7 @@ export default function CustomersTab() {
                                                           {ps.sizes?.value ||
                                                             "Unknown"}
                                                           :{" "}
-                                                          <span className="ml-1 text-black dark:text-white bg-white dark:bg-gray-700 px-1.5 rounded">
+                                                          <span className="ml-1 text-black dark:text-white bg-background dark:bg-gray-700 px-1.5 rounded">
                                                             {ps.quantity}
                                                           </span>
                                                         </Badge>

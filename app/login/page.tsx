@@ -1,58 +1,64 @@
-'use client'
+"use client";
 
-import { useState } from 'react'
-import { useRouter } from 'next/navigation'
-import { signIn } from 'next-auth/react'
-import { Button } from '@/components/ui/button'
-import { Input } from '@/components/ui/input'
-import { Label } from '@/components/ui/label'
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
-import { Eye, EyeOff } from 'lucide-react'
+import { useState } from "react";
+import { useRouter } from "next/navigation";
+import { signIn } from "next-auth/react";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { Eye, EyeOff } from "lucide-react";
 
 export default function LoginPage() {
-  const [email, setEmail] = useState('')
-  const [password, setPassword] = useState('')
-  const [isLoading, setIsLoading] = useState(false)
-  const [error, setError] = useState('')
-  const [showPassword, setShowPassword] = useState(false)
-  const router = useRouter()
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
+  const router = useRouter();
 
   const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault()
-    setIsLoading(true)
-    setError('')
+    e.preventDefault();
+    setIsLoading(true);
+    setError("");
 
     try {
-      const result = await signIn('credentials', {
+      const result = await signIn("credentials", {
         email,
         password,
-        redirect: false
-      })
+        redirect: false,
+      });
 
       if (result?.error) {
-        setError('Invalid email or password')
+        setError("Invalid email or password");
       } else if (result?.ok) {
         // Get session to check user role
-        const response = await fetch('/api/auth/session')
-        const session = await response.json()
-        
-        if (session?.user?.role === 'admin') {
-          router.push('/admin')
+        const response = await fetch("/api/auth/session");
+        const session = await response.json();
+
+        if (session?.user?.role === "admin") {
+          router.push("/admin");
         } else {
-          router.push('/')
+          router.push("/");
         }
       }
     } catch (error) {
-      console.error('Login page error:', error)
-      setError('Network error. Please try again.')
+      console.error("Login page error:", error);
+      setError("Network error. Please try again.");
     } finally {
-      setIsLoading(false)
+      setIsLoading(false);
     }
-  }
+  };
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-linear-to-br from-gray-50 via-white to-gray-100 p-4 sm:p-6 lg:p-8">
-      <Card className="w-full max-w-md border-none shadow-none sm:border sm:shadow-lg bg-transparent sm:bg-white">
+      <Card className="w-full max-w-md border-none shadow-none sm:border sm:shadow-lg bg-transparent sm:bg-background">
         <CardHeader className="space-y-2 p-6 sm:p-8">
           <CardTitle className="text-3xl sm:text-4xl font-extrabold text-center tracking-tight text-gray-900">
             Print Pro
@@ -64,7 +70,12 @@ export default function LoginPage() {
         <CardContent className="p-6 sm:p-8 pt-0 sm:pt-0">
           <form onSubmit={handleSubmit} className="space-y-5">
             <div className="space-y-2">
-              <Label htmlFor="email" className="text-sm font-medium text-gray-700">Email Address</Label>
+              <Label
+                htmlFor="email"
+                className="text-sm font-medium text-gray-700"
+              >
+                Email Address
+              </Label>
               <Input
                 id="email"
                 type="email"
@@ -77,12 +88,17 @@ export default function LoginPage() {
             </div>
             <div className="space-y-2">
               <div className="flex items-center justify-between">
-                <Label htmlFor="password" className="text-sm font-medium text-gray-700">Password</Label>
+                <Label
+                  htmlFor="password"
+                  className="text-sm font-medium text-gray-700"
+                >
+                  Password
+                </Label>
               </div>
               <div className="relative">
                 <Input
                   id="password"
-                  type={showPassword ? 'text' : 'password'}
+                  type={showPassword ? "text" : "password"}
                   placeholder="••••••••"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
@@ -119,11 +135,13 @@ export default function LoginPage() {
                   <div className="h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent" />
                   Signing in...
                 </span>
-              ) : 'Sign in'}
+              ) : (
+                "Sign in"
+              )}
             </Button>
           </form>
         </CardContent>
       </Card>
     </div>
-  )
+  );
 }

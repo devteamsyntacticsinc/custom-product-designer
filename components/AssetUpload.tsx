@@ -68,7 +68,7 @@ export default function AssetUpload({
         />
         <div
           className={`group flex items-center justify-between p-3 rounded-xl border border-gray-200 bg-gray-50/50 hover:bg-gray-100 transition-colors cursor-pointer min-w-0 ${
-            asset ? "bg-white border-gray-200" : ""
+            asset ? "bg-background border-gray-200" : ""
           }`}
           onClick={() => !asset && fileInputRefs.current[slot.id]?.click()}
         >

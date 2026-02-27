@@ -235,7 +235,7 @@ export default function OrdersPage() {
       />
 
       {/* Mobile Header */}
-      <header className="bg-white dark:bg-gray-800 shadow-sm border-b lg:hidden fixed top-0 left-0 right-0 z-40 px-4">
+      <header className="bg-background dark:bg-gray-800 shadow-sm border-b lg:hidden fixed top-0 left-0 right-0 z-40 px-4">
         <div className="relative flex items-center justify-center h-16">
           <Button
             variant="ghost"

@@ -111,7 +111,7 @@ export default function ProductsPage() {
         currentPath={currentPath}
       />
 
-      <header className="bg-white dark:bg-gray-800 shadow-sm border-b lg:hidden fixed top-0 left-0 right-0 z-40 px-4">
+      <header className="bg-background dark:bg-gray-800 shadow-sm border-b lg:hidden fixed top-0 left-0 right-0 z-40 px-4">
         <div className="relative flex items-center justify-center h-16">
           <Button
             variant="ghost"
@@ -198,7 +198,7 @@ function ProductTypesTabContent() {
         <TabsTrigger
           value="product-types"
           disabled={isNavigating || isPending}
-          className="flex-1 text-[10px] sm:text-xs lg:text-sm px-1 sm:px-2 data-[state=active]:bg-white data-[state=active]:shadow-sm dark:data-[state=active]:bg-gray-700"
+          className="flex-1 text-[10px] sm:text-xs lg:text-sm px-1 sm:px-2 data-[state=active]:bg-background data-[state=active]:shadow-sm dark:data-[state=active]:bg-gray-700"
         >
           {isNavigating && activeTab === "product-types" && (
             <Loader2 className="h-3 w-3 sm:h-4 sm:w-4 animate-spin mr-2" />
@@ -208,7 +208,7 @@ function ProductTypesTabContent() {
         <TabsTrigger
           value="brands"
           disabled={isNavigating || isPending}
-          className="flex-1 text-[10px] sm:text-xs lg:text-sm px-1 sm:px-2 data-[state=active]:bg-white data-[state=active]:shadow-sm dark:data-[state=active]:bg-gray-700"
+          className="flex-1 text-[10px] sm:text-xs lg:text-sm px-1 sm:px-2 data-[state=active]:bg-background data-[state=active]:shadow-sm dark:data-[state=active]:bg-gray-700"
         >
           {isNavigating && activeTab === "brands" && (
             <Loader2 className="h-3 w-3 sm:h-4 sm:w-4 animate-spin mr-2" />
@@ -218,7 +218,7 @@ function ProductTypesTabContent() {
         <TabsTrigger
           value="colors"
           disabled={isNavigating || isPending}
-          className="flex-1 text-[10px] sm:text-xs lg:text-sm px-1 sm:px-2 data-[state=active]:bg-white data-[state=active]:shadow-sm dark:data-[state=active]:bg-gray-700"
+          className="flex-1 text-[10px] sm:text-xs lg:text-sm px-1 sm:px-2 data-[state=active]:bg-background data-[state=active]:shadow-sm dark:data-[state=active]:bg-gray-700"
         >
           {isNavigating && activeTab === "colors" && (
             <Loader2 className="h-3 w-3 sm:h-4 sm:w-4 animate-spin mr-2" />
@@ -230,7 +230,7 @@ function ProductTypesTabContent() {
         <TabsTrigger
           value="sizes"
           disabled={isNavigating || isPending}
-          className="hidden lg:flex flex-1 text-sm px-2 data-[state=active]:bg-white data-[state=active]:shadow-sm dark:data-[state=active]:bg-gray-700"
+          className="hidden lg:flex flex-1 text-sm px-2 data-[state=active]:bg-background data-[state=active]:shadow-sm dark:data-[state=active]:bg-gray-700"
         >
           {isNavigating && activeTab === "sizes" && (
             <Loader2 className="h-4 w-4 animate-spin" />
@@ -245,7 +245,7 @@ function ProductTypesTabContent() {
               <Button
                 variant="ghost"
                 size="sm"
-                className={`h-8 w-8 p-0 rounded-md transition-colors ${isMoreActive ? "bg-white shadow-sm text-gray-900 border border-gray-200 dark:bg-gray-700 dark:text-white dark:border-gray-600" : "text-gray-500 hover:bg-gray-200 dark:text-gray-400 dark:hover:bg-gray-700"}`}
+                className={`h-8 w-8 p-0 rounded-md transition-colors ${isMoreActive ? "bg-background shadow-sm text-gray-900 border border-gray-200 dark:bg-gray-700 dark:text-white dark:border-gray-600" : "text-gray-500 hover:bg-gray-200 dark:text-gray-400 dark:hover:bg-gray-700"}`}
               >
                 <MoreHorizontal className="h-4 w-4" />
               </Button>

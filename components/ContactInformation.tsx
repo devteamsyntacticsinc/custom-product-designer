@@ -39,16 +39,17 @@ export default function ContactInformation({
   sizeSelection,
   assets,
   contactData,
-  setContactData
+  setContactData,
 }: ContactInformationProps) {
   const [showOrderSummary, setShowOrderSummary] = useState(false);
 
-  const handleInputChange = (field: keyof ContactData) => (e: React.ChangeEvent<HTMLInputElement>) => {
-    setContactData(prev => ({
-      ...prev,
-      [field]: e.target.value
-    }));
-  };
+  const handleInputChange =
+    (field: keyof ContactData) => (e: React.ChangeEvent<HTMLInputElement>) => {
+      setContactData((prev) => ({
+        ...prev,
+        [field]: e.target.value,
+      }));
+    };
 
   const handleSubmit = () => {
     setShowOrderSummary(true);
@@ -148,11 +149,14 @@ export default function ContactInformation({
       </div>
 
       {/* Action Buttons */}
-      <div className="flex gap-3 mt-auto pt-6 bg-white border-t lg:border-none">
+      <div className="flex gap-3 mt-auto pt-6 bg-background border-t lg:border-none">
         <Button variant="outline" className="flex-1" onClick={onBack}>
           Back
         </Button>
-        <Button className="flex-1 bg-gray-800 hover:bg-gray-900" onClick={handleSubmit}>
+        <Button
+          className="flex-1 bg-gray-800 hover:bg-gray-900"
+          onClick={handleSubmit}
+        >
           Submit
         </Button>
       </div>

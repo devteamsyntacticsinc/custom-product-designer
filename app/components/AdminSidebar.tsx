@@ -1,7 +1,7 @@
 "use client";
 
-import { Button } from '@/components/ui/button'
-import { Badge } from '@/components/ui/badge'
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
 import {
   LayoutDashboard,
   Users,
@@ -24,18 +24,18 @@ const sidebarItems = [
 
 interface AdminSidebarProps {
   user: {
-    id: string
-    name: string
-    email: string
-    role: string
-  } | null
-  sidebarOpen: boolean
-  setSidebarOpen: (open: boolean) => void
-  onLogout: () => void
-  onNavigate: (href: string) => void
-  isCollapsed?: boolean
-  onToggleCollapse?: () => void
-  currentPath?: string
+    id: string;
+    name: string;
+    email: string;
+    role: string;
+  } | null;
+  sidebarOpen: boolean;
+  setSidebarOpen: (open: boolean) => void;
+  onLogout: () => void;
+  onNavigate: (href: string) => void;
+  isCollapsed?: boolean;
+  onToggleCollapse?: () => void;
+  currentPath?: string;
 }
 
 export default function AdminSidebar({
@@ -56,11 +56,13 @@ export default function AdminSidebar({
         onClick={() => setSidebarOpen(false)}
       />
       <div
-        className={`${sidebarOpen ? "translate-x-0" : "-translate-x-full"} fixed inset-y-0 left-0 z-40 ${isCollapsed ? "w-16" : "w-64"} bg-white dark:bg-gray-900 shadow-lg transform transition-all duration-300 ease-in-out lg:translate-x-0 lg:fixed lg:inset-0 lg:top-0 lg:left-0`}
+        className={`${sidebarOpen ? "translate-x-0" : "-translate-x-full"} fixed inset-y-0 left-0 z-40 ${isCollapsed ? "w-16" : "w-64"} bg-background dark:bg-gray-900 shadow-lg transform transition-all duration-300 ease-in-out lg:translate-x-0 lg:fixed lg:inset-0 lg:top-0 lg:left-0`}
       >
         <div className="flex items-center justify-between h-16 px-6 border-b border-gray-200 dark:border-gray-700">
           {!isCollapsed && (
-            <h1 className="text-xl font-bold text-gray-900 dark:text-white">Print Pro Admin</h1>
+            <h1 className="text-xl font-bold text-gray-900 dark:text-white">
+              Print Pro Admin
+            </h1>
           )}
           <div className="flex items-center gap-2">
             <Button
@@ -89,8 +91,9 @@ export default function AdminSidebar({
         <nav className="mt-6">
           <div className={`${isCollapsed ? "px-2" : "px-4"} space-y-2`}>
             {sidebarItems.map((item) => {
-              const isActive = currentPath === item.href || 
-                (item.href !== '/admin' && currentPath.startsWith(item.href))
+              const isActive =
+                currentPath === item.href ||
+                (item.href !== "/admin" && currentPath.startsWith(item.href));
               return (
                 <Button
                   key={item.label}
@@ -112,8 +115,12 @@ export default function AdminSidebar({
         <div className="absolute bottom-0 left-0 right-0 p-4 border-t border-gray-200 dark:border-gray-700">
           {!isCollapsed && user && (
             <div className="mb-4">
-              <p className="text-sm font-medium text-gray-900 dark:text-white">{user.name}</p>
-              <p className="text-xs text-gray-500 dark:text-gray-400">{user.email}</p>
+              <p className="text-sm font-medium text-gray-900 dark:text-white">
+                {user.name}
+              </p>
+              <p className="text-xs text-gray-500 dark:text-gray-400">
+                {user.email}
+              </p>
               <Badge variant="secondary" className="mt-1">
                 Admin
               </Badge>
