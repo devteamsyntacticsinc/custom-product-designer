@@ -70,7 +70,7 @@ export default function ProductsPage() {
 
   if (status === "loading" || !session) {
     return (
-      <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex">
+      <div className="min-h-screen bg-background flex">
         <AdminSidebar
           user={null}
           sidebarOpen={false}
@@ -94,7 +94,7 @@ export default function ProductsPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex">
+    <div className="min-h-screen bg-background flex">
       <AdminSidebar
         user={{
           id: session.user.id,

@@ -273,7 +273,7 @@ export default function AdminDashboard() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex">
+    <div className="min-h-screen bg-background flex">
       <AdminSidebar
         user={{
           id: session.user.id,
