@@ -475,8 +475,19 @@ export default function ProductCustomizer() {
             Reset
           </Button>
           <Button
-            className="flex-1 bg-gray-800 hover:bg-gray-900"
+            className="flex-1"
             onClick={handleNext}
+            disabled={
+              loadingProductTypes ||
+              loadingBrands ||
+              loadingBrandColors ||
+              !productType ||
+              !brand ||
+              !color ||
+              (!assets["front-top-left"] && !assets["front-center"]) ||
+              !sizeSelection.some((item) => item.quantity > 0) ||
+              (selectedProductType?.is_onlyType && (!brand || !color))
+            }
           >
             Next
           </Button>
