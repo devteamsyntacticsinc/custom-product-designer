@@ -57,7 +57,7 @@ export default function LoginPage() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-linear-to-br from-gray-50 via-white to-gray-100 p-4 sm:p-6 lg:p-8">
+    <div className="min-h-screen flex items-center justify-center bg-linear-to-br from-gray-50 via-white to-gray-100 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900 p-4 sm:p-6 lg:p-8">
       <Card className="w-full max-w-md border-none shadow-none sm:border sm:shadow-lg bg-transparent sm:bg-background">
         <CardHeader className="space-y-2 p-6 sm:p-8">
           <CardTitle className="text-3xl sm:text-4xl font-extrabold text-center tracking-tight ">
@@ -72,7 +72,7 @@ export default function LoginPage() {
             <div className="space-y-2">
               <Label
                 htmlFor="email"
-                className="text-sm font-medium text-gray-700"
+                className="text-sm font-medium text-gray-700 dark:text-gray-400"
               >
                 Email Address
               </Label>
@@ -83,14 +83,14 @@ export default function LoginPage() {
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 required
-                className="pr-12 h-10 lg:h-10 border-gray-300 focus:ring-primary focus:border-primary transition-all"
+                className="pr-12 h-10 lg:h-10 border-input focus:ring-primary focus:border-primary transition-all"
               />
             </div>
             <div className="space-y-2">
               <div className="flex items-center justify-between">
                 <Label
                   htmlFor="password"
-                  className="text-sm font-medium text-gray-700"
+                  className="text-sm font-medium text-gray-700 dark:text-gray-400"
                 >
                   Password
                 </Label>
@@ -103,7 +103,7 @@ export default function LoginPage() {
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   required
-                  className="pr-12 h-10 lg:h-10 border-gray-300 focus:ring-primary focus:border-primary transition-all"
+                  className="pr-12 h-10 lg:h-10 border-input focus:ring-primary focus:border-primary transition-all"
                 />
                 <Button
                   type="button"
