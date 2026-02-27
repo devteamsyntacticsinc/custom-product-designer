@@ -16,6 +16,7 @@ import {
   Phone,
   Download,
   Check,
+  File,
 } from "lucide-react";
 import AdminSidebar from "../../components/AdminSidebar";
 import OrdersPageSkeleton from "../../../components/OrdersPageSkeleton";
@@ -324,12 +325,12 @@ export default function OrdersPage() {
                                 variant="outline"
                                 size="sm"
                                 disabled
-                                className=" h-10 w-fit sm:h-10 sm:w-fit shrink-0 gap-2 hover:bg-green-50 hover:text-green-500 cursor-not-allowed bg-green-50 border-green-500"
+                                className=" h-10 w-fit sm:h-10 sm:w-fit shrink-0 gap-2 hover:bg-green-50 hover:text-green-500 cursor-not-allowed bg-green-50 border-green-500 "
                               >
                                 <Check
-                                  className={`h-4 w-4 sm:h-5 sm:w-5 text-green-500`}
+                                  className={`h-4 w-4 sm:h-5 sm:w-5 text-green-500 dark:text-green-400`}
                                 />
-                                <span className="text-green-500">
+                                <span className="text-green-500 dark:text-green-400">
                                   Downloaded
                                 </span>
                               </Button>
@@ -342,9 +343,9 @@ export default function OrdersPage() {
                                   variant="outline"
                                   size="sm"
                                   onClick={() => handleDownload(order.id)}
-                                  className="h-10 w-fit sm:h-10 sm:w-fit text-gray-900 hover:bg-gray-200 transition-colors shrink-0 gap-2 cursor-pointer"
+                                  className="h-10"
                                 >
-                                  <Download className="h-4 w-4 sm:h-5 sm:w-5" />
+                                  <File className="h-4 w-4 sm:h-5 sm:w-5" />
                                   <span>Download Receipt</span>
                                 </Button>
                               </PDFDownloadLink>
@@ -354,7 +355,7 @@ export default function OrdersPage() {
                               size="sm"
                               onClick={() => handleSendPickupEmail(order.id)}
                               disabled={sendingEmailIds.has(order.id)}
-                              className=" h-10 w-fit sm:h-10 sm:w-fit text-gray-900 hover:bg-gray-200 transition-colors shrink-0 gap-2 cursor-pointer"
+                              className="h-10"
                             >
                               <Mail
                                 className={`h-4 w-4 sm:h-5 sm:w-5 ${sendingEmailIds.has(order.id) ? "animate-pulse" : ""}`}
