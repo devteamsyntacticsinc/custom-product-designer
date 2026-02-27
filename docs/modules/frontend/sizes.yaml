@@ -1,0 +1,307 @@
+openapi: 3.0.3
+info:
+  title: Sizes API
+  description: |
+    Size management API endpoints for the Custom Product Designer frontend.
+
+    ## Module Purpose
+    Provides RESTful endpoints for managing size options available for
+    product customization.
+
+    ## Features
+    - Retrieve all available sizes
+    - Create new size options
+    - Update existing sizes
+    - Delete size options
+    - Active/inactive status management
+    - Size filtering by product type
+
+    ## Business Logic
+    - Case-insensitive duplicate validation
+    - Active status filtering
+    - Foreign key constraint handling
+    - Size-type relationship management
+  version: 1.0.0
+  contact:
+    name: Custom Product Designer Development Team
+
+servers:
+  - url: http://localhost:3000/api
+    description: Local development
+  - url: https://your-domain.com/api
+    description: Production
+
+tags:
+  - name: sizes
+    description: Size management operations
+
+components:
+  schemas:
+    Size:
+      type: object
+      properties:
+        id:
+          type: string
+          description: Size unique identifier
+          example: "size-123"
+        value:
+          type: string
+          description: Size value
+          example: "M"
+        is_Active:
+          type: boolean
+          description: Size active status
+          example: true
+
+    CreateSizeRequest:
+      type: object
+      required:
+        - value
+      properties:
+        value:
+          type: string
+          description: Size value
+          example: "L"
+        is_Active:
+          type: boolean
+          default: true
+          description: Size active status
+          example: true
+
+    UpdateSizeRequest:
+      type: object
+      required:
+        - id
+      properties:
+        id:
+          type: string
+          description: Size ID to update
+          example: "size-123"
+        value:
+          type: string
+          description: Updated size value
+          example: "XL"
+        is_Active:
+          type: boolean
+          description: Updated size active status
+          example: false
+
+    ErrorResponse:
+      type: object
+      properties:
+        error:
+          type: string
+          description: Error message
+          example: "Size already exists"
+        details:
+          type: string
+          description: Error details
+          example: "Size with this value already exists"
+
+paths:
+  /sizes:
+    get:
+      tags:
+        - sizes
+      summary: Get all sizes
+      description: |
+        Retrieve all available sizes with their active status.
+
+        **Business Logic:**
+        - Returns sizes sorted by value
+        - Includes active/inactive status
+        - Returns empty array on error
+      operationId: getSizes
+      responses:
+        '200':
+          description: Sizes retrieved successfully
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Size'
+        '500':
+          description: Server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+    post:
+      tags:
+        - sizes
+      summary: Create size
+      description: |
+        Create a new size option.
+
+        **Validation:**
+        - Size value required (non-empty string)
+        - Case-insensitive duplicate validation
+        - Default active status if not specified
+      operationId: createSize
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateSizeRequest'
+      responses:
+        '201':
+          description: Size created successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Size'
+        '400':
+          description: Validation error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '409':
+          description: Size already exists
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: Server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+    put:
+      tags:
+        - sizes
+      summary: Update size
+      description: |
+        Update an existing size.
+
+        **Update Options:**
+        - Update size value and/or active status
+        - Partial updates supported
+        - Duplicate validation (excluding current size)
+      operationId: updateSize
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateSizeRequest'
+      responses:
+        '200':
+          description: Size updated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Size'
+        '400':
+          description: Validation error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Size not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '409':
+          description: Size value already exists
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: Server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+    delete:
+      tags:
+        - sizes
+      summary: Delete size
+      description: |
+        Delete a size by ID.
+
+        **Business Logic:**
+        - Validates size ID parameter
+        - Direct deletion (no foreign key constraints)
+      operationId: deleteSize
+      parameters:
+        - name: id
+          in: query
+          required: true
+          schema:
+            type: string
+          description: Size ID to delete
+      responses:
+        '200':
+          description: Size deleted successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: "Size deleted successfully"
+        '400':
+          description: Invalid size ID
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: Server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /sizes-by-type:
+    get:
+      tags:
+        - sizes
+      summary: Get sizes by product type
+      description: |
+        Retrieve sizes available for a specific product type.
+
+        **Business Logic:**
+        - Filters sizes by product type association
+        - Returns only sizes associated with specified type
+        - Includes active/inactive status
+      operationId: getSizesByType
+      parameters:
+        - name: typeId
+          in: query
+          required: true
+          schema:
+            type: string
+          description: Product type ID to filter sizes
+      responses:
+        '200':
+          description: Sizes retrieved successfully
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Size'
+        '400':
+          description: Missing type ID
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: Server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
