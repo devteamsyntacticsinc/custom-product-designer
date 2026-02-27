@@ -3,7 +3,7 @@ import { Card } from '@/components/ui/card'
 
 export default function OrdersPageSkeleton() {
   return (
-    <div className="space-y-4 p-4 sm:p-6 lg:p-8">
+    <div className="space-y-4 p-4 sm:p-6 lg:p-8 dark:bg-[#0d1117]">
       {/* Header Skeleton */}
       <div className="mb-6 sm:mb-8 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>

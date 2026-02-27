@@ -172,7 +172,7 @@ export default function OrdersPage() {
 
   if (status === "loading" || !session) {
     return (
-      <div className="min-h-screen bg-gray-50 flex">
+      <div className="min-h-screen bg-gray-50 dark:bg-[#0d1117] flex">
         <AdminSidebar
           user={null}
           sidebarOpen={false}
@@ -192,7 +192,7 @@ export default function OrdersPage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-background flex">
+      <div className="min-h-screen bg-background dark:bg-[#0d1117] flex">
         <AdminSidebar
           user={{
             id: session.user.id,
@@ -236,7 +236,7 @@ export default function OrdersPage() {
       />
 
       {/* Mobile Header */}
-      <header className="bg-background dark:bg-gray-800 shadow-sm border-b lg:hidden fixed top-0 left-0 right-0 z-40 px-4">
+      <header className="bg-background dark:bg-[#0d1117] shadow-sm border-b lg:hidden fixed top-0 left-0 right-0 z-40 px-4">
         <div className="relative flex items-center justify-center h-16">
           <Button
             variant="ghost"
@@ -252,7 +252,7 @@ export default function OrdersPage() {
 
       {/* Main Content */}
       <div
-        className={`flex-1 transition-all duration-300 ${isCollapsed ? "lg:ml-16" : "lg:ml-64"} lg:pt-0 pt-16`}
+        className={`flex-1 transition-all duration-300 bg-gray-50 dark:bg-[#0d1117] ${isCollapsed ? "lg:ml-16" : "lg:ml-64"} lg:pt-0 pt-16`}
       >
         {/* Orders Content */}
         <main className="p-4 sm:p-6 lg:p-8">

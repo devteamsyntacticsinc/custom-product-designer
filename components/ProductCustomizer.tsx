@@ -246,7 +246,7 @@ export default function ProductCustomizer() {
 
         <div
           className={`
-          fixed inset-y-0 left-0 z-50 w-80 bg-background shadow-lg p-6 overflow-y-auto scrollbar-hide flex flex-col h-full
+          fixed inset-y-0 left-0 z-50 w-80 bg-background dark:bg-[#010409] shadow-lg p-6 overflow-y-auto scrollbar-hide flex flex-col h-full
           transform transition-transform duration-300 ease-in-out
           ${isMobileMenuOpen ? "translate-x-0" : "-translate-x-full"}
           lg:relative lg:translate-x-0 lg:flex lg:z-0
@@ -286,7 +286,7 @@ export default function ProductCustomizer() {
         {/* Burger Button */}
         <button
           onClick={() => setIsMobileMenuOpen(true)}
-          className="lg:hidden fixed w-full z-40 p-4 bg-background shadow-md border"
+          className="lg:hidden fixed w-full z-40 p-4 bg-background dark:bg-[#010409] shadow-md border"
         >
           <div className="flex items-center content-center gap-3">
             <Menu className="h-6 w-6 text-gray-700" />
@@ -305,7 +305,7 @@ export default function ProductCustomizer() {
       {/* Burger Button */}
       <button
         onClick={() => setIsMobileMenuOpen(true)}
-        className="lg:hidden fixed w-full z-40 p-4 bg-background border"
+        className="lg:hidden fixed w-full z-40 p-4 bg-background dark:bg-[#010409] border"
       >
         <div className="flex items-center content-center gap-3">
           <Menu className="h-6 w-6 text-gray-700" />
@@ -325,7 +325,7 @@ export default function ProductCustomizer() {
 
       <div
         className={`
-        fixed inset-y-0 left-0 z-50 w-80 bg-background shadow-lg p-6 overflow-y-auto scrollbar-hide flex flex-col h-full
+        fixed inset-y-0 left-0 z-50 w-80 bg-background dark:bg-[#010409] shadow-lg p-6 overflow-y-auto scrollbar-hide flex flex-col h-full
         transform transition-transform duration-300 ease-in-out
         ${isMobileMenuOpen ? "translate-x-0" : "-translate-x-full"}
         lg:relative lg:translate-x-0 lg:flex lg:z-0

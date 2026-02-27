@@ -759,7 +759,7 @@ function ProductTypeSheet({
               </Button>
             </div>
             {showExistingImages && (
-              <div className="grid grid-cols-4 gap-2 border rounded-lg p-2 max-h-[150px] overflow-y-auto bg-gray-50/50">
+              <div className="grid grid-cols-4 gap-2 border rounded-lg p-2 max-h-[150px] overflow-y-auto bg-gray-50/50 dark:bg-gray-700">
                 {uniqueExistingImages.length === 0 ? (
                   <p className="col-span-4 text-center text-xs text-gray-400 py-2">
                     No other images found
@@ -768,7 +768,7 @@ function ProductTypeSheet({
                   uniqueExistingImages.map((img, idx) => (
                     <div
                       key={idx}
-                      className="relative aspect-square rounded border bg-white overflow-hidden cursor-pointer hover:border-primary transition-colors group"
+                      className="relative aspect-square rounded border  overflow-hidden cursor-pointer hover:border-primary transition-colors group"
                       onClick={() => handleSelectExistingImage(img.filepath)}
                     >
                       <Image
