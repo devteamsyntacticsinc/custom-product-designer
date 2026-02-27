@@ -12,7 +12,11 @@ interface AdminLayoutProps {
   description?: string;
 }
 
-export default function AdminLayout({ children, title, description }: AdminLayoutProps) {
+export default function AdminLayout({
+  children,
+  title,
+  description,
+}: AdminLayoutProps) {
   const { data: session, status } = useSession();
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [isCollapsed, setIsCollapsed] = useState(false);
@@ -31,7 +35,7 @@ export default function AdminLayout({ children, title, description }: AdminLayou
   if (status === "loading" || !session) {
     return (
       <AdminThemeProvider>
-        <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex">
+        <div className="min-h-screen bg-background flex">
           <AdminSidebar
             user={null}
             sidebarOpen={false}
@@ -66,7 +70,7 @@ export default function AdminLayout({ children, title, description }: AdminLayou
 
   return (
     <AdminThemeProvider>
-      <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex">
+      <div className="min-h-screen bg-background flex">
         <AdminSidebar
           user={{
             id: session.user.id,
@@ -84,17 +88,29 @@ export default function AdminLayout({ children, title, description }: AdminLayou
         />
 
         {/* Mobile Header */}
-        <header className="bg-white dark:bg-gray-800 shadow-sm border-b lg:hidden fixed top-0 left-0 right-0 z-40 px-4">
+        <header className="bg-background dark:bg-gray-800 shadow-sm border-b lg:hidden fixed top-0 left-0 right-0 z-40 px-4">
           <div className="relative flex items-center justify-center h-16">
             <button
               onClick={() => setSidebarOpen(true)}
               className="absolute left-0 p-2"
             >
-              <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
+              <svg
+                className="h-4 w-4"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M4 6h16M4 12h16M4 18h16"
+                />
               </svg>
             </button>
-            <h1 className="text-lg font-bold tracking-tight text-gray-900 dark:text-white">Print Pro</h1>
+            <h1 className="text-lg font-bold tracking-tight  dark:text-white">
+              Print Pro
+            </h1>
           </div>
         </header>
 
@@ -105,8 +121,16 @@ export default function AdminLayout({ children, title, description }: AdminLayou
           <main className="p-6">
             {(title || description) && (
               <div className="mb-8">
-                {title && <h1 className="text-2xl font-bold text-gray-900 dark:text-white mb-2">{title}</h1>}
-                {description && <p className="text-gray-600 dark:text-gray-400">{description}</p>}
+                {title && (
+                  <h1 className="text-2xl font-bold  dark:text-white mb-2">
+                    {title}
+                  </h1>
+                )}
+                {description && (
+                  <p className="text-gray-600 dark:text-gray-400">
+                    {description}
+                  </p>
+                )}
               </div>
             )}
             {children}

@@ -983,7 +983,7 @@ export default function CustomersTab() {
                   <TableRow>
                     <TableCell
                       colSpan={5}
-                      className="text-center py-4 text-red-500"
+                      className="text-center py-4 text-destructive"
                     >
                       {error}
                     </TableCell>
@@ -1030,7 +1030,7 @@ export default function CustomersTab() {
                         <TableRow className="bg-gray-50/50 dark:bg-gray-800/50">
                           <TableCell colSpan={5} className="p-0">
                             <div className="p-4 sm:p-6 space-y-4">
-                              <h4 className="text-sm font-semibold text-gray-900 dark:text-white flex items-center gap-2">
+                              <h4 className="text-sm font-semibold  dark:text-white flex items-center gap-2">
                                 <Package className="h-4 w-4" />
                                 Order History
                               </h4>
@@ -1056,14 +1056,14 @@ export default function CustomersTab() {
                                     return (
                                       <div
                                         key={order.id}
-                                        className="bg-white dark:bg-gray-800 border dark:border-gray-700 rounded-xl overflow-hidden shadow-sm hover:shadow-md transition-shadow"
+                                        className="bg-background dark:bg-gray-800 border dark:border-gray-700 rounded-xl overflow-hidden shadow-sm hover:shadow-md transition-shadow"
                                       >
                                         {/* Order Header */}
                                         <div className="bg-gray-50/50 dark:bg-gray-700/50 px-4 py-3 border-b dark:border-gray-600 flex flex-wrap justify-between items-center gap-2">
                                           <div className="flex items-center gap-3">
                                             <Badge
                                               variant="outline"
-                                              className="text-[10px] sm:text-xs font-bold bg-white dark:bg-gray-800"
+                                              className="text-[10px] sm:text-xs font-bold bg-background dark:bg-gray-800"
                                             >
                                               #{String(order.id).slice(-6)}
                                             </Badge>
@@ -1116,7 +1116,7 @@ export default function CustomersTab() {
                                             <div className="flex flex-wrap items-center gap-x-3 gap-y-2 text-sm text-gray-700 dark:text-gray-300">
                                               {brandType?.product_type
                                                 ?.name && (
-                                                <span className="font-bold text-gray-900 dark:text-white bg-gray-100 dark:bg-gray-700 px-2 py-0.5 rounded italic">
+                                                <span className="font-bold  dark:text-white bg-gray-100 dark:bg-gray-700 px-2 py-0.5 rounded italic">
                                                   {brandType.product_type.name}
                                                 </span>
                                               )}
@@ -1138,7 +1138,7 @@ export default function CustomersTab() {
                                                   </span>
                                                   <div className="flex items-center gap-1.5">
                                                     <div
-                                                      className="w-3 h-3 rounded-full border border-gray-200 dark:border-gray-600"
+                                                      className="w-3 h-3 rounded-full border dark:border-gray-600"
                                                       style={{
                                                         backgroundColor:
                                                           order.colors[0].value,
@@ -1172,7 +1172,7 @@ export default function CustomersTab() {
                                                           {ps.sizes?.value ||
                                                             "Unknown"}
                                                           :{" "}
-                                                          <span className="ml-1 text-black dark:text-white bg-white dark:bg-gray-700 px-1.5 rounded">
+                                                          <span className="ml-1 text-black dark:text-white bg-background dark:bg-gray-700 px-1.5 rounded">
                                                             {ps.quantity}
                                                           </span>
                                                         </Badge>
