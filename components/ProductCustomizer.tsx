@@ -41,7 +41,6 @@ export default function ProductCustomizer() {
   const [loadingProductTypes, setLoadingProductTypes] = useState(true);
   const [loadingBrands, setLoadingBrands] = useState(false);
   const [brands, setBrands] = useState<Brand[]>([]);
-  const [loadingColors, setLoadingColors] = useState(false);
   const [colors, setColors] = useState<Color[]>([]);
   const [loadingBrandColors, setLoadingBrandColors] = useState(false);
 
@@ -232,7 +231,7 @@ export default function ProductCustomizer() {
         {/* Burger Button */}
         <button
           onClick={() => setIsMobileMenuOpen(true)}
-          className="lg:hidden fixed top-4 left-4 z-40 p-2 bg-white rounded-md shadow-md border border-gray-200"
+          className="lg:hidden fixed top-4 left-4 z-40 p-2 bg-background rounded-md shadow-md border"
         >
           <Menu className="h-6 w-6 text-gray-700" />
         </button>
@@ -247,14 +246,14 @@ export default function ProductCustomizer() {
 
         <div
           className={`
-          fixed inset-y-0 left-0 z-50 w-80 bg-white shadow-lg p-6 overflow-y-auto scrollbar-hide flex flex-col h-full
+          fixed inset-y-0 left-0 z-50 w-80 bg-background shadow-lg p-6 overflow-y-auto scrollbar-hide flex flex-col h-full
           transform transition-transform duration-300 ease-in-out
           ${isMobileMenuOpen ? "translate-x-0" : "-translate-x-full"}
           lg:relative lg:translate-x-0 lg:flex lg:z-0
         `}
         >
           <div className="lg:hidden flex items-center justify-between mb-6">
-            <h2 className="text-2xl font-bold text-gray-900">Print Pro</h2>
+            <h2 className="text-2xl font-bold ">Print Pro</h2>
             <button
               onClick={() => setIsMobileMenuOpen(false)}
               className="p-2 text-gray-500 hover:text-gray-700"
@@ -287,7 +286,7 @@ export default function ProductCustomizer() {
         {/* Burger Button */}
         <button
           onClick={() => setIsMobileMenuOpen(true)}
-          className="lg:hidden fixed w-full z-40 p-4 bg-white shadow-md border border-gray-200"
+          className="lg:hidden fixed w-full z-40 p-4 bg-background shadow-md border"
         >
           <div className="flex items-center content-center gap-3">
             <Menu className="h-6 w-6 text-gray-700" />
@@ -306,7 +305,7 @@ export default function ProductCustomizer() {
       {/* Burger Button */}
       <button
         onClick={() => setIsMobileMenuOpen(true)}
-        className="lg:hidden fixed w-full z-40 p-4 bg-gray-50 border border-gray-200"
+        className="lg:hidden fixed w-full z-40 p-4 bg-background border"
       >
         <div className="flex items-center content-center gap-3">
           <Menu className="h-6 w-6 text-gray-700" />
@@ -319,21 +318,21 @@ export default function ProductCustomizer() {
       {/* Backdrop */}
       {isMobileMenuOpen && (
         <div
-          className="lg:hidden fixed inset-0 bg-black/50 z-40"
+          className="lg:hidden fixed inset-0 z-40"
           onClick={() => setIsMobileMenuOpen(false)}
         />
       )}
 
       <div
         className={`
-        fixed inset-y-0 left-0 z-50 w-80 bg-white shadow-lg p-6 overflow-y-auto scrollbar-hide flex flex-col h-full
+        fixed inset-y-0 left-0 z-50 w-80 bg-background shadow-lg p-6 overflow-y-auto scrollbar-hide flex flex-col h-full
         transform transition-transform duration-300 ease-in-out
         ${isMobileMenuOpen ? "translate-x-0" : "-translate-x-full"}
         lg:relative lg:translate-x-0 lg:flex lg:z-0
       `}
       >
         <div className="lg:hidden flex items-center justify-between mb-6">
-          <h2 className="text-2xl font-bold text-gray-900">Print Pro</h2>
+          <h2 className="text-2xl font-bold ">Print Pro</h2>
           <button
             onClick={() => setIsMobileMenuOpen(false)}
             className="p-2 text-gray-500 hover:text-gray-700"
@@ -342,9 +341,7 @@ export default function ProductCustomizer() {
           </button>
         </div>
 
-        <h2 className="hidden lg:block text-2xl font-bold text-gray-900 mb-6">
-          Print Pro
-        </h2>
+        <h2 className="hidden lg:block text-2xl font-bold  mb-6">Print Pro</h2>
 
         {/* Product Type */}
         <div className="mb-6">
@@ -456,17 +453,13 @@ export default function ProductCustomizer() {
 
         {/* Place Your Assets */}
         <div className="mb-6">
-          <h3 className="text-lg font-semibold text-gray-900 mb-4">
-            Place your assets
-          </h3>
+          <h3 className="text-lg font-semibold  mb-4">Place your assets</h3>
           <AssetUpload assets={assets} setAssets={setAssets} />
         </div>
 
         {/* Sizing and Quantity */}
         <div className="mb-6">
-          <h3 className="text-lg font-semibold text-gray-900 mb-4">
-            Sizing and Quantity
-          </h3>
+          <h3 className="text-lg font-semibold  mb-4">Sizing and Quantity</h3>
           <SizingAndQuantity
             brandId={brand}
             productTypeId={productType}
@@ -481,8 +474,16 @@ export default function ProductCustomizer() {
             Reset
           </Button>
           <Button
-            className="flex-1 bg-gray-800 hover:bg-gray-900"
+            className="flex-1"
             onClick={handleNext}
+            disabled={
+              loadingProductTypes ||
+              loadingBrands ||
+              loadingBrandColors ||
+              !productType ||
+              (!assets["front-top-left"] && !assets["front-center"]) ||
+              !sizeSelection.some((item) => item.quantity > 0)
+            }
           >
             Next
           </Button>

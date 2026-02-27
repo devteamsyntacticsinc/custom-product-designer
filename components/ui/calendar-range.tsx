@@ -56,7 +56,7 @@ export function CalendarRange({
           align="end"
           sideOffset={8}
         >
-          <div className="bg-white dark:bg-gray-950 rounded-lg border border-gray-200 dark:border-gray-800">
+          <div className="bg-white dark:bg-gray-950 rounded-lg border dark:border-gray-800">
             <Calendar
               mode="range"
               defaultMonth={date?.from}

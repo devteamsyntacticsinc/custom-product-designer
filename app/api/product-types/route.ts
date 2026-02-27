@@ -1,11 +1,6 @@
 import { NextResponse } from "next/server";
 import { ProductService } from "@/lib/api/product";
-
-interface DatabaseError extends Error {
-  code?: string;
-  details?: string;
-  hint?: string;
-}
+import { DatabaseError } from "@/types/database";
 
 export async function GET() {
   try {
@@ -30,7 +25,7 @@ export async function POST(request: Request) {
     let name: string;
     let is_Active: boolean;
     let is_onlyType: boolean;
-    let images: { file: File; is_hasBack: boolean }[] = [];
+    let images: { file?: File; filepath?: string; is_hasBack: boolean }[] = [];
 
     if (contentType.includes("multipart/form-data")) {
       // Handle FormData with images
@@ -45,18 +40,25 @@ export async function POST(request: Request) {
         key.startsWith("images["),
       );
 
-      for (const key of imageKeys) {
-        if (key.includes(".file")) {
-          const file = formData.get(key) as File;
-          if (file) {
-            const indexMatch = key.match(/images\[(\d+)\]/);
-            if (indexMatch) {
-              const index = indexMatch[1];
-              const is_hasBack =
-                formData.get(`images[${index}].is_hasBack`) === "true";
-              images.push({ file, is_hasBack });
-            }
-          }
+      const imageIndices = new Set(
+        imageKeys
+          .map((key) => {
+            const match = key.match(/images\[(\d+)\]/);
+            return match ? match[1] : null;
+          })
+          .filter(Boolean),
+      );
+
+      for (const index of imageIndices) {
+        const file = formData.get(`images[${index}].file`) as File;
+        const filepath = formData.get(`images[${index}].filepath`) as string;
+        const is_hasBack =
+          formData.get(`images[${index}].is_hasBack`) === "true";
+
+        if (file && file.size > 0) {
+          images.push({ file, is_hasBack });
+        } else if (filepath) {
+          images.push({ filepath, is_hasBack });
         }
       }
     } else {
@@ -124,7 +126,7 @@ export async function PUT(request: Request) {
     let name: string | undefined;
     let is_Active: boolean | undefined;
     let is_onlyType: boolean | undefined;
-    let images: { file: File; is_hasBack: boolean }[] = [];
+    let images: { file?: File; filepath?: string; is_hasBack: boolean }[] = [];
     let imagesToDelete: number[] = [];
 
     if (contentType.includes("multipart/form-data")) {
@@ -141,18 +143,25 @@ export async function PUT(request: Request) {
         key.startsWith("images["),
       );
 
-      for (const key of imageKeys) {
-        if (key.includes(".file")) {
-          const file = formData.get(key) as File;
-          if (file) {
-            const indexMatch = key.match(/images\[(\d+)\]/);
-            if (indexMatch) {
-              const index = indexMatch[1];
-              const is_hasBack =
-                formData.get(`images[${index}].is_hasBack`) === "true";
-              images.push({ file, is_hasBack });
-            }
-          }
+      const imageIndices = new Set(
+        imageKeys
+          .map((key) => {
+            const match = key.match(/images\[(\d+)\]/);
+            return match ? match[1] : null;
+          })
+          .filter(Boolean),
+      );
+
+      for (const index of imageIndices) {
+        const file = formData.get(`images[${index}].file`) as File;
+        const filepath = formData.get(`images[${index}].filepath`) as string;
+        const is_hasBack =
+          formData.get(`images[${index}].is_hasBack`) === "true";
+
+        if (file && file.size > 0) {
+          images.push({ file, is_hasBack });
+        } else if (filepath) {
+          images.push({ filepath, is_hasBack });
         }
       }
 

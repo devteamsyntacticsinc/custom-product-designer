@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, useRef } from "react";
+import { useEffect, useState, useRef, useMemo } from "react";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -91,7 +91,9 @@ export const validateImageClient = (file: File): Promise<void> => {
 
 export default function ProductTypesTab() {
   const [productTypes, setProductTypes] = useState<
-    (ProductType & { images: { file: File; is_hasBack: boolean }[] })[]
+    (ProductType & {
+      images: { file?: File; filepath?: string; is_hasBack: boolean }[];
+    })[]
   >([]);
   const [isFetchingProductTypes, setIsFetchingProductTypes] = useState(false);
   const [isMutating, setIsMutating] = useState(false);
@@ -125,7 +127,7 @@ export default function ProductTypesTab() {
 
   const handleSubmitProductType = async (
     payload: ProductType & {
-      images: { file: File; is_hasBack: boolean }[];
+      images: { file?: File; filepath?: string; is_hasBack: boolean }[];
       imagesToDelete?: number[];
       existingImages?: { id: number; filepath: string; is_hasBack: boolean }[];
     },
@@ -142,7 +144,11 @@ export default function ProductTypesTab() {
 
       // Append images with their metadata
       payload.images.forEach((imageData, index) => {
-        formData.append(`images[${index}].file`, imageData.file);
+        if (imageData.file) {
+          formData.append(`images[${index}].file`, imageData.file);
+        } else if (imageData.filepath) {
+          formData.append(`images[${index}].filepath`, imageData.filepath);
+        }
         formData.append(
           `images[${index}].is_hasBack`,
           imageData.is_hasBack.toString(),
@@ -210,6 +216,7 @@ export default function ProductTypesTab() {
           mode="create"
           isLoading={isMutating}
           onSubmit={handleSubmitProductType}
+          allProductTypes={productTypes}
         >
           <Button
             size="sm"
@@ -271,7 +278,10 @@ export default function ProductTypesTab() {
                 ))
               ) : error ? (
                 <TableRow>
-                  <TableCell colSpan={4} className="text-xs text-red-600 p-4">
+                  <TableCell
+                    colSpan={4}
+                    className="text-xs text-destructive p-4"
+                  >
                     {error}
                   </TableCell>
                 </TableRow>
@@ -320,6 +330,7 @@ export default function ProductTypesTab() {
                           isLoading={isMutating}
                           initialData={productType}
                           onSubmit={handleSubmitProductType}
+                          allProductTypes={productTypes}
                         >
                           <Button
                             variant="ghost"
@@ -364,6 +375,7 @@ function ProductTypeSheet({
   initialData,
   onSubmit,
   isLoading,
+  allProductTypes,
 }: {
   children: React.ReactNode;
   mode: "create" | "edit";
@@ -372,12 +384,15 @@ function ProductTypeSheet({
   };
   onSubmit: (
     data: ProductType & {
-      images: { file: File; is_hasBack: boolean }[];
+      images: { file?: File; filepath?: string; is_hasBack: boolean }[];
       imagesToDelete?: number[];
       existingImages?: { id: number; filepath: string; is_hasBack: boolean }[];
     },
   ) => Promise<void>;
   isLoading: boolean;
+  allProductTypes: (ProductType & {
+    images: { file?: File; filepath?: string; is_hasBack: boolean }[];
+  })[];
 }) {
   const [name, setName] = useState("");
   const [open, onOpenChange] = useState(false);
@@ -387,7 +402,43 @@ function ProductTypeSheet({
   const [imageValidationError, setImageValidationError] = useState("");
   const [assets, setAssets] = useState<ProductImage[]>([]);
   const [imagesToDelete, setImagesToDelete] = useState<number[]>([]);
+  const [showExistingImages, setShowExistingImages] = useState(false);
   const fileInputRefs = useRef<Record<string, HTMLInputElement | null>>({});
+
+  const uniqueExistingImages = useMemo(() => {
+    const images: { filepath: string; id: number }[] = [];
+    const seen = new Set<string>();
+
+    allProductTypes.forEach((pt) => {
+      if (pt.id === initialData?.id) return;
+      pt.image_products?.forEach((img) => {
+        if (!seen.has(img.filepath)) {
+          seen.add(img.filepath);
+          images.push({ filepath: img.filepath, id: img.id });
+        }
+      });
+    });
+    return images;
+  }, [allProductTypes, initialData?.id]);
+
+  const handleSelectExistingImage = (filepath: string) => {
+    if (assets.length >= 2) {
+      alert("Maximum of 2 images allowed.");
+      return;
+    }
+
+    const isFrontTaken = assets.some((a) => !a.is_hasBack);
+    const isBackTaken = assets.some((a) => a.is_hasBack);
+
+    let is_hasBack = false;
+    if (isFrontTaken && !isBackTaken) {
+      is_hasBack = true;
+    } else if (isFrontTaken && isBackTaken) {
+      return;
+    }
+
+    setAssets((prev) => [...prev, { filepath, is_hasBack, _isExisting: false }]);
+  };
 
   const handleFileChange = async (slotId: string, file: File | null) => {
     if (file) {
@@ -504,7 +555,8 @@ function ProductTypeSheet({
     try {
       // Separate new images from existing ones
       const newImages = assets.filter((asset) => !asset._isExisting) as {
-        file: File;
+        file?: File;
+        filepath?: string;
         is_hasBack: boolean;
       }[];
 
@@ -557,7 +609,7 @@ function ProductTypeSheet({
           </div>
 
           {name.length === 0 && (
-            <p className="text-red-500 text-sm italic">
+            <p className="text-destructive text-sm italic">
               *Product Type Name is required before saving.
             </p>
           )}
@@ -579,17 +631,17 @@ function ProductTypeSheet({
               }
             />
             <div
-              className={`group flex items-center justify-between p-3 rounded-xl border border-gray-200 transition-colors min-w-0 bg-gray-50/50 cursor-pointer ${assets.length < 2 ? "" : "hidden"}`}
+              className={`group flex items-center bg-gray-100 dark:bg-gray-800 justify-between p-3 rounded-xl border transition-colors cursor-pointer ${assets.length < 2 ? "" : "hidden"}`}
               onClick={() => {
                 if (assets.length < 2) {
                   fileInputRefs.current["image"]?.click();
                 }
               }}
             >
-              <span className="text-sm truncate mr-2 text-gray-600">
+              <span className="text-sm truncate mr-2">
                 Upload Product Type Image
               </span>
-              <Upload className="w-6 h-6 text-gray-400 group-hover:text-gray-600 mb-2" />
+              <Upload className="w-6 h-6 mb-2" />
             </div>
 
             {/* Image List */}
@@ -598,13 +650,13 @@ function ProductTypeSheet({
                 {assets.map((item, index) => (
                   <div
                     key={index}
-                    className="flex items-center justify-between p-2 rounded-lg border border-gray-200 bg-white"
+                    className="flex items-center justify-between p-2 rounded-lg border  bg-background"
                   >
                     <div className="flex items-center space-x-3 min-w-0 flex-1">
                       <div className="w-10 h-10 rounded border border-gray-100 shrink-0 overflow-hidden flex items-center justify-center bg-gray-50">
-                        {item._isExisting ? (
+                        {item._isExisting || item.filepath ? (
                           <Image
-                            src={item.filepath}
+                            src={item.filepath!}
                             alt="preview"
                             width={40}
                             height={40}
@@ -612,7 +664,7 @@ function ProductTypeSheet({
                           />
                         ) : (
                           <Image
-                            src={URL.createObjectURL(item.file)}
+                            src={URL.createObjectURL(item.file!)}
                             alt="preview"
                             width={40}
                             height={40}
@@ -621,10 +673,10 @@ function ProductTypeSheet({
                         )}
                       </div>
                       <div className="flex flex-col min-w-0">
-                        <span className="text-xs font-semibold text-gray-900 truncate">
+                        <span className="text-xs font-semibold  truncate">
                           {item._isExisting
                             ? `Existing ${item.is_hasBack ? "Back" : "Front"} Image`
-                            : item.file.name}
+                            : item.file?.name || "Linked Image"}
                         </span>
                         <div className="flex items-center space-x-1 mt-0.5">
                           <span
@@ -644,7 +696,7 @@ function ProductTypeSheet({
                     <div className="flex items-center space-x-4 ml-4">
                       <div className="flex items-center space-x-2">
                         <span
-                          className={`text-[10px] ${!item.is_hasBack ? "text-gray-900 font-bold" : "text-gray-400"}`}
+                          className={`text-[10px] ${!item.is_hasBack ? " font-bold" : "text-gray-400"}`}
                         >
                           F
                         </span>
@@ -654,7 +706,7 @@ function ProductTypeSheet({
                           className="scale-75 data-[state=unchecked]:bg-primary"
                         />
                         <span
-                          className={`text-[10px] ${item.is_hasBack ? "text-gray-900 font-bold" : "text-gray-400"}`}
+                          className={`text-[10px] ${item.is_hasBack ? " font-bold" : "text-gray-400"}`}
                         >
                           B
                         </span>
@@ -665,7 +717,7 @@ function ProductTypeSheet({
                           e.stopPropagation();
                           removeAsset(index);
                         }}
-                        className="p-1 rounded-full hover:bg-red-50 text-red-500 transition-colors"
+                        className="p-1 rounded-full hover:bg-red-50 text-destructive transition-colors"
                       >
                         <X className="w-4 h-4" />
                       </button>
@@ -678,24 +730,65 @@ function ProductTypeSheet({
           <p className="text-muted-foreground">
             Need help? View a sample of an{" "}
             <ImageDialogShowcase>
-              <span className="underline font-medium text-black cursor-pointer">
+              <span className="underline font-medium text-black dark:text-white cursor-pointer">
                 accepted image.{" "}
               </span>
             </ImageDialogShowcase>
           </p>
 
           {assigned && assets.length !== 0 && (
-            <p className="text-red-500 text-sm italic">{assigned}</p>
+            <p className="text-destructive text-sm italic">{assigned}</p>
           )}
 
           {imageValidationError && (
-            <p className="text-red-500 text-sm italic">
+            <p className="text-destructive text-sm italic">
               {imageValidationError}
             </p>
           )}
 
+          <div className="space-y-4">
+            <div className="flex items-center justify-between">
+              <Label className="text-sm font-medium">Existing Images</Label>
+              <Button
+                variant="ghost"
+                size="sm"
+                className="text-xs h-7"
+                onClick={() => setShowExistingImages(!showExistingImages)}
+              >
+                {showExistingImages ? "Hide" : "Show"}
+              </Button>
+            </div>
+            {showExistingImages && (
+              <div className="grid grid-cols-4 gap-2 border rounded-lg p-2 max-h-[150px] overflow-y-auto bg-gray-50/50">
+                {uniqueExistingImages.length === 0 ? (
+                  <p className="col-span-4 text-center text-xs text-gray-400 py-2">
+                    No other images found
+                  </p>
+                ) : (
+                  uniqueExistingImages.map((img, idx) => (
+                    <div
+                      key={idx}
+                      className="relative aspect-square rounded border bg-white overflow-hidden cursor-pointer hover:border-primary transition-colors group"
+                      onClick={() => handleSelectExistingImage(img.filepath)}
+                    >
+                      <Image
+                        src={img.filepath}
+                        alt={`Existing ${idx}`}
+                        fill
+                        className="object-contain p-1"
+                      />
+                      <div className="absolute inset-0 bg-black/0 group-hover:bg-black/5 flex items-center justify-center transition-colors">
+                        <Plus className="w-4 h-4 text-primary opacity-0 group-hover:opacity-100" />
+                      </div>
+                    </div>
+                  ))
+                )}
+              </div>
+            )}
+          </div>
+
           {assets.length === 0 && (
-            <p className="text-red-500 text-sm italic">
+            <p className="text-destructive text-sm italic">
               *Product Type Image is required before saving.
             </p>
           )}

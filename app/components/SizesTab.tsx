@@ -143,7 +143,10 @@ export default function SizesTab({
           isLoading={isMutating}
           onSubmit={handleSubmitSize}
         >
-          <Button size="sm" className="w-full sm:w-auto text-xs lg:text-sm h-8 lg:h-10">
+          <Button
+            size="sm"
+            className="w-full sm:w-auto text-xs lg:text-sm h-8 lg:h-10"
+          >
             <Plus className="h-4 w-4 mr-2" />
             Add Size
           </Button>
@@ -183,23 +186,36 @@ export default function SizesTab({
                 ))
               ) : error ? (
                 <TableRow>
-                  <TableCell colSpan={4} className="text-sm text-red-600 p-4">
+                  <TableCell
+                    colSpan={4}
+                    className="text-sm text-destructive p-4"
+                  >
                     {error}
                   </TableCell>
                 </TableRow>
               ) : sizes.length === 0 ? (
                 <TableRow>
-                  <TableCell colSpan={4} className="text-center py-8 text-gray-500">
+                  <TableCell
+                    colSpan={4}
+                    className="text-center py-8 text-gray-500"
+                  >
                     No sizes found
                   </TableCell>
                 </TableRow>
               ) : (
                 sizes.map((size) => (
                   <TableRow key={size.id}>
-                    <TableCell className="text-xs lg:text-sm text-gray-500 py-3">#{size.id}</TableCell>
-                    <TableCell className="font-medium text-xs lg:text-sm py-3">{size.value}</TableCell>
+                    <TableCell className="text-xs lg:text-sm text-gray-500 py-3">
+                      #{size.id}
+                    </TableCell>
+                    <TableCell className="font-medium text-xs lg:text-sm py-3">
+                      {size.value}
+                    </TableCell>
                     <TableCell className="py-3">
-                      <Badge variant={size.is_Active ? "default" : "secondary"} className="text-[10px] px-2 py-0">
+                      <Badge
+                        variant={size.is_Active ? "default" : "secondary"}
+                        className="text-[10px] px-2 py-0"
+                      >
                         {size.is_Active ? "Active" : "Inactive"}
                       </Badge>
                     </TableCell>
@@ -211,7 +227,12 @@ export default function SizesTab({
                           initialData={size}
                           onSubmit={handleSubmitSize}
                         >
-                          <Button variant="ghost" size="icon" className="h-8 w-8" disabled={isMutating}>
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="h-8 w-8"
+                            disabled={isMutating}
+                          >
                             <Edit className="h-3.5 w-3.5" />
                           </Button>
                         </SizeSheet>
@@ -222,7 +243,12 @@ export default function SizesTab({
                           fetchSizes={fetchSizes}
                           setRefetchSize={setRefetchSize}
                         >
-                          <Button variant="ghost" size="icon" className="h-8 w-8 text-destructive" disabled={isMutating}>
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="h-8 w-8 text-destructive"
+                            disabled={isMutating}
+                          >
                             <Trash2 className="h-3.5 w-3.5" />
                           </Button>
                         </DeleteDialog>
@@ -300,7 +326,9 @@ function SizeSheet({
 
         <div className="py-6 space-y-4">
           <div className="space-y-2">
-            <Label htmlFor="size-name" className="text-xs lg:text-sm">Size Name</Label>
+            <Label htmlFor="size-name" className="text-xs lg:text-sm">
+              Size Name
+            </Label>
             <Input
               id="size-name"
               value={name}
@@ -311,13 +339,23 @@ function SizeSheet({
           </div>
 
           <div className="flex items-center space-x-2">
-            <Switch checked={active} onCheckedChange={setActive} className="text-xs lg:text-sm" />
-            <Label className="text-xs lg:text-sm">{active ? "Active" : "Inactive"}</Label>
+            <Switch
+              checked={active}
+              onCheckedChange={setActive}
+              className="text-xs lg:text-sm"
+            />
+            <Label className="text-xs lg:text-sm">
+              {active ? "Active" : "Inactive"}
+            </Label>
           </div>
         </div>
 
         <SheetFooter>
-          <Button onClick={handleSubmit} disabled={isLoading} className="text-xs lg:text-sm h-8 lg:h-10">
+          <Button
+            onClick={handleSubmit}
+            disabled={isLoading}
+            className="text-xs lg:text-sm h-8 lg:h-10"
+          >
             {isLoading
               ? isEdit
                 ? "Updating..."

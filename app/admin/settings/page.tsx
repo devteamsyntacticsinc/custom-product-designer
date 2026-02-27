@@ -11,9 +11,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import {
-  Badge,
-} from "@/components/ui/badge";
+import { Badge } from "@/components/ui/badge";
 import {
   Moon,
   Sun,
@@ -46,43 +44,83 @@ export default function SettingsPage() {
         { name: "React", version: "19.2.3", description: "UI library" },
         { name: "React DOM", version: "19.2.3", description: "DOM renderer" },
         { name: "TypeScript", version: "^5", description: "Type safety" },
-        { name: "Tailwind CSS", version: "4", description: "Styling framework" },
-      ]
+        {
+          name: "Tailwind CSS",
+          version: "4",
+          description: "Styling framework",
+        },
+      ],
     },
     {
       category: "UI Components",
       icon: Palette,
       color: "text-purple-600",
       items: [
-        { name: "Radix UI", version: "1.4.3", description: "Headless components" },
-        { name: "@radix-ui/react-dialog", version: "1.1.15", description: "Dialog components" },
-        { name: "@radix-ui/react-popover", version: "1.1.15", description: "Popover components" },
-        { name: "Lucide React", version: "0.563.0", description: "Icon library" },
-        { name: "shadcn/ui", version: "3.8.4", description: "Component library" },
-        { name: "class-variance-authority", version: "0.7.1", description: "Component variants" },
+        {
+          name: "Radix UI",
+          version: "1.4.3",
+          description: "Headless components",
+        },
+        {
+          name: "@radix-ui/react-dialog",
+          version: "1.1.15",
+          description: "Dialog components",
+        },
+        {
+          name: "@radix-ui/react-popover",
+          version: "1.1.15",
+          description: "Popover components",
+        },
+        {
+          name: "Lucide React",
+          version: "0.563.0",
+          description: "Icon library",
+        },
+        {
+          name: "shadcn/ui",
+          version: "3.8.4",
+          description: "Component library",
+        },
+        {
+          name: "class-variance-authority",
+          version: "0.7.1",
+          description: "Component variants",
+        },
         { name: "cmdk", version: "1.1.1", description: "Command menu" },
         { name: "vaul", version: "1.1.2", description: "Drawer/modal" },
-      ]
+      ],
     },
     {
       category: "Backend & Database",
       icon: Database,
       color: "text-green-600",
       items: [
-        { name: "NextAuth.js", version: "4.24.13", description: "Authentication" },
+        {
+          name: "NextAuth.js",
+          version: "4.24.13",
+          description: "Authentication",
+        },
         { name: "Supabase", version: "2.95.3", description: "Database & Auth" },
         { name: "bcryptjs", version: "3.0.3", description: "Password hashing" },
         { name: "nodemailer", version: "7.0.7", description: "Email sending" },
-      ]
+      ],
     },
     {
       category: "PDF & Media",
       icon: Zap,
       color: "text-orange-600",
       items: [
-        { name: "@react-pdf/renderer", version: "4.3.2", description: "PDF generation" },
-        { name: "tw-animate-css", version: "1.4.0", description: "Tailwind animations" },
-      ]
+        {
+          name: "@react-pdf/renderer",
+          version: "4.3.2",
+          description: "PDF generation",
+        },
+        {
+          name: "tw-animate-css",
+          version: "1.4.0",
+          description: "Tailwind animations",
+        },
+      ],
     },
     {
       category: "Utilities",
@@ -91,24 +129,28 @@ export default function SettingsPage() {
       items: [
         { name: "Axios", version: "1.13.5", description: "HTTP client" },
         { name: "clsx", version: "2.1.1", description: "Utility classes" },
-        { name: "tailwind-merge", version: "3.4.0", description: "Tailwind merging" },
-      ]
-    }
+        {
+          name: "tailwind-merge",
+          version: "3.4.0",
+          description: "Tailwind merging",
+        },
+      ],
+    },
   ];
 
   const applyTheme = (selectedTheme: Theme) => {
     const root = document.documentElement;
-    
-    if (selectedTheme === 'dark') {
-      root.classList.add('dark');
-    } else if (selectedTheme === 'light') {
-      root.classList.remove('dark');
+
+    if (selectedTheme === "dark") {
+      root.classList.add("dark");
+    } else if (selectedTheme === "light") {
+      root.classList.remove("dark");
     } else {
       // System theme
-      if (window.matchMedia('(prefers-color-scheme: dark)').matches) {
-        root.classList.add('dark');
+      if (window.matchMedia("(prefers-color-scheme: dark)").matches) {
+        root.classList.add("dark");
       } else {
-        root.classList.remove('dark');
+        root.classList.remove("dark");
       }
     }
   };
@@ -120,7 +162,7 @@ export default function SettingsPage() {
 
   const handleThemeChange = (newTheme: Theme) => {
     setTheme(newTheme);
-    localStorage.setItem('admin-theme', newTheme);
+    localStorage.setItem("admin-theme", newTheme);
     applyTheme(newTheme);
   };
 
@@ -131,7 +173,7 @@ export default function SettingsPage() {
 
   if (status === "loading" || !session) {
     return (
-      <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex">
+      <div className="min-h-screen bg-background flex">
         <AdminSidebar
           user={null}
           sidebarOpen={false}
@@ -159,7 +201,7 @@ export default function SettingsPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex">
+    <div className="min-h-screen bg-background flex">
       <AdminSidebar
         user={{
           id: session.user.id,
@@ -182,7 +224,7 @@ export default function SettingsPage() {
       >
         <main className="p-8">
           <div className="mb-10">
-            <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Settings</h1>
+            <h1 className="text-2xl font-bold  dark:text-white">Settings</h1>
             <p className="text-gray-600 dark:text-gray-400">
               Manage your admin preferences and view system information
             </p>
@@ -210,10 +252,12 @@ export default function SettingsPage() {
                     <Sun className="h-4 w-4" />
                     <div className="text-left">
                       <div className="font-medium text-sm">Light</div>
-                      <div className="text-xs text-muted-foreground">Bright and clean</div>
+                      <div className="text-xs text-muted-foreground">
+                        Bright and clean
+                      </div>
                     </div>
                   </Button>
-                  
+
                   <Button
                     variant={theme === "dark" ? "default" : "outline"}
                     className="flex items-center gap-2 h-12 p-3"
@@ -222,10 +266,12 @@ export default function SettingsPage() {
                     <Moon className="h-4 w-4" />
                     <div className="text-left">
                       <div className="font-medium text-sm">Dark</div>
-                      <div className="text-xs text-muted-foreground">Easy on the eyes</div>
+                      <div className="text-xs text-muted-foreground">
+                        Easy on the eyes
+                      </div>
                     </div>
                   </Button>
-                  
+
                   <Button
                     variant={theme === "system" ? "default" : "outline"}
                     className="flex items-center gap-2 h-12 p-3"
@@ -234,7 +280,9 @@ export default function SettingsPage() {
                     <Monitor className="h-4 w-4" />
                     <div className="text-left">
                       <div className="font-medium text-sm">System</div>
-                      <div className="text-xs text-muted-foreground">Follow OS preference</div>
+                      <div className="text-xs text-muted-foreground">
+                        Follow OS preference
+                      </div>
                     </div>
                   </Button>
                 </div>
@@ -257,8 +305,10 @@ export default function SettingsPage() {
                   {techStack.map((category) => (
                     <div key={category.category} className="space-y-3">
                       <div className="flex items-center gap-2">
-                        <category.icon className={`h-5 w-5 ${category.color}`} />
-                        <h3 className="font-semibold text-gray-900 dark:text-white">
+                        <category.icon
+                          className={`h-5 w-5 ${category.color}`}
+                        />
+                        <h3 className="font-semibold  dark:text-white">
                           {category.category}
                         </h3>
                       </div>
@@ -266,10 +316,10 @@ export default function SettingsPage() {
                         {category.items.map((item) => (
                           <div
                             key={item.name}
-                            className="flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-800 rounded-lg"
+                            className="flex items-center justify-between p-3 bg-background rounded-lg"
                           >
                             <div>
-                              <div className="font-medium text-gray-900 dark:text-white">
+                              <div className="font-medium  dark:text-white">
                                 {item.name}
                               </div>
                               <div className="text-sm text-gray-600 dark:text-gray-400">
@@ -301,30 +351,36 @@ export default function SettingsPage() {
               </CardHeader>
               <CardContent className="p-6">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div className="flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-800 rounded-lg">
+                  <div className="flex items-center justify-between p-3 bg-background rounded-lg">
                     <div>
-                      <div className="font-medium text-gray-900 dark:text-white">
+                      <div className="font-medium  dark:text-white">
                         Environment
                       </div>
                       <div className="text-sm text-gray-600 dark:text-gray-400">
                         Current deployment environment
                       </div>
                     </div>
-                    <Badge variant="outline" className="text-green-600 border-green-200 bg-green-50 dark:bg-green-900/20 dark:border-green-800">
+                    <Badge
+                      variant="outline"
+                      className="text-green-600 border-green-200 bg-green-50 dark:bg-green-900/20 dark:border-green-800"
+                    >
                       Development
                     </Badge>
                   </div>
-                  
-                  <div className="flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-800 rounded-lg">
+
+                  <div className="flex items-center justify-between p-3 bg-background rounded-lg">
                     <div>
-                      <div className="font-medium text-gray-900 dark:text-white">
+                      <div className="font-medium  dark:text-white">
                         Admin Panel
                       </div>
                       <div className="text-sm text-gray-600 dark:text-gray-400">
                         Custom Product Designer Admin
                       </div>
                     </div>
-                    <Badge variant="outline" className="text-blue-600 border-blue-200 bg-blue-50 dark:bg-blue-900/20 dark:border-blue-800">
+                    <Badge
+                      variant="outline"
+                      className="text-blue-600 border-blue-200 bg-blue-50 dark:bg-blue-900/20 dark:border-blue-800"
+                    >
                       v1.0.0
                     </Badge>
                   </div>

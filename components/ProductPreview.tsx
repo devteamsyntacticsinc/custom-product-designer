@@ -57,7 +57,7 @@ export default function ProductPreview() {
   return (
     <div className="flex-1 p-4 lg:p-8 overflow-y-auto lg:overflow-hidden scrollbar-hide">
       <div className="max-w-7xl mx-auto h-full pt-15 md:pt-10 lg:pt-5">
-        <h2 className="text-lg md:text-xl lg:text-2xl font-bold text-gray-900 mb-8">
+        <h2 className="text-lg md:text-xl lg:text-2xl font-bold  mb-8">
           Product Preview
         </h2>
 
@@ -75,7 +75,7 @@ export default function ProductPreview() {
               />
               {/* Front Design Area - Top Left */}
               <div
-                className={`absolute top-[25%] left-[65%] w-[10%] h-[10%] border-2 border-dashed border-gray-400 rounded flex items-center justify-center transform -translate-x-1/2 -translate-y-1/2 overflow-hidden bg-white/50 z-10 ${selectedProductType?.is_onlyType ? "hidden" : ""}`}
+                className={`absolute top-[25%] left-[65%] w-[10%] h-[10%] border-2 border-dashed border-gray-400 rounded flex items-center justify-center transform -translate-x-1/2 -translate-y-1/2 overflow-hidden bg-background/50 z-10 ${selectedProductType?.is_onlyType ? "hidden" : ""}`}
               >
                 {previews["front-top-left"] ? (
                   <BlobImage
@@ -91,7 +91,7 @@ export default function ProductPreview() {
               </div>
               {/* Front Design Area - Center Large */}
               <div
-                className={`absolute border-2 border-dashed border-gray-400 rounded flex items-center justify-center transform -translate-x-1/2 -translate-y-1/2 overflow-hidden bg-white/50 z-10 ${selectedProductType?.is_onlyType ? "top-[53%] left-[45%] w-[30%] h-[40%] " : "top-[58%] left-[50%] w-[30%] h-[40%]"}`}
+                className={`absolute border-2 border-dashed border-gray-400 rounded flex items-center justify-center transform -translate-x-1/2 -translate-y-1/2 overflow-hidden bg-background/50 z-10 ${selectedProductType?.is_onlyType ? "top-[53%] left-[45%] w-[30%] h-[40%] " : "top-[58%] left-[50%] w-[30%] h-[40%]"}`}
               >
                 {previews["front-center"] ? (
                   <BlobImage
@@ -143,7 +143,7 @@ export default function ProductPreview() {
                 className="object-contain"
               />
               {/* Back Design Area - Top Center */}
-              <div className="absolute top-[25%] left-[50%] w-[10%] h-[10%] border-2 border-dashed border-gray-400 rounded flex items-center justify-center transform -translate-x-1/2 -translate-y-1/2 overflow-hidden bg-white/50 z-10">
+              <div className="absolute top-[25%] left-[50%] w-[10%] h-[10%] border-2 border-dashed border-gray-400 rounded flex items-center justify-center transform -translate-x-1/2 -translate-y-1/2 overflow-hidden bg-background/50 z-10">
                 {previews["back-top"] ? (
                   <BlobImage
                     src={previews["back-top"]}
@@ -155,7 +155,7 @@ export default function ProductPreview() {
                 )}
               </div>
               {/* Back Design Area - Bottom Center */}
-              <div className="absolute top-[75%] left-[50%] w-[38%] h-[8%] border-2 border-dashed border-gray-400 rounded flex items-center justify-center transform -translate-x-1/2 -translate-y-1/2 overflow-hidden bg-white/50 z-10">
+              <div className="absolute top-[75%] left-[50%] w-[38%] h-[8%] border-2 border-dashed border-gray-400 rounded flex items-center justify-center transform -translate-x-1/2 -translate-y-1/2 overflow-hidden bg-background/50 z-10">
                 {previews["back-bottom"] ? (
                   <BlobImage
                     src={previews["back-bottom"]}
