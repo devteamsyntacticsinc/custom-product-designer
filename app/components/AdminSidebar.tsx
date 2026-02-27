@@ -56,7 +56,7 @@ export default function AdminSidebar({
         onClick={() => setSidebarOpen(false)}
       />
       <div
-        className={`${sidebarOpen ? "translate-x-0" : "-translate-x-full"} fixed inset-y-0 left-0 z-40 ${isCollapsed ? "w-16" : "w-64"} bg-background dark:bg-gray-900 shadow-lg transform transition-all duration-300 ease-in-out lg:translate-x-0 lg:fixed lg:inset-0 lg:top-0 lg:left-0`}
+        className={`${sidebarOpen ? "translate-x-0" : "-translate-x-full"} fixed inset-y-0 left-0 z-40 ${isCollapsed ? "w-16" : "w-64"} bg-background dark:bg-[#010409] shadow-lg transform transition-all duration-300 ease-in-out lg:translate-x-0 lg:fixed lg:inset-0 lg:top-0 lg:left-0`}
       >
         <div className="flex items-center justify-between h-16 px-6 border-b border-gray-200 dark:border-gray-700">
           {!isCollapsed && (
