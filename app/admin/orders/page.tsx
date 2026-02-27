@@ -308,7 +308,7 @@ export default function OrdersPage() {
                 return (
                   <Card
                     key={order.id}
-                    className="p-4 sm:p-6 hover:shadow-md transition-shadow dark:bg-gray-800"
+                    className="p-4 sm:p-6 hover:shadow-md transition-shadow dark:bg-[#0d1117]"
                   >
                     <div className="space-y-6">
                       {/* Product Preview */}
