@@ -1,5 +1,6 @@
 import { Document, Page, Text, View, StyleSheet } from "@react-pdf/renderer";
 import { receiptStyles as styles } from "./styles";
+import { DateRange } from "react-day-picker";
 
 interface ProcessedOrderRow {
   customerId: string;
@@ -21,7 +22,7 @@ interface CustomerTableReceiptProps {
     brand: { id: number; name: string } | null;
     size: { id: number; value: string } | null;
     color: { id: number; value: string } | null;
-    date_range: string;
+    date_range: DateRange | undefined;
   };
 }
 
@@ -45,8 +46,23 @@ export default function CustomerTableReceipt({
     if (filterValues.brand) filters.push(`Brand: ${filterValues.brand.name}`);
     if (filterValues.size) filters.push(`Size: ${filterValues.size.value}`);
     if (filterValues.color) filters.push(`Color: ${filterValues.color.value}`);
-    if (filterValues.date_range)
-      filters.push(`Date Range: ${filterValues.date_range}`);
+    if (filterValues.date_range?.from || filterValues.date_range?.to) {
+      const from = filterValues.date_range?.from
+        ? new Date(filterValues.date_range.from).toLocaleDateString("en-US", {
+            year: "numeric",
+            month: "short",
+            day: "numeric",
+          })
+        : "Start";
+      const to = filterValues.date_range?.to
+        ? new Date(filterValues.date_range.to).toLocaleDateString("en-US", {
+            year: "numeric",
+            month: "short",
+            day: "numeric",
+          })
+        : "End";
+      filters.push(`Date Range: ${from} - ${to}`);
+    }
     return filters.length > 0 ? filters : ["All Customers"];
   };
 

@@ -7,6 +7,8 @@ export class CustomerService {
     brand?: string;
     size?: string;
     color?: string;
+    date_from?: string;
+    date_to?: string;
   }): Promise<CustomerWithOrders[]> {
     try {
       let query = supabase
@@ -27,7 +29,12 @@ export class CustomerService {
       // If filters are applied, we need to join with orders and filter
       if (
         filters &&
-        (filters.product_type || filters.brand || filters.size || filters.color)
+        (filters.product_type ||
+          filters.brand ||
+          filters.size ||
+          filters.color ||
+          filters.date_from ||
+          filters.date_to)
       ) {
         // Build a single query with all necessary joins
         const brandJoin = filters.brand
@@ -59,6 +66,13 @@ export class CustomerService {
           `;
         }
 
+        // Add created_at to select for date filtering
+        if (filters.date_from || filters.date_to) {
+          selectQuery += `,
+            created_at
+          `;
+        }
+
         let orderQuery = supabase.from("product_orders").select(selectQuery);
 
         // Apply filter conditions
@@ -76,6 +90,12 @@ export class CustomerService {
         }
         if (filters.color) {
           orderQuery = orderQuery.eq("colors.value", filters.color);
+        }
+        if (filters.date_from) {
+          orderQuery = orderQuery.gte("created_at", filters.date_from);
+        }
+        if (filters.date_to) {
+          orderQuery = orderQuery.lte("created_at", filters.date_to);
         }
 
         const { data: filteredOrders, error: filterError } = await orderQuery;

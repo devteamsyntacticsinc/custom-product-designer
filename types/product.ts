@@ -183,14 +183,17 @@ export interface ColorBrandTypeWithDetails {
 
 export interface ColorProduct {
   id: number;
-  colors: { value: string };
   brandT_id: number;
   color_id: number;
+  colors: { value: string };
   brand_type: {
     id: number;
     brands: { name: string };
     product_type: { name: string };
+    brand_id: number;
   };
+  brand_name: string;
+  color_name: string;
 }
 
 export interface BrandGroup {
