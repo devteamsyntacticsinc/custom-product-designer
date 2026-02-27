@@ -7,7 +7,7 @@ import { AssetsProvider } from "@/contexts/AssetsContext";
 export default function Home() {
   return (
     <AssetsProvider>
-      <div className="h-screen bg-gray-50 flex overflow-hidden">
+      <div className="h-screen bg-background flex overflow-hidden">
         {/* Left Sidebar - Controls */}
         <ProductCustomizer />
 

@@ -238,7 +238,10 @@ export default function BrandsTab() {
                 ))
               ) : error ? (
                 <TableRow>
-                  <TableCell colSpan={4} className="text-sm text-red-600 p-4">
+                  <TableCell
+                    colSpan={4}
+                    className="text-sm text-destructive p-4"
+                  >
                     {error}
                   </TableCell>
                 </TableRow>
@@ -454,12 +457,12 @@ function BrandSheet({
             </Label>
           </div>
           {name.length === 0 && (
-            <p className="text-red-500 text-sm italic">
+            <p className="text-destructive text-sm italic">
               *Brand Name is required before saving.
             </p>
           )}
           {selectedTypeIds.length === 0 && (
-            <p className="text-red-500 text-sm italic">
+            <p className="text-destructive text-sm italic">
               *Product Type is required before saving.
             </p>
           )}

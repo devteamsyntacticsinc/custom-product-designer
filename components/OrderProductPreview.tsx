@@ -49,7 +49,7 @@ const DesignArea = ({
 }: DesignAreaProps) => {
   return (
     <div
-      className={`absolute ${customClass} border-2 border-dashed border-gray-400 rounded flex items-center justify-center transform -translate-x-1/2 -translate-y-1/2 overflow-hidden bg-white/50 z-10 transition-all duration-200 ${imageUrl ? "cursor-pointer hover:border-primary hover:bg-white group" : ""}`}
+      className={`absolute ${customClass} border-2 border-dashed border-gray-400  rounded flex items-center justify-center transform -translate-x-1/2 -translate-y-1/2 overflow-hidden bg-white/50 z-10 transition-all duration-200 ${imageUrl ? "cursor-pointer hover:border-primary hover:bg-background group" : ""}`}
       onClick={() =>
         imageUrl &&
         onDownload(imageUrl, `${orderId}_${placement.replace(/\s+/g, "_")}.png`)
@@ -63,7 +63,7 @@ const DesignArea = ({
             alt={label}
             className="w-full h-full object-contain"
           />
-          <div className="absolute inset-0 bg-black/20 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity">
+          <div className="absolute inset-0 bg-black/20  opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity">
             <Download className="text-white w-4 h-4" />
           </div>
         </>
@@ -127,16 +127,16 @@ export default function OrderProductPreview({
   return (
     <div className="space-y-4">
       {/* Product Info & Actions */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 p-4 bg-white dark:bg-gray-700 border border-gray-100 dark:border-gray-800 rounded-xl shadow-sm">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 p-4 bg-background dark:bg-gray-700 border dark:border-gray-800 rounded-xl shadow-sm">
         <div className="flex items-center gap-4 text-sm text-gray-600 dark:text-gray-400">
           <div className="flex flex-col">
             {shouldDisplayBrand && (
-              <span className="font-semibold text-gray-900 dark:text-white text-sm lg:text-lg">
+              <span className="font-semibold  dark:text-white text-sm lg:text-lg">
                 {brandName}
               </span>
             )}
             <span
-              className={`text-xs lg:text-base text-gray-500 ${!shouldDisplayBrand ? "font-semibold text-gray-900 dark:text-white text-sm lg:text-lg" : ""}`}
+              className={`text-xs lg:text-base text-gray-500 ${!shouldDisplayBrand ? "font-semibold  dark:text-white text-sm lg:text-lg" : ""}`}
             >
               {productTypeName}
             </span>
@@ -152,7 +152,7 @@ export default function OrderProductPreview({
           <Button
             variant="outline"
             size="sm"
-            className="flex items-center gap-2 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors cursor-pointer"
+            className="h-10"
             onClick={(e: React.MouseEvent) => {
               e.preventDefault();
               productImages.forEach((img, index) => {
@@ -165,7 +165,7 @@ export default function OrderProductPreview({
               });
             }}
           >
-            <Download className="h-4 w-4" />
+            <Download className="h-4 w-4 " />
             Download All Designs ({productImages.length})
           </Button>
         )}

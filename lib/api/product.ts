@@ -667,7 +667,7 @@ export class ProductService {
     name: string,
     is_Active: boolean = true,
     is_onlyType: boolean = false,
-    images: { file: File; is_hasBack: boolean }[],
+    images: { file?: File; filepath?: string; is_hasBack: boolean }[],
   ): Promise<ProductType> {
     try {
       // Check if product type already exists (case-insensitive)
@@ -729,7 +729,7 @@ export class ProductService {
     name?: string,
     is_Active?: boolean,
     is_onlyType?: boolean,
-    images?: { file: File; is_hasBack: boolean }[],
+    images?: { file?: File; filepath?: string; is_hasBack: boolean }[],
     imagesToDelete?: number[],
   ): Promise<ProductType> {
     try {
@@ -926,7 +926,7 @@ export class ProductService {
 
   static async uploadImageProductType(
     productTypeId: string,
-    assets: { file: File; is_hasBack: boolean }[],
+    assets: { file?: File; filepath?: string; is_hasBack: boolean }[],
   ) {
     try {
       const imageInserts = [];
@@ -952,6 +952,13 @@ export class ProductService {
           imageInserts.push({
             productT_id: productTypeId,
             filepath: urlData.publicUrl,
+            is_hasBack: asset.is_hasBack,
+          });
+        } else if (asset && asset.filepath) {
+          // Use existing filepath
+          imageInserts.push({
+            productT_id: productTypeId,
+            filepath: asset.filepath,
             is_hasBack: asset.is_hasBack,
           });
         }

@@ -1,0 +1,483 @@
+openapi: 3.0.3
+info:
+  title: Frontend API
+  description: |
+    Frontend-facing API endpoints for the Custom Product Designer application.
+
+    ## Module Purpose
+    Provides RESTful API endpoints for frontend components to interact with
+    backend services including authentication, product management, order processing,
+    and administrative functions.
+
+    ## Features
+    - Authentication and session management
+    - Product catalog management (brands, colors, sizes, types)
+    - Order processing and tracking
+    - Customer management
+    - Administrative operations
+    - File upload and processing
+    - Email notifications
+
+    ## Business Logic
+    - JWT-based authentication with NextAuth.js
+    - CRUD operations for all product entities
+    - Order processing with email notifications
+    - File upload handling for product customization
+    - Role-based access control for admin operations
+
+  version: 1.0.0
+  contact:
+    name: Custom Product Designer Development Team
+
+servers:
+  - url: http://localhost:3000/api
+    description: Local development
+  - url: https://your-domain.com/api
+    description: Production
+
+tags:
+  - name: authentication
+    description: Authentication and session management
+  - name: brands
+    description: Brand management operations
+  - name: colors
+    description: Color management operations
+  - name: sizes
+    description: Size management operations
+  - name: product-types
+    description: Product type management operations
+  - name: orders
+    description: Order processing and management
+  - name: customers
+    description: Customer management operations
+  - name: admin
+    description: Administrative operations
+
+components:
+  schemas:
+    ApiResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+          description: Operation success status
+          example: true
+        data:
+          type: object
+          description: Response data
+        error:
+          type: string
+          description: Error message (if any)
+          example: "Internal server error"
+        details:
+          type: string
+          description: Detailed error information
+          example: "Database connection failed"
+
+    Brand:
+      type: object
+      properties:
+        id:
+          type: number
+          description: Brand unique identifier
+          example: 1
+        name:
+          type: string
+          description: Brand name
+          example: "Nike"
+        is_Active:
+          type: boolean
+          description: Brand active status
+          example: true
+        type_id:
+          type: number
+          nullable: true
+          description: Associated product type ID
+          example: 1
+
+    OrderRequest:
+      type: object
+      required:
+        - orderData
+      properties:
+        orderData:
+          type: string
+          description: JSON string containing order data
+          example: '{"contactInformation":{"fullName":"John Doe","email":"john@example.com"},"productTypeId":"1","sizeSelection":[{"size":"M","quantity":2}]}'
+
+    OrderResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+          example: true
+        orderId:
+          type: string
+          description: Generated order ID
+          example: "order-123"
+        customerId:
+          type: string
+          description: Customer ID
+          example: "customer-123"
+
+    ErrorResponse:
+      type: object
+      properties:
+        error:
+          type: string
+          description: Error message
+          example: "Validation failed"
+        details:
+          type: string
+          description: Error details
+          example: "Brand name is required"
+
+    CreateBrandRequest:
+      type: object
+      required:
+        - name
+      properties:
+        name:
+          type: string
+          description: Brand name
+          example: "Nike"
+        is_Active:
+          type: boolean
+          default: true
+          description: Brand active status
+        type_id:
+          type: number
+          description: Single product type ID (backward compatibility)
+          example: 1
+        type_ids:
+          type: array
+          items:
+            type: number
+          description: Multiple product type IDs
+          example: [1, 2, 3]
+
+    UpdateBrandRequest:
+      type: object
+      required:
+        - id
+      properties:
+        id:
+          type: number
+          description: Brand ID to update
+          example: 1
+        name:
+          type: string
+          description: Updated brand name
+          example: "Adidas"
+        is_Active:
+          type: boolean
+          description: Updated brand active status
+          example: true
+        type_ids:
+          type: array
+          items:
+            type: number
+          description: Updated product type associations
+          example: [1, 2]
+
+paths:
+  /auth/nextauth:
+    get:
+      tags:
+        - authentication
+      summary: NextAuth.js authentication handler
+      description: |
+        Handles NextAuth.js authentication requests including sign-in, sign-out,
+        session management, and callback processing.
+
+        **Authentication Flow:**
+        - Processes credential-based authentication
+        - Manages JWT tokens and sessions
+        - Handles OAuth callbacks
+        - Provides session information
+
+        **Security Features:**
+        - JWT token strategy
+        - Secure session management
+        - Role-based access control
+      operationId: nextAuthHandler
+      responses:
+        '200':
+          description: Authentication response
+          content:
+            application/json:
+              schema:
+                oneOf:
+                  - $ref: '#/components/schemas/ApiResponse'
+                  - type: object
+                    description: Session data
+    post:
+      tags:
+        - authentication
+      summary: NextAuth.js authentication handler
+      description: Handles POST requests for authentication
+      operationId: nextAuthPost
+      responses:
+        '200':
+          description: Authentication response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponse'
+
+  /brands:
+    get:
+      tags:
+        - brands
+      summary: Get brands
+      description: |
+        Retrieve all brands or filter by product type.
+
+        **Query Parameters:**
+        - typeId: Filter brands by product type ID
+
+        **Business Logic:**
+        - Returns all brands with type associations
+        - Supports filtering by product type
+        - Includes active/inactive status
+      operationId: getBrands
+      parameters:
+        - name: typeId
+          in: query
+          required: false
+          schema:
+            type: string
+          description: Filter by product type ID
+      responses:
+        '200':
+          description: Brands retrieved successfully
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Brand'
+        '500':
+          description: Server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+    post:
+      tags:
+        - brands
+      summary: Create brand
+      description: |
+        Create a new brand with optional product type associations.
+
+        **Creation Options:**
+        - Create brand without type associations
+        - Create brand with single type (backward compatibility)
+        - Create brand with multiple types
+
+        **Validation:**
+        - Brand name required (non-empty string)
+        - At least one type if type_ids provided
+        - Duplicate name validation
+      operationId: createBrand
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateBrandRequest'
+      responses:
+        '201':
+          description: Brand created successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponse'
+        '400':
+          description: Validation error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '409':
+          description: Brand already exists
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: Server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+    put:
+      tags:
+        - brands
+      summary: Update brand
+      description: |
+        Update an existing brand and its type associations.
+
+        **Update Options:**
+        - Update brand name and/or active status
+        - Update product type associations
+        - Partial updates supported
+
+        **Validation:**
+        - Brand ID required
+        - At least name or type_ids must be provided
+        - Duplicate name validation
+      operationId: updateBrand
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateBrandRequest'
+      responses:
+        '200':
+          description: Brand updated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponse'
+        '400':
+          description: Validation error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Brand not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '409':
+          description: Brand name already exists
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: Server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+    delete:
+      tags:
+        - brands
+      summary: Delete brand
+      description: |
+        Delete a brand and its type associations.
+
+        **Business Logic:**
+        - Validates brand ID parameter
+        - Handles foreign key constraints
+        - Cannot delete brands in use
+      operationId: deleteBrand
+      parameters:
+        - name: id
+          in: query
+          required: true
+          schema:
+            type: string
+          description: Brand ID to delete
+      responses:
+        '200':
+          description: Brand deleted successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: "Brand deleted successfully"
+        '400':
+          description: Validation or constraint error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: Server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /orders:
+    post:
+      tags:
+        - orders
+      summary: Process order
+      description: |
+        Process a new product order with file uploads and email notifications.
+
+        **Order Processing:**
+        - Accepts multipart form data with JSON order data and files
+        - Processes order through OrderService
+        - Uploads product images to storage
+        - Sends email notifications to owner and customer
+
+        **File Upload:**
+        - Supports front-top-left, front-center, back-top, back-bottom placements
+        - Validates file presence and size
+        - Associates files with order
+
+        **Email Notifications:**
+        - Sends order confirmation to customer
+        - Sends new order notification to business owner
+        - Includes detailed order information in HTML emails
+      operationId: processOrder
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              required:
+                - orderData
+              properties:
+                orderData:
+                  $ref: '#/components/schemas/OrderRequest'
+                front-top-left:
+                  type: string
+                  format: binary
+                  description: Front top-left image file
+                front-center:
+                  type: string
+                  format: binary
+                  description: Front center image file
+                back-top:
+                  type: string
+                  format: binary
+                  description: Back top image file
+                back-bottom:
+                  type: string
+                  format: binary
+                  description: Back bottom image file
+      responses:
+        '200':
+          description: Order processed successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OrderResponse'
+        '400':
+          description: Invalid order data
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: Processing error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
