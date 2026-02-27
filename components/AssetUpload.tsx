@@ -67,13 +67,13 @@ export default function AssetUpload({
           }
         />
         <div
-          className={`group flex items-center justify-between p-3 rounded-xl border bg-gray-50/50 hover:bg-gray-100 transition-colors cursor-pointer min-w-0 ${
-            asset ? "bg-background border-gray-200" : ""
+          className={`group flex items-center justify-between p-3 rounded-xl border bg-gray-50/50 hover:bg-gray-100 dark:bg-gray-800/50 dark:hover:bg-gray-700 dark:border-gray-600 transition-colors cursor-pointer min-w-0 ${
+            asset ? "bg-background border-gray-200 dark:border-gray-600" : ""
           }`}
           onClick={() => !asset && fileInputRefs.current[slot.id]?.click()}
         >
           <span
-            className={`text-sm truncate mr-2 ${asset ? " font-medium" : "text-gray-600"}`}
+            className={`text-sm truncate mr-2 ${asset ? " font-medium" : "text-gray-600 dark:text-gray-400"}`}
           >
             {asset
               ? asset.name
@@ -87,12 +87,12 @@ export default function AssetUpload({
                 e.stopPropagation();
                 removeAsset(slot.id);
               }}
-              className="p-1 rounded-full hover:bg-red-50 text-destructive transition-colors"
+              className="p-1 rounded-full hover:bg-red-50 dark:hover:bg-red-900/20 text-destructive transition-colors"
             >
               <X className="w-4 h-4" />
             </button>
           ) : (
-            <Upload className="w-4 h-4 text-gray-400 group-hover:text-gray-600" />
+            <Upload className="w-4 h-4 text-gray-400 group-hover:text-gray-600 dark:text-gray-500 dark:group-hover:text-gray-300" />
           )}
         </div>
       </div>
