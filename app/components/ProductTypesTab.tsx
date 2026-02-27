@@ -271,7 +271,10 @@ export default function ProductTypesTab() {
                 ))
               ) : error ? (
                 <TableRow>
-                  <TableCell colSpan={4} className="text-xs text-red-600 p-4">
+                  <TableCell
+                    colSpan={4}
+                    className="text-xs text-destructive p-4"
+                  >
                     {error}
                   </TableCell>
                 </TableRow>
@@ -557,7 +560,7 @@ function ProductTypeSheet({
           </div>
 
           {name.length === 0 && (
-            <p className="text-red-500 text-sm italic">
+            <p className="text-destructive text-sm italic">
               *Product Type Name is required before saving.
             </p>
           )}
@@ -665,7 +668,7 @@ function ProductTypeSheet({
                           e.stopPropagation();
                           removeAsset(index);
                         }}
-                        className="p-1 rounded-full hover:bg-red-50 text-red-500 transition-colors"
+                        className="p-1 rounded-full hover:bg-red-50 text-destructive transition-colors"
                       >
                         <X className="w-4 h-4" />
                       </button>
@@ -685,17 +688,17 @@ function ProductTypeSheet({
           </p>
 
           {assigned && assets.length !== 0 && (
-            <p className="text-red-500 text-sm italic">{assigned}</p>
+            <p className="text-destructive text-sm italic">{assigned}</p>
           )}
 
           {imageValidationError && (
-            <p className="text-red-500 text-sm italic">
+            <p className="text-destructive text-sm italic">
               {imageValidationError}
             </p>
           )}
 
           {assets.length === 0 && (
-            <p className="text-red-500 text-sm italic">
+            <p className="text-destructive text-sm italic">
               *Product Type Image is required before saving.
             </p>
           )}

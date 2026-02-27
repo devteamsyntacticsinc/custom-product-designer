@@ -983,7 +983,7 @@ export default function CustomersTab() {
                   <TableRow>
                     <TableCell
                       colSpan={5}
-                      className="text-center py-4 text-red-500"
+                      className="text-center py-4 text-destructive"
                     >
                       {error}
                     </TableCell>

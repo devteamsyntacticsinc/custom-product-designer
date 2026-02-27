@@ -87,7 +87,7 @@ export default function AssetUpload({
                 e.stopPropagation();
                 removeAsset(slot.id);
               }}
-              className="p-1 rounded-full hover:bg-red-50 text-red-500 transition-colors"
+              className="p-1 rounded-full hover:bg-red-50 text-destructive transition-colors"
             >
               <X className="w-4 h-4" />
             </button>
