@@ -1,0 +1,162 @@
+name: Authentication API
+description: NextAuth.js configuration for user authentication with credentials provider
+version: 1.0.0
+base_path: /lib/auth.ts
+
+configuration:
+  authOptions:
+    description: NextAuth.js configuration object
+    strategy: JWT
+    provider: Credentials
+    sign_in_page: /login
+
+providers:
+  credentials:
+    name: credentials
+    type: CredentialsProvider
+    fields:
+      email:
+        label: Email
+        type: email
+        required: true
+      password:
+        label: Password
+        type: password
+        required: true
+
+methods:
+  authorize:
+    description: Authenticate user credentials and return user object
+    parameters:
+      credentials:
+        email: string
+        password: string
+    returns:
+      type: NextAuthUser | null
+      description: User object with role information or null if authentication fails
+    workflow:
+      - Validate credentials presence
+      - Query users table with role information
+      - Compare password using bcrypt
+      - Return user object with role
+    database_tables:
+      - users
+      - roles
+    validation:
+      - Email and password required
+      - Password comparison with bcrypt
+      - User existence check
+    error_handling:
+      - Returns null on any error
+      - Logs authentication errors to console
+
+callbacks:
+  jwt:
+    description: JWT callback to add role information to token
+    parameters:
+      token: JWT
+      user: NextAuthUser | null
+    returns:
+      type: JWT
+      description: Token with role information added
+    logic:
+      - Add user role to token when user is available
+
+  session:
+    description: Session callback to add user information to session
+    parameters:
+      session: Session
+      token: JWT
+    returns:
+      type: Session
+      description: Session with user ID and role information
+    logic:
+      - Add user ID from token subject
+      - Add role from token to session user
+
+dependencies:
+  - next-auth
+  - next-auth/providers/credentials
+  - ./supabase
+  - bcryptjs
+  - next-auth/jwt
+  - next-auth
+
+database_schema:
+  users:
+    id: string/number
+    email: string
+    password: string (hashed)
+    name: string
+    roles: object (relation)
+  
+  roles:
+    name: string
+
+security:
+  password_hashing: bcryptjs
+  session_strategy: JWT
+  credential_validation: Required fields check
+  error_handling: Silent failure (returns null)
+
+environment_variables:
+  required:
+    - NEXT_PUBLIC_SUPABASE_URL
+    - NEXT_PUBLIC_SUPABASE_ANON_KEY
+
+exports:
+  - handler: NextAuth handler function
+  - authOptions: Configuration object
+
+usage_example: |
+  // Import in API route
+  import { handler } from '@/lib/auth'
+  
+  export { handler as GET, handler as POST }
+  
+  // Use authOptions in configuration
+  import { authOptions } from '@/lib/auth'
+  
+  // Access session in components
+  import { useSession } from 'next-auth/react'
+  
+  const { data: session } = useSession()
+  console.log(session.user.role) // 'admin' | 'user'
+
+user_object_structure:
+  id: string/number
+  email: string
+  name: string
+  role: string (from roles.name)
+
+session_structure:
+  user:
+    id: string
+    email: string
+    name: string
+    role: string
+  expires: string
+
+token_structure:
+  sub: string (user ID)
+  role: string
+  email: string
+  name: string
+  exp: number
+  iat: number
+  jti: string
+
+error_scenarios:
+  - Missing credentials: Returns null
+  - Invalid email: Returns null
+  - Invalid password: Returns null
+  - Database error: Returns null
+  - User not found: Returns null
+
+authentication_flow:
+  1. User submits email and password
+  2. CredentialsProvider.authorize() called
+  3. Query users table with role join
+  4. Compare password with bcrypt
+  5. Create JWT with user role
+  6. Return session with user information

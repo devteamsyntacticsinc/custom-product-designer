@@ -1,5 +1,5 @@
 import { supabase } from "@/lib/supabase";
-import { Customer, CustomerWithOrders, FilteredOrder } from "@/types/customer";
+import { CustomerWithOrders, FilteredOrder } from "@/types/customer";
 
 export class CustomerService {
   static async getCustomers(filters?: {

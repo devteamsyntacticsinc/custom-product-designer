@@ -1,0 +1,158 @@
+name: Supabase Client
+description: Supabase database client configuration and initialization
+version: 1.0.0
+base_path: /lib/supabase.ts
+
+client_configuration:
+  library: '@supabase/supabase-js'
+  client_type: createClient
+  authentication: Anonymous key authentication
+
+environment_variables:
+  required:
+    NEXT_PUBLIC_SUPABASE_URL:
+      description: Supabase project URL
+      type: string
+      format: https://your-project.supabase.co
+      example: "https://abc123.supabase.co"
+    
+    NEXT_PUBLIC_SUPABASE_ANON_KEY:
+      description: Supabase anonymous/public key
+      type: string
+      format: Long alphanumeric string
+      example: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+
+exports:
+  supabase:
+    type: SupabaseClient
+    description: Configured Supabase client instance
+    usage: Import and use for database operations
+
+features:
+  - Database queries and mutations
+  - Real-time subscriptions
+  - File storage operations
+  - Authentication (when used with auth helpers)
+  - Edge functions support
+
+usage_patterns:
+  database_queries:
+    example: |
+      // Select data
+      const { data, error } = await supabase
+        .from('users')
+        .select('*')
+        .eq('email', 'user@example.com')
+      
+      // Insert data
+      const { data, error } = await supabase
+        .from('orders')
+        .insert([{ customer_id: 1, total: 99.99 }])
+      
+      // Update data
+      const { data, error } = await supabase
+        .from('products')
+        .update({ name: 'New Name' })
+        .eq('id', 1)
+      
+      // Delete data
+      const { error } = await supabase
+        .from('categories')
+        .delete()
+        .eq('id', 1)
+
+  storage_operations:
+    example: |
+      // Upload file
+      const { data, error } = await supabase.storage
+        .from('bucket-name')
+        .upload('file-path', file)
+      
+      // Get public URL
+      const { data } = supabase.storage
+        .from('bucket-name')
+        .getPublicUrl('file-path')
+      
+      // Delete file
+      const { error } = await supabase.storage
+        .from('bucket-name')
+        .remove(['file-path'])
+
+  real_time_subscriptions:
+    example: |
+      const subscription = supabase
+        .channel('table-changes')
+        .on('postgres_changes', 
+          { event: '*', schema: 'public', table: 'orders' },
+          (payload) => console.log(payload)
+        )
+        .subscribe()
+
+configuration_details:
+  client_initialization:
+    url: process.env.NEXT_PUBLIC_SUPABASE_URL
+    key: process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
+    options: Default Supabase client options
+
+security:
+  authentication_method: Anonymous key
+  key_visibility: Public (NEXT_PUBLIC_ prefix)
+  row_level_security: Enabled via Supabase RLS policies
+  permissions: Controlled by RLS policies in Supabase
+
+database_connection:
+  type: PostgreSQL
+  host: Supabase managed
+  pooling: Handled by Supabase
+  ssl: Enabled by default
+
+error_handling:
+  pattern: Supabase returns { data, error } objects
+  recommendation: Always check for errors before using data
+  example: |
+    const { data, error } = await supabase
+      .from('table')
+      .select('*')
+    
+    if (error) {
+      console.error('Database error:', error)
+      return
+    }
+    
+    // Use data safely
+
+dependencies:
+  - '@supabase/supabase-js'
+
+integration_notes:
+  - Works seamlessly with NextAuth.js for authentication
+  - Can be used in API routes, pages, and components
+  - Supports both client and server-side usage
+  - Compatible with Edge Runtime
+
+best_practices:
+  - Always handle errors returned by Supabase operations
+  - Use environment variables for configuration
+  - Implement proper RLS policies in Supabase
+  - Consider using Supabase auth helpers for authentication
+  - Use TypeScript for better type safety
+
+common_use_cases:
+  - User authentication and authorization
+  - CRUD operations on database tables
+  - File upload and storage
+  - Real-time data synchronization
+  - Analytics and reporting queries
+
+example_import:
+  import: |
+    import { supabase } from '@/lib/supabase'
+    
+    // Use in any component or API route
+    async function getUsers() {
+      const { data, error } = await supabase
+        .from('users')
+        .select('*')
+      
+      return data || []
+    }
