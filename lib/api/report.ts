@@ -1,7 +1,7 @@
 import { supabase } from "@/lib/supabase";
 
 export class ReportService {
-    static async getTopCustomers(startDate?: string, endDate?: string, productType?: string) {
+    static async getTopCustomers(startDate?: string, endDate?: string, productType?: number) {
         try {
             let query = supabase
                 .from('product_orders')
@@ -10,6 +10,7 @@ export class ReportService {
                     created_at,
                     brand_type (
                         product_type (
+                            id,
                             name
                         )
                     ),
@@ -41,8 +42,9 @@ export class ReportService {
                 if (productType) {
                     const brandType = order.brand_type as any;
                     const pType = brandType?.product_type;
-                    const typeName = Array.isArray(pType) ? pType[0]?.name : pType?.name;
-                    if (typeName !== productType) return;
+                    const typeId = Array.isArray(pType) ? pType[0]?.id : pType?.id;
+
+                    if (Number(typeId) !== Number(productType)) return;
                 }
 
                 if (custResult && custResult.id) {
@@ -66,33 +68,6 @@ export class ReportService {
                 .slice(0, 5);
         } catch (error) {
             console.error("Error fetching top customers:", error);
-            return [];
-        }
-    }
-
-    static async getOrdersByDay(startDate?: string, endDate?: string) {
-        try {
-            let query = supabase
-                .from('product_orders')
-                .select('created_at');
-
-            if (startDate) query = query.gte('created_at', startDate);
-            if (endDate) query = query.lte('created_at', endDate);
-
-            const { data, error } = await query;
-            if (error) throw error;
-
-            const stats: Record<string, number> = {};
-            data?.forEach(order => {
-                const date = new Date(order.created_at).toISOString().split('T')[0];
-                stats[date] = (stats[date] || 0) + 1;
-            });
-
-            return Object.entries(stats)
-                .map(([date, count]) => ({ date, count }))
-                .sort((a, b) => a.date.localeCompare(b.date));
-        } catch (error) {
-            console.error("Error fetching orders by day:", error);
             return [];
         }
     }
@@ -148,6 +123,79 @@ export class ReportService {
             };
         } catch (error) {
             console.error("Error fetching product type time series:", error);
+            return { data: [], types: [] };
+        }
+    }
+
+    static async getMostOrderedBrand(startDate?: string, endDate?: string) {
+        try {
+            let query = supabase
+                .from("product_orders")
+                .select(`
+                created_at,
+                brand_type (
+                    brands (
+                        name
+                    )
+                )
+            `);
+
+            if (startDate) query = query.gte("created_at", startDate);
+            if (endDate) query = query.lte("created_at", endDate);
+
+            const { data, error } = await query;
+            if (error) throw error;
+
+            const timeSeries: Record<string, Record<string, number>> = {};
+            const brandsSet = new Set<string>();
+
+            data?.forEach((order: any) => {
+                const date = new Date(order.created_at)
+                    .toISOString()
+                    .split("T")[0];
+
+                // Ensure brand_type is always an array
+                const brandTypeArray = Array.isArray(order.brand_type)
+                    ? order.brand_type
+                    : order.brand_type
+                        ? [order.brand_type]
+                        : [];
+
+                brandTypeArray.forEach((bt: any) => {
+                    const brandName = bt?.brands?.name;
+
+                    if (!brandName) return;
+
+                    brandsSet.add(brandName);
+
+                    if (!timeSeries[date]) {
+                        timeSeries[date] = {};
+                    }
+
+                    timeSeries[date][brandName] =
+                        (timeSeries[date][brandName] || 0) + 1;
+                });
+            });
+
+            // Sort dates
+            const sortedDates = Object.keys(timeSeries).sort();
+
+            const result = sortedDates.map(date => {
+                const entry: any = { date };
+
+                brandsSet.forEach(brand => {
+                    entry[brand] = timeSeries[date][brand] || 0;
+                });
+
+                return entry;
+            });
+
+            return {
+                data: result,
+                types: Array.from(brandsSet),
+            };
+        } catch (error) {
+            console.error("Error fetching most ordered brand:", error);
             return { data: [], types: [] };
         }
     }

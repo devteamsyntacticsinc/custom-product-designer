@@ -19,22 +19,25 @@ import {
 interface ChartAreaInteractiveProps {
     data: any[]
     config: ChartConfig
+    types: string[]
 }
 
 export function ChartAreaInteractive({
     data,
     config,
+    types,
 }: ChartAreaInteractiveProps) {
-    const defaultColors = [
-        "#3b82f6", // blue
-        "#f97316", // orange
-        "#f43f5e", // red
-        "#10b981", // green
-        "#8b5cf6", // purple
-        "#eab308", // yellow
-        "#14b8a6", // teal
-        "#f472b6", // pink
-    ];
+    const baseColor = [59, 130, 246]; // [R, G, B]
+
+    // Suppose `types` is your array of items you want colors for
+    const COLORS = types.map((_, index) => {
+        // Calculate factor from dark to light
+        const factor = 0.4 + (index / types.length) * 0.6;
+        const r = Math.floor(baseColor[0] * factor);
+        const g = Math.floor(baseColor[1] * factor);
+        const b = Math.floor(baseColor[2] * factor);
+        return `rgb(${r}, ${g}, ${b})`;
+    });
 
     const { keys, dynamicConfig } = React.useMemo(() => {
         const allKeys = Array.from(
@@ -46,7 +49,7 @@ export function ChartAreaInteractive({
         allKeys.forEach((key, index) => {
             newConfig[key] = {
                 label: config[key]?.label || key,
-                color: defaultColors[index % defaultColors.length]
+                color: COLORS[index % COLORS.length]
             };
         });
 

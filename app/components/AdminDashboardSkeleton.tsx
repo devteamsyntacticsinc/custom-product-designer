@@ -66,35 +66,54 @@ export default function AdminDashboardSkeleton() {
             </div>
             <Skeleton className="h-[300px] w-full rounded-md" />
           </Card>
+
+          {/* Most Ordered Brands Skeleton */}
+          <Card className="p-6">
+            <div className="flex flex-row items-center justify-between flex-wrap gap-4 mb-4">
+              <div>
+                <Skeleton className="h-4 lg:h-5 w-32 mb-2" />
+                <Skeleton className="h-3 lg:h-4 w-48" />
+              </div>
+              <div className="flex items-center gap-4 flex-wrap">
+                <div className="flex flex-col gap-1">
+                  <Skeleton className="h-2.5 w-8" />
+                  <Skeleton className="h-8 w-[150px]" />
+                </div>
+              </div>
+            </div>
+            <Skeleton className="h-[300px] w-full rounded-md" />
+          </Card>
         </div>
 
         {/* Right Column - Recent Activity Skeleton */}
-        <Card className="p-6">
-          <div className="mb-4">
-            <Skeleton className="h-4 lg:h-5 w-32 mb-2" />
-            <Skeleton className="h-3 lg:h-4 w-40" />
-          </div>
-          <div className="space-y-4">
-            {[...Array(10)].map((_, i) => (
-              <div key={i} className="flex items-center space-x-4 p-4">
-                <Skeleton className="w-2 h-2 rounded-full" />
-                <div className="flex-1 space-y-2">
-                  <Skeleton className="h-4 w-3/4" />
-                  <Skeleton className="h-3 w-1/2" />
+        <div className="h-fit">
+          <Card className="p-6">
+            <div className="mb-4">
+              <Skeleton className="h-4 lg:h-5 w-32 mb-2" />
+              <Skeleton className="h-3 lg:h-4 w-40" />
+            </div>
+            <div className="space-y-4">
+              {[...Array(10)].map((_, i) => (
+                <div key={i} className="flex items-center space-x-4 p-4">
+                  <Skeleton className="w-2 h-2 rounded-full" />
+                  <div className="flex-1 space-y-2">
+                    <Skeleton className="h-4 w-3/4" />
+                    <Skeleton className="h-3 w-1/2" />
+                  </div>
+                  <Skeleton className="h-3 w-16" />
                 </div>
-                <Skeleton className="h-3 w-16" />
-              </div>
-            ))}
-          </div>
-          {/* Pagination Skeleton */}
-          <div className="mt-6 flex justify-center gap-2">
-            <Skeleton className="h-8 w-8 rounded-md" />
-            <Skeleton className="h-8 w-8 rounded-md" />
-            <Skeleton className="h-8 w-8 rounded-md" />
-            <Skeleton className="h-8 w-8 rounded-md" />
-            <Skeleton className="h-8 w-8 rounded-md" />
-          </div>
-        </Card>
+              ))}
+            </div>
+            {/* Pagination Skeleton */}
+            <div className="mt-6 flex justify-center gap-2">
+              <Skeleton className="h-8 w-8 rounded-md" />
+              <Skeleton className="h-8 w-8 rounded-md" />
+              <Skeleton className="h-8 w-8 rounded-md" />
+              <Skeleton className="h-8 w-8 rounded-md" />
+              <Skeleton className="h-8 w-8 rounded-md" />
+            </div>
+          </Card>
+        </div>
       </div>
     </div>
   );
