@@ -67,20 +67,10 @@ export default function AdminDashboard() {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [isCollapsed, setIsCollapsed] = useState(false);
   const currentPath = usePathname();
-<<<<<<< HEAD
   const [ordersByProductTypeTimeSeriesData, setOrdersByProductTypeTimeSeriesData] = useState<{ data: ChartDataItem[]; types: string[] }>({ data: [], types: [] });
   const [productTypesData, setProductTypesData] = useState<ProductType[]>([]);
   const [topCustomersList, setTopCustomersList] = useState<Array<{ id: string; name: string; email: string; count: number }>>([]);
   const [mostOrderedBrand, setMostOrderedBrand] = useState<{ data: ChartDataItem[]; types: string[] }>({ data: [], types: [] });
-=======
-  const [productTypesData, setProductTypesData] = useState<{
-    data: Record<string, any>[];
-    types: string[];
-  }>({ data: [], types: [] });
-  const [topCustomersList, setTopCustomersList] = useState<
-    Array<{ id: string; name: string; email: string; count: number }>
-  >([]);
->>>>>>> development
   const [dashboardData, setDashboardData] = useState<{
     stats: {
       totalOrders: number;
@@ -116,16 +106,11 @@ export default function AdminDashboard() {
     from: undefined,
     to: undefined,
   });
-<<<<<<< HEAD
   const [obDateRange, setObDateRange] = useState<DateRange | undefined>({
     from: undefined,
     to: undefined,
   });
   const [selectedProductTypeForCustomers, setSelectedProductTypeForCustomers] = useState<string>("all");
-=======
-  const [selectedProductTypeForCustomers, setSelectedProductTypeForCustomers] =
-    useState<string>("all");
->>>>>>> development
   const itemsPerPage = 10; // Make it a constant instead of state
   const hasFetchedRef = useRef(false); // Use ref to track if we've already fetched
   const router = useRouter();
@@ -155,7 +140,6 @@ export default function AdminDashboard() {
     [], // Remove itemsPerPage since it's a constant
   );
 
-<<<<<<< HEAD
   const fetchOrdersByProductTypeTimeSeries = useCallback(
     async (ptfrom?: Date, ptto?: Date) => {
       try {
@@ -177,25 +161,6 @@ export default function AdminDashboard() {
     },
     [],
   );
-=======
-  const fetchProductTypes = useCallback(async (from?: Date, to?: Date) => {
-    try {
-      setProductTypeLoading(true);
-      const params = new URLSearchParams();
-      if (from) params.set("from", from.toISOString());
-      if (to) params.set("to", to.toISOString());
-      const response = await fetch(`/api/dashboard?${params.toString()}`);
-      const data = await response.json();
-      if (data.success) {
-        setProductTypesData(data.data.ordersByProductTypeTimeSeries);
-      }
-    } catch (error) {
-      console.error("Error fetching product types:", error);
-    } finally {
-      setProductTypeLoading(false);
-    }
-  }, []);
->>>>>>> development
 
   const fetchTopCustomers = useCallback(async (productType: string) => {
     try {
