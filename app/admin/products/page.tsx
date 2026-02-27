@@ -245,7 +245,7 @@ function ProductTypesTabContent() {
               <Button
                 variant="ghost"
                 size="sm"
-                className={`h-8 w-8 p-0 rounded-md transition-colors ${isMoreActive ? "bg-background shadow-sm text-gray-900 border border-gray-200 dark:bg-gray-700 dark:text-white dark:border-gray-600" : "text-gray-500 hover:bg-gray-200 dark:text-gray-400 dark:hover:bg-gray-700"}`}
+                className={`h-8 w-8 p-0 rounded-md transition-colors ${isMoreActive ? "bg-background shadow-sm text-gray-900 border dark:bg-gray-700 dark:text-white dark:border-gray-600" : "text-gray-500 hover:bg-gray-200 dark:text-gray-400 dark:hover:bg-gray-700"}`}
               >
                 <MoreHorizontal className="h-4 w-4" />
               </Button>

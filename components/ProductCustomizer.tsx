@@ -232,7 +232,7 @@ export default function ProductCustomizer() {
         {/* Burger Button */}
         <button
           onClick={() => setIsMobileMenuOpen(true)}
-          className="lg:hidden fixed top-4 left-4 z-40 p-2 bg-background rounded-md shadow-md border border-gray-200"
+          className="lg:hidden fixed top-4 left-4 z-40 p-2 bg-background rounded-md shadow-md border"
         >
           <Menu className="h-6 w-6 text-gray-700" />
         </button>
@@ -287,7 +287,7 @@ export default function ProductCustomizer() {
         {/* Burger Button */}
         <button
           onClick={() => setIsMobileMenuOpen(true)}
-          className="lg:hidden fixed w-full z-40 p-4 bg-background shadow-md border border-gray-200"
+          className="lg:hidden fixed w-full z-40 p-4 bg-background shadow-md border"
         >
           <div className="flex items-center content-center gap-3">
             <Menu className="h-6 w-6 text-gray-700" />
@@ -306,7 +306,7 @@ export default function ProductCustomizer() {
       {/* Burger Button */}
       <button
         onClick={() => setIsMobileMenuOpen(true)}
-        className="lg:hidden fixed w-full z-40 p-4 bg-gray-50 border border-gray-200"
+        className="lg:hidden fixed w-full z-40 p-4 bg-gray-50 border"
       >
         <div className="flex items-center content-center gap-3">
           <Menu className="h-6 w-6 text-gray-700" />

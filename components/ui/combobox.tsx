@@ -84,7 +84,7 @@ export function Combobox({
         </Button>
       </PopoverTrigger>
       <PopoverContent
-        className="p-0 border border-gray-200 dark:border-gray-700 shadow-md"
+        className="p-0 border dark:border-gray-700 shadow-md"
         align="start"
         style={{ width: "var(--radix-popover-trigger-width)" }}
       >
