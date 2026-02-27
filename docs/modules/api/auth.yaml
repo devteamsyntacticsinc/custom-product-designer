@@ -1,162 +1,307 @@
-name: Authentication API
-description: NextAuth.js configuration for user authentication with credentials provider
-version: 1.0.0
-base_path: /lib/auth.ts
+openapi: 3.0.3
+info:
+  title: Authentication API
+  description: |
+    NextAuth.js configuration for user authentication with credentials provider.
 
-configuration:
-  authOptions:
-    description: NextAuth.js configuration object
-    strategy: JWT
-    provider: Credentials
-    sign_in_page: /login
+    ## Module Purpose
+    Provides secure user authentication using email/password credentials with
+    role-based access control and JWT session management.
 
-providers:
-  credentials:
-    name: credentials
-    type: CredentialsProvider
-    fields:
-      email:
-        label: Email
-        type: email
+    ## Features
+    - Credentials-based authentication
+    - Role-based session management
+    - JWT token strategy
+    - Password hashing with bcrypt
+    - User role assignment from database
+    - Secure session handling
+
+    ## Business Logic
+    - Validates user credentials against database
+    - Compares passwords using bcrypt
+    - Includes user role in JWT token and session
+    - Handles authentication failures gracefully
+    - Provides custom sign-in page
+
+  version: 1.0.0
+  contact:
+    name: Custom Product Designer Development Team
+
+servers:
+  - url: http://localhost:3000/api/auth
+    description: Local development
+  - url: https://your-domain.com/api/auth
+    description: Production
+
+tags:
+  - name: authentication
+    description: User authentication operations
+
+components:
+  schemas:
+    LoginRequest:
+      type: object
+      required:
+        - email
+        - password
+      properties:
+        email:
+          type: string
+          format: email
+          description: User email address
+          example: "admin@example.com"
+        password:
+          type: string
+          format: password
+          description: User password
+          example: "securePassword123"
+
+    User:
+      type: object
+      properties:
+        id:
+          type: string
+          description: User unique identifier
+          example: "123e4567-e89b-12d3-a456-426614174000"
+        email:
+          type: string
+          format: email
+          description: User email address
+          example: "admin@example.com"
+        name:
+          type: string
+          description: User full name
+          example: "John Doe"
+        role:
+          type: string
+          description: User role from roles table
+          example: "admin"
+
+    Session:
+      type: object
+      properties:
+        user:
+          $ref: '#/components/schemas/User'
+        expires:
+          type: string
+          format: date-time
+          description: Session expiration time
+          example: "2024-01-28T10:30:00Z"
+
+    ErrorResponse:
+      type: object
+      properties:
+        error:
+          type: string
+          description: Error description
+          example: "Invalid credentials"
+        message:
+          type: string
+          description: Detailed error message
+          example: "Email or password is incorrect"
+
+paths:
+  /signin:
+    post:
+      tags:
+        - authentication
+      summary: Sign in with credentials
+      description: |
+        Authenticate user with email and password credentials.
+
+        **Authentication Flow:**
+        1. Validate email and password presence
+        2. Query users table with role information
+        3. Compare provided password with hashed password using bcrypt
+        4. Return user object with role if authentication successful
+        5. Create JWT token with user information
+        6. Establish session with user data
+
+        **Security Features:**
+        - Password hashing with bcrypt
+        - JWT token strategy for sessions
+        - Role-based access control
+        - Secure credential handling
+
+        **Business Rules:**
+        - Returns null on any authentication failure
+        - Includes user role from roles table join
+        - Logs authentication errors to console
+        - Handles missing user data gracefully
+      operationId: signIn
+      requestBody:
         required: true
-      password:
-        label: Password
-        type: password
-        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/LoginRequest'
+            example:
+              email: "admin@example.com"
+              password: "securePassword123"
+      responses:
+        '200':
+          description: Authentication successful
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Session'
+              example:
+                user:
+                  id: "123e4567-e89b-12d3-a456-426614174000"
+                  email: "admin@example.com"
+                  name: "John Doe"
+                  role: "admin"
+                expires: "2024-01-28T10:30:00Z"
+        '401':
+          description: Authentication failed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                error: "Invalid credentials"
+                message: "Email or password is incorrect"
+        '400':
+          description: Missing credentials
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                error: "Missing credentials"
+                message: "Email and password are required"
 
-methods:
-  authorize:
-    description: Authenticate user credentials and return user object
-    parameters:
-      credentials:
-        email: string
-        password: string
-    returns:
-      type: NextAuthUser | null
-      description: User object with role information or null if authentication fails
-    workflow:
-      - Validate credentials presence
-      - Query users table with role information
-      - Compare password using bcrypt
-      - Return user object with role
-    database_tables:
-      - users
-      - roles
-    validation:
-      - Email and password required
-      - Password comparison with bcrypt
-      - User existence check
-    error_handling:
-      - Returns null on any error
-      - Logs authentication errors to console
+  /session:
+    get:
+      tags:
+        - authentication
+      summary: Get current session
+      description: |
+        Retrieve the current user session information.
 
-callbacks:
-  jwt:
-    description: JWT callback to add role information to token
-    parameters:
-      token: JWT
-      user: NextAuthUser | null
-    returns:
-      type: JWT
-      description: Token with role information added
-    logic:
-      - Add user role to token when user is available
+        **Session Data:**
+        - User information from JWT token
+        - Role information included in session
+        - Session expiration time
 
-  session:
-    description: Session callback to add user information to session
-    parameters:
-      session: Session
-      token: JWT
-    returns:
-      type: Session
-      description: Session with user ID and role information
-    logic:
-      - Add user ID from token subject
-      - Add role from token to session user
+        **Business Logic:**
+        - Extracts user data from JWT token
+        - Includes role information in session user object
+        - Returns null if no valid session
+      operationId: getSession
+      responses:
+        '200':
+          description: Session retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Session'
+        '401':
+          description: No active session
+          content:
+            application/json:
+              schema:
+                type: object
+                example: null
 
-dependencies:
-  - next-auth
-  - next-auth/providers/credentials
-  - ./supabase
-  - bcryptjs
-  - next-auth/jwt
-  - next-auth
+  /signout:
+    post:
+      tags:
+        - authentication
+      summary: Sign out
+      description: |
+        Sign out the current user and invalidate the session.
 
-database_schema:
-  users:
-    id: string/number
-    email: string
-    password: string (hashed)
-    name: string
-    roles: object (relation)
-  
-  roles:
-    name: string
+        **Sign Out Process:**
+        - Clear JWT token
+        - Invalidate session
+        - Redirect to sign-in page
 
-security:
-  password_hashing: bcryptjs
-  session_strategy: JWT
-  credential_validation: Required fields check
-  error_handling: Silent failure (returns null)
+        **Business Logic:**
+        - Handles session cleanup
+        - Redirects to configured sign-in page
+      operationId: signOut
+      responses:
+        '200':
+          description: Sign out successful
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  message:
+                    type: string
+                    example: "Signed out successfully"
 
-environment_variables:
-  required:
-    - NEXT_PUBLIC_SUPABASE_URL
-    - NEXT_PUBLIC_SUPABASE_ANON_KEY
+  /callback:
+    post:
+      tags:
+        - authentication
+      summary: Authentication callback
+      description: |
+        Handle authentication callback for NextAuth.js.
 
-exports:
-  - handler: NextAuth handler function
-  - authOptions: Configuration object
+        **Callback Processing:**
+        - Processes authentication results
+        - Handles JWT token creation
+        - Manages session establishment
 
-usage_example: |
-  // Import in API route
-  import { handler } from '@/lib/auth'
-  
-  export { handler as GET, handler as POST }
-  
-  // Use authOptions in configuration
-  import { authOptions } from '@/lib/auth'
-  
-  // Access session in components
-  import { useSession } from 'next-auth/react'
-  
-  const { data: session } = useSession()
-  console.log(session.user.role) // 'admin' | 'user'
+        **Business Logic:**
+        - Internal NextAuth.js endpoint
+        - Handles various authentication providers
+      operationId: authCallback
+      responses:
+        '200':
+          description: Callback processed successfully
+        '400':
+          description: Callback error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
 
-user_object_structure:
-  id: string/number
-  email: string
-  name: string
-  role: string (from roles.name)
+  /providers:
+    get:
+      tags:
+        - authentication
+      summary: Get authentication providers
+      description: |
+        Retrieve available authentication providers.
 
-session_structure:
-  user:
-    id: string
-    email: string
-    name: string
-    role: string
-  expires: string
+        **Provider Information:**
+        - Lists configured authentication providers
+        - Includes provider configuration details
 
-token_structure:
-  sub: string (user ID)
-  role: string
-  email: string
-  name: string
-  exp: number
-  iat: number
-  jti: string
-
-error_scenarios:
-  - Missing credentials: Returns null
-  - Invalid email: Returns null
-  - Invalid password: Returns null
-  - Database error: Returns null
-  - User not found: Returns null
-
-authentication_flow:
-  1. User submits email and password
-  2. CredentialsProvider.authorize() called
-  3. Query users table with role join
-  4. Compare password with bcrypt
-  5. Create JWT with user role
-  6. Return session with user information
+        **Business Logic:**
+        - Returns credentials provider configuration
+        - Internal NextAuth.js endpoint
+      operationId: getProviders
+      responses:
+        '200':
+          description: Providers retrieved successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  credentials:
+                    type: object
+                    properties:
+                      id:
+                        type: string
+                        example: "credentials"
+                      name:
+                        type: string
+                        example: "credentials"
+                      type:
+                        type: string
+                        example: "credentials"
+                      signinUrl:
+                        type: string
+                        example: "http://localhost:3000/api/auth/signin/credentials"
+                      callbackUrl:
+                        type: string
+                        example: "http://localhost:3000/api/auth/callback/credentials"
