@@ -41,7 +41,6 @@ export default function ProductCustomizer() {
   const [loadingProductTypes, setLoadingProductTypes] = useState(true);
   const [loadingBrands, setLoadingBrands] = useState(false);
   const [brands, setBrands] = useState<Brand[]>([]);
-  const [loadingColors, setLoadingColors] = useState(false);
   const [colors, setColors] = useState<Color[]>([]);
   const [loadingBrandColors, setLoadingBrandColors] = useState(false);
 
@@ -306,7 +305,7 @@ export default function ProductCustomizer() {
       {/* Burger Button */}
       <button
         onClick={() => setIsMobileMenuOpen(true)}
-        className="lg:hidden fixed w-full z-40 p-4 bg-gray-50 border"
+        className="lg:hidden fixed w-full z-40 p-4 bg-background border"
       >
         <div className="flex items-center content-center gap-3">
           <Menu className="h-6 w-6 text-gray-700" />
@@ -319,7 +318,7 @@ export default function ProductCustomizer() {
       {/* Backdrop */}
       {isMobileMenuOpen && (
         <div
-          className="lg:hidden fixed inset-0 bg-black/50 z-40"
+          className="lg:hidden fixed inset-0 z-40"
           onClick={() => setIsMobileMenuOpen(false)}
         />
       )}
@@ -482,11 +481,8 @@ export default function ProductCustomizer() {
               loadingBrands ||
               loadingBrandColors ||
               !productType ||
-              !brand ||
-              !color ||
               (!assets["front-top-left"] && !assets["front-center"]) ||
-              !sizeSelection.some((item) => item.quantity > 0) ||
-              (selectedProductType?.is_onlyType && (!brand || !color))
+              !sizeSelection.some((item) => item.quantity > 0)
             }
           >
             Next

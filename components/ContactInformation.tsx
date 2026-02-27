@@ -152,7 +152,7 @@ export default function ContactInformation({
           Back
         </Button>
         <Button
-          className="flex-1 bg-gray-800 hover:bg-gray-900"
+          className="flex-1"
           onClick={handleSubmit}
         >
           Submit
