@@ -17,7 +17,7 @@ export function Toast({ type, message, onClose }: ToastProps) {
   useEffect(() => {
     // Trigger animation on mount
     const animationTimer = setTimeout(() => setIsVisible(true), 10);
-    
+
     // Auto-close after 5 seconds
     const closeTimer = setTimeout(() => {
       setIsVisible(false);
@@ -35,7 +35,7 @@ export function Toast({ type, message, onClose }: ToastProps) {
       case "success":
         return <CheckCircle className="w-5 h-5 text-green-500" />;
       case "error":
-        return <AlertCircle className="w-5 h-5 text-red-500" />;
+        return <AlertCircle className="w-5 h-5 text-destructive" />;
       case "info":
         return <Info className="w-5 h-5 text-blue-500" />;
     }
@@ -62,7 +62,7 @@ export function Toast({ type, message, onClose }: ToastProps) {
       `}
     >
       {getIcon()}
-      <p className="text-sm font-medium text-gray-900">{message}</p>
+      <p className="text-sm font-medium ">{message}</p>
       <button
         onClick={() => {
           setIsVisible(false);

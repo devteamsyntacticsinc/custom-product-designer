@@ -189,7 +189,7 @@ export default function ColorsTab({
                 <TableRow>
                   <TableCell
                     colSpan={4}
-                    className="text-xs lg:text-sm text-red-600 p-4"
+                    className="text-xs lg:text-sm text-destructive p-4"
                   >
                     {error}
                   </TableCell>

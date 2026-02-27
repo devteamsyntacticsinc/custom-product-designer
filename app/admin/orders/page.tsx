@@ -16,6 +16,7 @@ import {
   Phone,
   Download,
   Check,
+  File,
 } from "lucide-react";
 import AdminSidebar from "../../components/AdminSidebar";
 import OrdersPageSkeleton from "../../../components/OrdersPageSkeleton";
@@ -191,7 +192,7 @@ export default function OrdersPage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex">
+      <div className="min-h-screen bg-background flex">
         <AdminSidebar
           user={{
             id: session.user.id,
@@ -217,7 +218,7 @@ export default function OrdersPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex">
+    <div className="min-h-screen bg-background flex">
       <AdminSidebar
         user={{
           id: session.user.id,
@@ -235,7 +236,7 @@ export default function OrdersPage() {
       />
 
       {/* Mobile Header */}
-      <header className="bg-white dark:bg-gray-800 shadow-sm border-b lg:hidden fixed top-0 left-0 right-0 z-40 px-4">
+      <header className="bg-background dark:bg-gray-800 shadow-sm border-b lg:hidden fixed top-0 left-0 right-0 z-40 px-4">
         <div className="relative flex items-center justify-center h-16">
           <Button
             variant="ghost"
@@ -245,9 +246,7 @@ export default function OrdersPage() {
           >
             <Menu className="h-4 w-4" />
           </Button>
-          <h1 className="text-lg font-bold tracking-tight text-gray-900">
-            Print Pro
-          </h1>
+          <h1 className="text-lg font-bold tracking-tight ">Print Pro</h1>
         </div>
       </header>
 
@@ -260,7 +259,7 @@ export default function OrdersPage() {
           {/* Header */}
           <div className="flex flex-row items-center justify-between gap-4 mb-6 sm:mb-8">
             <div>
-              <h1 className="text-xl sm:text-3xl font-bold text-gray-900 dark:text-white">
+              <h1 className="text-xl sm:text-3xl font-bold  dark:text-white">
                 Orders
               </h1>
               <p className="text-xs lg:text-base text-gray-600 dark:text-gray-400 mt-1 sm:mt-2">
@@ -272,7 +271,7 @@ export default function OrdersPage() {
               size="icon"
               onClick={handleRefresh}
               disabled={refreshing}
-              className=" h-8 w-8 sm:h-10 sm:w-10 text-gray-400 hover:bg-gray-200 hover:text-gray-900 transition-colors shrink-0"
+              className=" h-8 w-8 sm:h-10 sm:w-10 text-gray-400 hover:bg-gray-200 hover: transition-colors shrink-0"
             >
               <RefreshCw
                 className={`h-4 w-4 sm:h-5 sm:w-5 ${refreshing ? "animate-spin" : ""}`}
@@ -286,7 +285,7 @@ export default function OrdersPage() {
             {orders.length === 0 ? (
               <Card className="p-8 sm:p-12 text-center">
                 <Package className="h-10 w-10 sm:h-12 sm:w-12 text-gray-400 mx-auto mb-4" />
-                <h3 className="text-base sm:text-lg font-semibold text-gray-900 dark:text-white mb-2">
+                <h3 className="text-base sm:text-lg font-semibold  dark:text-white mb-2">
                   No orders yet
                 </h3>
                 <p className="text-sm sm:text-base text-gray-600 dark:text-gray-400">
@@ -315,7 +314,7 @@ export default function OrdersPage() {
                       {/* Product Preview */}
                       <div>
                         <div className="flex items-center content-center justify-between mb-2">
-                          <h3 className="text-base lg:text-lg font-semibold text-gray-900 dark:text-white mb-3 sm:mb-4">
+                          <h3 className="text-base lg:text-lg font-semibold  dark:text-white mb-3 sm:mb-4">
                             Product Design
                           </h3>
                           <div className="flex items-center gap-2">
@@ -324,12 +323,12 @@ export default function OrdersPage() {
                                 variant="outline"
                                 size="sm"
                                 disabled
-                                className=" h-10 w-fit sm:h-10 sm:w-fit shrink-0 gap-2 hover:bg-green-50 hover:text-green-500 cursor-not-allowed bg-green-50 border-green-500"
+                                className=" h-10 w-fit sm:h-10 sm:w-fit shrink-0 gap-2 hover:bg-green-50 hover:text-green-500 cursor-not-allowed bg-green-50 border-green-500 "
                               >
                                 <Check
-                                  className={`h-4 w-4 sm:h-5 sm:w-5 text-green-500`}
+                                  className={`h-4 w-4 sm:h-5 sm:w-5 text-green-500 dark:text-green-400`}
                                 />
-                                <span className="text-green-500">
+                                <span className="text-green-500 dark:text-green-400">
                                   Downloaded
                                 </span>
                               </Button>
@@ -342,9 +341,9 @@ export default function OrdersPage() {
                                   variant="outline"
                                   size="sm"
                                   onClick={() => handleDownload(order.id)}
-                                  className="h-10 w-fit sm:h-10 sm:w-fit text-gray-900 hover:bg-gray-200 transition-colors shrink-0 gap-2 cursor-pointer"
+                                  className="h-10"
                                 >
-                                  <Download className="h-4 w-4 sm:h-5 sm:w-5" />
+                                  <File className="h-4 w-4 sm:h-5 sm:w-5" />
                                   <span>Download Receipt</span>
                                 </Button>
                               </PDFDownloadLink>
@@ -354,7 +353,7 @@ export default function OrdersPage() {
                               size="sm"
                               onClick={() => handleSendPickupEmail(order.id)}
                               disabled={sendingEmailIds.has(order.id)}
-                              className=" h-10 w-fit sm:h-10 sm:w-fit text-gray-900 hover:bg-gray-200 transition-colors shrink-0 gap-2 cursor-pointer"
+                              className="h-10"
                             >
                               <Mail
                                 className={`h-4 w-4 sm:h-5 sm:w-5 ${sendingEmailIds.has(order.id) ? "animate-pulse" : ""}`}
@@ -385,7 +384,7 @@ export default function OrdersPage() {
                             </span>
                             <Badge
                               variant="outline"
-                              className="text-[10px] sm:text-xs text-blue-600 border-blue-200 bg-blue-50 dark:bg-blue-600 dark:text-white "
+                              className="text-[10px] sm:text-xs text-blue-600 border-blue-200 bg-blue-50 dark:border-blue-800 dark:bg-blue-950 "
                             >
                               {totalQuantity} items
                             </Badge>
@@ -393,7 +392,7 @@ export default function OrdersPage() {
 
                           <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs sm:text-sm text-gray-600">
                             {order.brand_type?.[0]?.product_type?.name && (
-                              <span className="font-semibold text-gray-900 dark:text-gray-400">
+                              <span className="font-semibold  dark:text-gray-400">
                                 {order.brand_type[0].product_type.name}
                               </span>
                             )}
@@ -423,7 +422,7 @@ export default function OrdersPage() {
                                     <Badge
                                       key={size.id}
                                       variant="outline"
-                                      className="text-[10px] sm:text-xs px-2 py-0 h-5 dark:bg-blue-600 dark:text-white"
+                                      className="text-[10px] sm:text-xs px-2 py-0 h-5 text-blue-600 border-blue-200 bg-blue-50 dark:border-blue-800 dark:bg-blue-950"
                                     >
                                       {size.sizes?.value || "Unknown"} (
                                       {size.quantity})
@@ -438,7 +437,7 @@ export default function OrdersPage() {
                         <div className="w-full sm:w-auto sm:text-right space-y-2 border-t sm:border-t-0 pt-4 sm:pt-0">
                           {customer ? (
                             <div className="flex flex-col sm:items-end gap-1 dark:text-gray-400">
-                              <div className="flex items-center sm:justify-end gap-2 text-sm font-bold text-gray-900 dark:text-white">
+                              <div className="flex items-center sm:justify-end gap-2 text-sm font-bold  dark:text-white">
                                 <UserIcon className="h-4 w-4 text-gray-400" />
                                 {customer.name}
                               </div>

@@ -1,0 +1,486 @@
+  openapi: 3.0.3
+  info:
+    title: UI Pages Documentation
+    description: |
+      Complete UI documentation for the Custom Product Designer application pages.
+
+      ## Application Overview
+      Print Pro is a custom product designer application that allows customers to
+      customize products and place orders, with administrative backend management.
+
+      ## Page Structure
+      - Public landing page for marketing and product showcase
+      - Authentication pages for login/logout
+      - Admin dashboard with multiple management sections
+      - Responsive design with mobile support
+
+      ## UI Framework
+      - Next.js with TypeScript
+      - TailwindCSS for styling
+      - shadcn/ui components
+      - Lucide icons
+      - Custom components for product designer
+
+    version: 1.0.0
+    contact:
+      name: Custom Product Designer Development Team
+
+  tags:
+    - name: public-pages
+      description: Publicly accessible pages
+    - name: auth-pages
+      description: Authentication and session pages
+    - name: admin-pages
+      description: Administrative interface pages
+
+  components:
+    schemas:
+      UIComponent:
+        type: object
+        properties:
+          name:
+            type: string
+            description: Component name
+          type:
+            type: string
+            enum: [molecule, organism, template, page]
+            description: Component type in atomic design
+          props:
+            type: object
+            description: Component properties
+          usage:
+            type: string
+            description: Usage context
+
+  paths:
+    /:
+      get:
+        tags:
+          - public-pages
+        summary: Landing Page
+        description: |
+          Main landing page showcasing products and company information.
+
+          **Purpose:**
+          - First impression for visitors
+          - Product catalog showcase
+          - Call-to-action for customization
+          - Brand presentation
+
+          **Key Sections:**
+          - Hero section with main value proposition
+          - Featured products gallery
+          - Customization process overview
+          - Customer testimonials
+          - Pricing information
+          - Contact information
+
+          **UI Components:**
+          - HeroBanner
+          - ProductGallery
+          - FeatureCards
+          - TestimonialCarousel
+          - PricingTable
+          - ContactForm
+          - NavigationHeader
+          - Footer
+
+          **Interactions:**
+          - Product preview on hover
+          - Smooth scroll navigation
+          - Modal for product details
+          - Newsletter signup
+          - Contact form submission
+
+          **Responsive Design:**
+          - Mobile-first approach
+          - Touch-friendly interactions
+          - Optimized images for different screen sizes
+        operationId: landingPage
+        responses:
+          '200':
+            description: Landing page rendered successfully
+            content:
+              text/html:
+                schema:
+                  type: object
+                  properties:
+                    title:
+                      type: string
+                      example: "Print Pro - Custom Product Designer"
+                    components:
+                      type: array
+                      items:
+                        $ref: '#/components/schemas/UIComponent'
+
+    /login:
+      get:
+        tags:
+          - auth-pages
+        summary: Login Page
+        description: |
+          Authentication page for admin and user access.
+
+          **Purpose:**
+          - Secure authentication for admin access
+          - Session management
+          - Password recovery
+          - Multi-factor authentication support
+
+          **UI Components:**
+          - LoginForm
+          - PasswordInput
+          - RememberMeCheckbox
+          - ForgotPasswordLink
+          - BrandLogo
+          - BackgroundDecoration
+          - LoadingSpinner
+          - ErrorMessage
+          - SuccessMessage
+
+          **Form Fields:**
+          - Email/Username input
+          - Password input with visibility toggle
+          - Remember me option
+          - Submit button with loading state
+
+          **Security Features:**
+          - CSRF protection
+          - Rate limiting indication
+          - Secure password field
+          - Session timeout warnings
+
+          **User Experience:**
+          - Auto-focus on email field
+          - Enter key submission
+          - Loading states during authentication
+          - Clear error messages
+          - Redirect after successful login
+
+          **Validation:**
+          - Real-time email format validation
+          - Password strength requirements
+          - Field-level error indicators
+          - Form submission prevention on errors
+        operationId: loginPage
+        responses:
+          '200':
+            description: Login page rendered successfully
+          '302':
+            description: Redirect to dashboard if already authenticated
+
+    /admin:
+      get:
+        tags:
+          - admin-pages
+        summary: Admin Dashboard
+        description: |
+          Main administrative dashboard with overview and navigation.
+
+          **Purpose:**
+          - Central hub for admin operations
+          - System overview and statistics
+          - Quick access to all admin functions
+          - Performance monitoring
+
+          **Dashboard Sections:**
+          - Key metrics cards (orders, customers, revenue)
+          - Recent orders table
+          - Quick action buttons
+          - System status indicators
+          - Navigation menu
+
+          **UI Components:**
+          - AdminLayout
+          - SidebarNavigation
+          - MetricCards
+          - RecentOrdersTable
+          - QuickActions
+          - StatusIndicators
+          - DateRangePicker
+          - ExportButton
+
+          **Data Visualization:**
+          - Order trends chart
+          - Revenue analytics
+          - Customer growth graph
+          - Product performance metrics
+
+          **Interactions:**
+          - Real-time data updates
+          - Drill-down on metrics
+          - Export functionality
+          - Responsive sidebar toggle
+
+          **Permissions:**
+          - Admin authentication required
+          - Role-based access control
+          - Session validation
+        operationId: adminDashboard
+        responses:
+          '200':
+            description: Admin dashboard rendered successfully
+          '401':
+            description: Redirect to login if not authenticated
+          '403':
+            description: Access denied for insufficient permissions
+
+    /admin/orders:
+      get:
+        tags:
+          - admin-pages
+        summary: Orders Management
+        description: |
+          Comprehensive order management interface.
+
+          **Purpose:**
+          - View and manage all customer orders
+          - Order status tracking and updates
+          - Customer communication
+          - Order analytics and reporting
+
+          **Main Features:**
+          - Orders table with sorting/filtering
+          - Order detail view
+          - Status management
+          - Customer information
+          - File downloads (design files)
+          - Email communication logs
+
+          **UI Components:**
+          - OrdersTable
+          - OrderDetailModal
+          - StatusDropdown
+          - FilterPanel
+          - SearchBar
+          - Pagination
+          - BulkActions
+          - ExportTools
+
+          **Filter Options:**
+          - Order status (pending, processing, completed, cancelled)
+          - Date range
+          - Customer name/email
+          - Product type
+          - Order value range
+
+          **Order Details:**
+          - Customer contact information
+          - Product customization details
+          - Uploaded design files
+          - Order timeline
+          - Payment status
+          - Shipping information
+
+          **Actions:**
+          - Update order status
+          - Send customer notifications
+          - Download design files
+          - Print order summary
+          - Refund processing
+          - Order notes
+
+          **Bulk Operations:**
+          - Multiple order selection
+          - Bulk status updates
+          - Mass email sending
+          - Export selected orders
+        operationId: adminOrders
+        responses:
+          '200':
+            description: Orders management page rendered successfully
+
+    /admin/customers:
+      get:
+        tags:
+          - admin-pages
+        summary: Customers Management
+        description: |
+          Customer relationship management interface.
+
+          **Purpose:**
+          - View and manage customer database
+          - Track customer order history
+          - Customer communication
+          - Customer analytics
+
+          **Main Features:**
+          - Customers directory with search
+          - Customer profile view
+          - Order history tracking
+          - Customer segmentation
+          - Communication tools
+
+          **UI Components:**
+          - CustomersTable
+          - CustomerProfileModal
+          - OrderHistoryList
+          - CustomerMetrics
+          - SegmentFilters
+          - CommunicationPanel
+          - NotesSection
+
+          **Customer Information:**
+          - Contact details
+          - Order statistics
+          - Total spending
+          - Last order date
+          - Communication preferences
+          - Notes and tags
+
+          **Search & Filters:**
+          - Name/email search
+          - Order count range
+          - Total spending range
+          - Registration date
+          - Customer tags
+          - Order status filters
+
+          **Customer Actions:**
+          - View detailed profile
+          - Send email
+          - Add notes
+          - View order history
+          - Export customer data
+          - Tag management
+
+          **Analytics:**
+          - Customer acquisition trends
+          - Repeat purchase rate
+          - Customer lifetime value
+          - Geographic distribution
+        operationId: adminCustomers
+        responses:
+          '200':
+            description: Customers management page rendered successfully
+
+    /admin/products:
+      get:
+        tags:
+          - admin-pages
+        summary: Products Management
+        description: |
+          Product catalog and inventory management.
+
+          **Purpose:**
+          - Manage product types and variants
+          - Brand and color management
+          - Size and pricing configuration
+          - Product organization
+
+          **Main Features:**
+          - Product types management
+          - Brand management
+          - Color options
+          - Size configurations
+          - Pricing rules
+          - Product relationships
+
+          **UI Components:**
+          - ProductTypesTable
+          - BrandsManager
+          - ColorPalette
+          - SizeGrid
+          - PricingEditor
+          - ProductRelations
+          - BulkEditor
+
+          **Product Types:**
+          - Create/edit product categories
+          - Type-specific attributes
+          - Design templates
+          - Pricing rules
+          - Active status management
+
+          **Brand Management:**
+          - Brand creation and editing
+          - Brand-product associations
+          - Logo management
+          - Brand organization
+
+          **Color & Size Options:**
+          - Color palette management
+          - Size configuration per product type
+          - Visual color previews
+          - Size availability tracking
+
+          **Advanced Features:**
+          - Bulk import/export
+          - Product variants
+          - Design templates
+          - Inventory tracking
+          - Product analytics
+        operationId: adminProducts
+        responses:
+          '200':
+            description: Products management page rendered successfully
+
+    /admin/settings:
+      get:
+        tags:
+          - admin-pages
+        summary: Admin Settings
+        description: |
+          System configuration and administrative settings.
+
+          **Purpose:**
+          - System configuration
+          - User management
+          - Integration settings
+          - Security and preferences
+
+          **Main Sections:**
+          - General settings
+          - User management
+          - Email configuration
+          - Payment settings
+          - Security options
+          - System preferences
+
+          **UI Components:**
+          - SettingsTabs
+          - UserManagementTable
+          - EmailConfigForm
+          - PaymentSettings
+          - SecurityOptions
+          - SystemPreferences
+          - BackupTools
+
+          **General Settings:**
+          - Store information
+          - Contact details
+          - Business hours
+          - Tax configuration
+          - Currency settings
+
+          **User Management:**
+          - Admin user accounts
+          - Role assignments
+          - Permission management
+          - Activity logs
+          - Session management
+
+          **Integration Settings:**
+          - Email service configuration
+          - Payment gateway setup
+          - Shipping providers
+          - Third-party integrations
+          - API keys management
+
+          **Security Options:**
+          - Password policies
+          - Two-factor authentication
+          - Session timeout settings
+          - IP restrictions
+          - Audit logs
+
+          **System Tools:**
+          - Database backup
+          - Cache management
+          - Log viewing
+          - System health check
+          - Performance metrics
+        operationId: adminSettings
+        responses:
+          '200':
+            description: Settings page rendered successfully

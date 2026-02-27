@@ -105,13 +105,13 @@ export default function OrderSummaryDialog({
 
   return createPortal(
     <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-100 p-4">
-      <div className="bg-white rounded-lg shadow-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+      <div className="bg-background rounded-lg shadow-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
         {/* Header */}
         <div className="flex items-center justify-between p-6 border-b">
           <h2 className="text-xl font-semibold">Order Summary</h2>
           <button
             onClick={onClose}
-            className="text-gray-400 hover:text-gray-600 transition-colors"
+            className="text-gray-400 hover:text-muted-foreground transition-colors"
           >
             <X className="h-6 w-6" />
           </button>
@@ -121,23 +121,23 @@ export default function OrderSummaryDialog({
         <div className="p-6 space-y-6">
           {/* Product Details */}
           <div className="space-y-4">
-            <h3 className="text-lg font-medium text-gray-900">
-              Product Details
-            </h3>
+            <h3 className="text-lg font-medium ">Product Details</h3>
 
             <div className="grid grid-cols-1 gap-4 text-sm">
               <div>
-                <Label className="text-gray-600">Product Type:</Label>
+                <Label className="text-muted-foreground">Product Type:</Label>
                 <p className="font-medium">{productType}</p>
               </div>
               {!is_onlyType && (
                 <div className="grid grid-cols-2 gap-4">
                   <div>
-                    <Label className="text-gray-600">Brand:</Label>
+                    <Label className="text-muted-foreground">Brand:</Label>
                     <p className="font-medium">{brand}</p>
                   </div>
                   <div>
-                    <Label className="text-gray-600">Shirt color:</Label>
+                    <Label className="text-muted-foreground">
+                      Shirt color:
+                    </Label>
                     <p className="font-medium">{color}</p>
                   </div>
                 </div>
@@ -147,16 +147,14 @@ export default function OrderSummaryDialog({
 
           {/* Sizing and Quantity */}
           <div className="space-y-4">
-            <h3 className="text-lg font-medium text-gray-900">
-              Sizing and Quantity
-            </h3>
+            <h3 className="text-lg font-medium ">Sizing and Quantity</h3>
 
             <div className="space-y-2">
               {sizeSelection
                 .filter((item) => item.quantity > 0)
                 .map((item) => (
                   <div key={item.size} className="flex justify-between text-sm">
-                    <span className="text-gray-600">
+                    <span className="text-muted-foreground">
                       {getSizeName(item.size)}:
                     </span>
                     <span className="font-medium">{item.quantity}pcs</span>
@@ -164,7 +162,7 @@ export default function OrderSummaryDialog({
                 ))}
             </div>
 
-            <div className="pt-2 text-sm text-gray-600">
+            <div className="pt-2 text-sm text-muted-foreground">
               Total Items:{" "}
               <span className="font-medium">{getTotalItems()}</span>
             </div>
@@ -172,7 +170,7 @@ export default function OrderSummaryDialog({
 
           {/* Assets */}
           <div className="space-y-4">
-            <h3 className="text-lg font-medium text-gray-900">Assets</h3>
+            <h3 className="text-lg font-medium ">Assets</h3>
 
             <div className="space-y-2">
               {getAssetList().map((asset) => (
@@ -181,7 +179,7 @@ export default function OrderSummaryDialog({
                   className="flex items-center justify-between text-sm"
                 >
                   <div className="flex items-center gap-2">
-                    <div className="w-8 h-8 bg-gray-100 rounded flex items-center justify-center">
+                    <div className="w-8 h-8 bg-muted rounded flex items-center justify-center">
                       <svg
                         className="w-4 h-4 text-gray-500"
                         fill="none"
@@ -197,8 +195,10 @@ export default function OrderSummaryDialog({
                       </svg>
                     </div>
                     <div>
-                      <span className="text-gray-700">{asset.name}</span>
-                      <div className="text-xs text-gray-500">
+                      <span className="text-muted-foreground">
+                        {asset.name}
+                      </span>
+                      <div className="text-xs text-muted-foreground">
                         {asset.placement}
                       </div>
                     </div>
@@ -210,27 +210,25 @@ export default function OrderSummaryDialog({
 
           {/* Contact Information */}
           <div className="space-y-4">
-            <h3 className="text-lg font-medium text-gray-900">
-              Contact Information
-            </h3>
+            <h3 className="text-lg font-medium ">Contact Information</h3>
 
             <div className="grid grid-cols-1 gap-3 text-sm">
               <div>
-                <Label className="text-gray-600">Full Name:</Label>
+                <Label className="text-muted-foreground">Full Name:</Label>
                 <p className="font-medium">{contactInformation.fullName}</p>
               </div>
               <div>
-                <Label className="text-gray-600">Email:</Label>
+                <Label className="text-muted-foreground">Email:</Label>
                 <p className="font-medium">{contactInformation.email}</p>
               </div>
               <div>
-                <Label className="text-gray-600">Number:</Label>
+                <Label className="text-muted-foreground">Number:</Label>
                 <p className="font-medium">
                   {contactInformation.contactNumber}
                 </p>
               </div>
               <div>
-                <Label className="text-gray-600">Address:</Label>
+                <Label className="text-muted-foreground">Address:</Label>
                 <p className="font-medium">{contactInformation.address}</p>
               </div>
             </div>
@@ -238,18 +236,18 @@ export default function OrderSummaryDialog({
         </div>
 
         {/* Actions */}
-        <div className="flex gap-3 p-6 border-t bg-gray-50">
+        <div className="flex gap-3 p-6 border-t bg-background">
           <Button
             variant="outline"
             onClick={onBack}
-            className="flex-1"
+            className="flex-1 h-11"
             disabled={isLoading}
           >
             Back to editing
           </Button>
           <Button
             onClick={handleSubmit}
-            className="flex-1 bg-gray-800 hover:bg-gray-900"
+            className="flex-1 h-10"
             disabled={isLoading}
           >
             {isLoading ? (
@@ -264,6 +262,6 @@ export default function OrderSummaryDialog({
         </div>
       </div>
     </div>,
-    document.body
+    document.body,
   );
 }

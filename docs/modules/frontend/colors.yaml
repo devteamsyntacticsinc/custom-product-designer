@@ -1,0 +1,263 @@
+openapi: 3.0.3
+info:
+  title: Colors API
+  description: |
+    Color management API endpoints for the Custom Product Designer frontend.
+
+    ## Module Purpose
+    Provides RESTful endpoints for managing color options available for
+    product customization.
+
+    ## Features
+    - Retrieve all available colors
+    - Create new color options
+    - Update existing colors
+    - Delete color options
+    - Active/inactive status management
+
+    ## Business Logic
+    - Case-insensitive duplicate validation
+    - Active status filtering
+    - Foreign key constraint handling
+  version: 1.0.0
+  contact:
+    name: Custom Product Designer Development Team
+
+servers:
+  - url: http://localhost:3000/api
+    description: Local development
+  - url: https://your-domain.com/api
+    description: Production
+
+tags:
+  - name: colors
+    description: Color management operations
+
+components:
+  schemas:
+    Color:
+      type: object
+      properties:
+        id:
+          type: string
+          description: Color unique identifier
+          example: "color-123"
+        value:
+          type: string
+          description: Color value/name
+          example: "Red"
+        is_Active:
+          type: boolean
+          description: Color active status
+          example: true
+
+    CreateColorRequest:
+      type: object
+      required:
+        - value
+      properties:
+        value:
+          type: string
+          description: Color value/name
+          example: "Blue"
+        is_Active:
+          type: boolean
+          default: true
+          description: Color active status
+          example: true
+
+    UpdateColorRequest:
+      type: object
+      required:
+        - id
+      properties:
+        id:
+          type: string
+          description: Color ID to update
+          example: "color-123"
+        value:
+          type: string
+          description: Updated color value
+          example: "Navy Blue"
+        is_Active:
+          type: boolean
+          description: Updated color active status
+          example: false
+
+    ErrorResponse:
+      type: object
+      properties:
+        error:
+          type: string
+          description: Error message
+          example: "Color already exists"
+        details:
+          type: string
+          description: Error details
+          example: "Color with this value already exists"
+
+paths:
+  /colors:
+    get:
+      tags:
+        - colors
+      summary: Get all colors
+      description: |
+        Retrieve all available colors with their active status.
+
+        **Business Logic:**
+        - Returns colors sorted by value
+        - Includes active/inactive status
+        - Returns empty array on error
+      operationId: getColors
+      responses:
+        '200':
+          description: Colors retrieved successfully
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Color'
+        '500':
+          description: Server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+    post:
+      tags:
+        - colors
+      summary: Create color
+      description: |
+        Create a new color option.
+
+        **Validation:**
+        - Color value required (non-empty string)
+        - Case-insensitive duplicate validation
+        - Default active status if not specified
+      operationId: createColor
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateColorRequest'
+      responses:
+        '201':
+          description: Color created successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Color'
+        '400':
+          description: Validation error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '409':
+          description: Color already exists
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: Server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+    put:
+      tags:
+        - colors
+      summary: Update color
+      description: |
+        Update an existing color.
+
+        **Update Options:**
+        - Update color value and/or active status
+        - Partial updates supported
+        - Duplicate validation (excluding current color)
+      operationId: updateColor
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateColorRequest'
+      responses:
+        '200':
+          description: Color updated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Color'
+        '400':
+          description: Validation error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Color not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '409':
+          description: Color value already exists
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: Server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+    delete:
+      tags:
+        - colors
+      summary: Delete color
+      description: |
+        Delete a color by ID.
+
+        **Business Logic:**
+        - Validates color ID parameter
+        - Direct deletion (no foreign key constraints)
+      operationId: deleteColor
+      parameters:
+        - name: id
+          in: query
+          required: true
+          schema:
+            type: string
+          description: Color ID to delete
+      responses:
+        '200':
+          description: Color deleted successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: "Color deleted successfully"
+        '400':
+          description: Invalid color ID
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: Server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'

@@ -1,0 +1,383 @@
+openapi: 3.0.3
+info:
+  title: Product Types API
+  description: |
+    Product type management API endpoints for the Custom Product Designer frontend.
+
+    ## Module Purpose
+    Provides RESTful endpoints for managing product types available for
+    customization.
+
+    ## Features
+    - Retrieve all product types with images
+    - Create new product types with image uploads
+    - Update existing product types
+    - Delete product types with image cleanup
+    - Brand-independent product type support
+    - Image management for front/back views
+
+    ## Business Logic
+    - Case-insensitive duplicate validation
+    - Image upload and storage handling
+    - Brand-type relationship management
+    - Foreign key constraint handling
+    - is_onlyType product type support
+  version: 1.0.0
+  contact:
+    name: Custom Product Designer Development Team
+
+servers:
+  - url: http://localhost:3000/api
+    description: Local development
+  - url: https://your-domain.com/api
+    description: Production
+
+tags:
+  - name: product-types
+    description: Product type management operations
+
+components:
+  schemas:
+    ProductType:
+      type: object
+      properties:
+        id:
+          type: string
+          description: Product type unique identifier
+          example: "type-123"
+        name:
+          type: string
+          description: Product type name
+          example: "T-Shirt"
+        is_Active:
+          type: boolean
+          description: Product type active status
+          example: true
+        is_onlyType:
+          type: boolean
+          description: Whether product type is brand-independent
+          example: false
+        image_products:
+          type: array
+          items:
+            $ref: '#/components/schemas/ImageProduct'
+          description: Associated product images
+
+    ImageProduct:
+      type: object
+      properties:
+        id:
+          type: number
+          description: Image unique identifier
+          example: 1
+        productT_id:
+          type: string
+          description: Product type identifier
+          example: "type-123"
+        filepath:
+          type: string
+          description: Image file path/URL
+          example: "https://storage.example.com/image.jpg"
+        is_hasBack:
+          type: boolean
+          description: Whether image is back view
+          example: false
+
+    CreateProductTypeRequest:
+      type: object
+      required:
+        - name
+      properties:
+        name:
+          type: string
+          description: Product type name
+          example: "Hoodie"
+        is_Active:
+          type: boolean
+          default: true
+          description: Product type active status
+        is_onlyType:
+          type: boolean
+          default: false
+          description: Whether product type is brand-independent
+        images:
+          type: array
+          items:
+            type: object
+            properties:
+              file:
+                type: string
+                format: binary
+                description: Image file
+              is_hasBack:
+                type: boolean
+                description: Whether image is back view
+          description: Product type images
+
+    UpdateProductTypeRequest:
+      type: object
+      required:
+        - id
+      properties:
+        id:
+          type: string
+          description: Product type ID to update
+          example: "type-123"
+        name:
+          type: string
+          description: Updated product type name
+          example: "Polo Shirt"
+        is_Active:
+          type: boolean
+          description: Updated product type active status
+        is_onlyType:
+          type: boolean
+          description: Updated brand-independent status
+        images:
+          type: array
+          items:
+            type: object
+            properties:
+              file:
+                type: string
+                format: binary
+                description: Image file
+              is_hasBack:
+                type: boolean
+                description: Whether image is back view
+          description: New product type images
+        imagesToDelete:
+          type: array
+          items:
+            type: number
+          description: Image IDs to delete
+          example: [1, 2]
+
+    ErrorResponse:
+      type: object
+      properties:
+        error:
+          type: string
+          description: Error message
+          example: "Product type already exists"
+        details:
+          type: string
+          description: Error details
+          example: "Product type with this name already exists"
+
+paths:
+  /product-types:
+    get:
+      tags:
+        - product-types
+      summary: Get all product types
+      description: |
+        Retrieve all product types with associated images.
+
+        **Business Logic:**
+        - Returns product types with image products
+        - Includes front/back image designation
+        - Returns fallback data if database unavailable
+        - Supports active/inactive status
+      operationId: getProductTypes
+      responses:
+        '200':
+          description: Product types retrieved successfully
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/ProductType'
+        '500':
+          description: Server error (returns fallback data)
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    id:
+                      type: number
+                      example: 1
+                    name:
+                      type: string
+                      example: "T-Shirt"
+
+    post:
+      tags:
+        - product-types
+      summary: Create product type
+      description: |
+        Create a new product type with optional image uploads.
+
+        **Creation Features:**
+        - Image upload support with front/back designation
+        - Brand-independent product type support
+        - Automatic brand_type creation for is_onlyType
+        - Image storage to Supabase
+
+        **Validation:**
+        - Product type name required (non-empty string)
+        - Case-insensitive duplicate validation
+        - Image file validation
+      operationId: createProductType
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/CreateProductTypeRequest'
+      responses:
+        '201':
+          description: Product type created successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProductType'
+        '400':
+          description: Validation error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '409':
+          description: Product type already exists
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: Server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+    put:
+      tags:
+        - product-types
+      summary: Update product type
+      description: |
+        Update an existing product type with image management.
+
+        **Update Features:**
+        - Update name, active status, or brand-independent status
+        - Upload new images
+        - Delete existing images
+        - Handle is_onlyType brand_type creation
+
+        **Image Management:**
+        - Delete specified images first
+        - Upload new images if provided
+        - Storage cleanup for deleted images
+      operationId: updateProductType
+      parameters:
+        - name: id
+          in: query
+          required: true
+          schema:
+            type: string
+          description: Product type ID to update
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/UpdateProductTypeRequest'
+      responses:
+        '200':
+          description: Product type updated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProductType'
+        '400':
+          description: Validation error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Product type not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '409':
+          description: Product type name already exists
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: Server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+    delete:
+      tags:
+        - product-types
+      summary: Delete product type
+      description: |
+        Delete a product type and its associated data.
+
+        **Deletion Process:**
+        - Delete specified images from storage and database
+        - Handle is_onlyType brand_type cleanup
+        - Check usage in transaction tables
+        - Delete product type only if safe
+
+        **Safety Checks:**
+        - Validates brand_type usage before deletion
+        - Requires image IDs for proper cleanup
+        - Handles foreign key constraints
+      operationId: deleteProductType
+      parameters:
+        - name: id
+          in: query
+          required: true
+          schema:
+            type: string
+          description: Product type ID to delete
+        - name: imagesToDelete
+          in: query
+          required: true
+          schema:
+            type: array
+            items:
+              type: number
+          description: Image IDs to delete (comma-separated)
+          example: "1,2,3"
+      responses:
+        '200':
+          description: Product type deleted successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: "Product type deleted successfully"
+        '400':
+          description: Validation error or constraint violation
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Product type not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: Server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'

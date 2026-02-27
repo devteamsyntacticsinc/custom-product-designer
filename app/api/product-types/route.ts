@@ -1,11 +1,6 @@
 import { NextResponse } from "next/server";
 import { ProductService } from "@/lib/api/product";
-
-interface DatabaseError extends Error {
-  code?: string;
-  details?: string;
-  hint?: string;
-}
+import { DatabaseError } from "@/types/database";
 
 export async function GET() {
   try {

@@ -1,0 +1,577 @@
+openapi: 3.0.3
+info:
+  title: Supabase Client API
+  description: |
+    Supabase database client configuration and initialization.
+
+    ## Module Purpose
+    Provides a configured Supabase client for database operations, storage,
+    real-time subscriptions, and authentication integration.
+
+    ## Features
+    - Database queries and mutations
+    - File storage operations
+    - Real-time data subscriptions
+    - Authentication integration
+    - Edge functions support
+    - PostgreSQL database access
+
+    ## Business Logic
+    - Anonymous key authentication for public access
+    - Row Level Security (RLS) for data protection
+    - Automatic connection pooling and SSL
+    - Client-side and server-side compatibility
+    - TypeScript support for type safety
+
+  version: 1.0.0
+  contact:
+    name: Custom Product Designer Development Team
+
+servers:
+  - url: https://your-project.supabase.co
+    description: Supabase project URL
+  - url: http://localhost:3000
+    description: Local development proxy
+
+tags:
+  - name: database
+    description: Database operations
+  - name: storage
+    description: File storage operations
+  - name: realtime
+    description: Real-time subscriptions
+  - name: auth
+    description: Authentication operations
+
+components:
+  schemas:
+    DatabaseQuery:
+      type: object
+      properties:
+        data:
+          type: array
+          items:
+            type: object
+          description: Query result data
+          example: [{"id": 1, "name": "John"}]
+        error:
+          type: object
+          description: Database error information
+          example: {"message": "Table not found", "code": "PGRST116"}
+        count:
+          type: number
+          description: Result count (when using count option)
+          example: 25
+
+    StorageUpload:
+      type: object
+      properties:
+        data:
+          type: object
+          properties:
+            path:
+              type: string
+              description: File path in storage
+              example: "uploads/image.jpg"
+            id:
+              type: string
+              description: Upload ID
+              example: "upload-123"
+        error:
+          type: object
+          description: Upload error information
+          example: {"message": "File too large"}
+
+    StorageUrl:
+      type: object
+      properties:
+        data:
+          type: object
+          properties:
+            publicUrl:
+              type: string
+              description: Public URL for file
+              example: "https://your-project.supabase.co/storage/v1/object/public/uploads/image.jpg"
+
+    RealtimeSubscription:
+      type: object
+      properties:
+        subscription:
+          type: object
+          description: Subscription object
+        status:
+          type: string
+          enum: [SUBSCRIBED, TIMED_OUT, CLOSED, CHANNEL_ERROR]
+          description: Subscription status
+          example: "SUBSCRIBED"
+
+    AuthResponse:
+      type: object
+      properties:
+        data:
+          type: object
+          properties:
+            user:
+              type: object
+              description: User object
+              example: {"id": "123", "email": "user@example.com"}
+            session:
+              type: object
+              description: Session object
+              example: {"access_token": "jwt-token", "user": {"id": "123"}}
+        error:
+          type: object
+          description: Authentication error
+          example: {"message": "Invalid credentials"}
+
+    ErrorResponse:
+      type: object
+      properties:
+        error:
+          type: object
+          description: Supabase error object
+          example: {"message": "Database connection failed", "code": "PGRST301"}
+        data:
+          type: array
+          items:
+            type: object
+          description: Empty array returned on error
+          example: []
+
+paths:
+  /database/select:
+    get:
+      tags:
+        - database
+      summary: Query database data
+      description: |
+        Execute SELECT queries on Supabase database tables.
+
+        **Query Features:**
+        - Table selection with joins
+        - Filtering with eq, neq, gt, lt, gte, lte, like, ilike
+        - Ordering with asc/desc
+        - Pagination with limit/offset
+        - Column selection
+
+        **Business Logic:**
+        - Returns { data, error } object
+        - Handles RLS policies automatically
+        - Supports complex queries with joins
+        - Type-safe with TypeScript
+      operationId: selectData
+      parameters:
+        - name: table
+          in: query
+          required: true
+          schema:
+            type: string
+          description: Table name to query
+        - name: select
+          in: query
+          required: false
+          schema:
+            type: string
+          description: Columns to select (comma-separated)
+        - name: eq
+          in: query
+          required: false
+          schema:
+            type: string
+          description: Equality filter (column:value)
+        - name: order
+          in: query
+          required: false
+          schema:
+            type: string
+          description: Order by column (column.asc|desc)
+        - name: limit
+          in: query
+          required: false
+          schema:
+            type: number
+          description: Limit results
+      responses:
+        '200':
+          description: Query successful
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DatabaseQuery'
+        '400':
+          description: Query error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /database/insert:
+    post:
+      tags:
+        - database
+      summary: Insert database records
+      description: |
+        Insert new records into Supabase database tables.
+
+        **Insert Features:**
+        - Single or multiple record insertion
+        - Automatic ID generation
+        - Default value handling
+        - Validation with constraints
+        - RLS policy enforcement
+
+        **Business Logic:**
+        - Returns inserted records
+        - Handles foreign key constraints
+        - Applies database defaults
+        - Validates data types
+      operationId: insertData
+      parameters:
+        - name: table
+          in: query
+          required: true
+          schema:
+            type: string
+          description: Table name to insert into
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              example:
+                name: "John Doe"
+                email: "john@example.com"
+      responses:
+        '200':
+          description: Insert successful
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DatabaseQuery'
+        '400':
+          description: Insert error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /database/update:
+    patch:
+      tags:
+        - database
+      summary: Update database records
+      description: |
+        Update existing records in Supabase database tables.
+
+        **Update Features:**
+        - Conditional updates with filters
+        - Partial updates (only provided fields)
+        - Multiple record updates
+        - Validation with constraints
+        - RLS policy enforcement
+
+        **Business Logic:**
+        - Returns updated records
+        - Handles foreign key constraints
+        - Validates data types
+        - Applies triggers and constraints
+      operationId: updateData
+      parameters:
+        - name: table
+          in: query
+          required: true
+          schema:
+            type: string
+          description: Table name to update
+        - name: eq
+          in: query
+          required: false
+          schema:
+            type: string
+          description: Filter for records to update (column:value)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              example:
+                name: "Jane Doe"
+                updated_at: "2024-01-27T10:30:00Z"
+      responses:
+        '200':
+          description: Update successful
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DatabaseQuery'
+        '400':
+          description: Update error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /database/delete:
+    delete:
+      tags:
+        - database
+      summary: Delete database records
+      description: |
+        Delete records from Supabase database tables.
+
+        **Delete Features:**
+        - Conditional deletion with filters
+        - Cascade delete handling
+        - RLS policy enforcement
+        - Foreign key constraint handling
+
+        **Business Logic:**
+        - Returns deleted records
+        - Handles cascade operations
+        - Validates permissions
+        - Applies constraints
+      operationId: deleteData
+      parameters:
+        - name: table
+          in: query
+          required: true
+          schema:
+            type: string
+          description: Table name to delete from
+        - name: eq
+          in: query
+          required: false
+          schema:
+            type: string
+          description: Filter for records to delete (column:value)
+      responses:
+        '200':
+          description: Delete successful
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DatabaseQuery'
+        '400':
+          description: Delete error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /storage/upload:
+    post:
+      tags:
+        - storage
+      summary: Upload file to storage
+      description: |
+        Upload files to Supabase storage buckets.
+
+        **Upload Features:**
+        - File upload to specified bucket
+        - Automatic path generation
+        - File size validation
+        - MIME type detection
+        - Public/private bucket support
+
+        **Business Logic:**
+        - Returns file path and metadata
+        - Handles file size limits
+        - Supports various file types
+        - Generates unique filenames
+      operationId: uploadFile
+      parameters:
+        - name: bucket
+          in: query
+          required: true
+          schema:
+            type: string
+          description: Storage bucket name
+        - name: path
+          in: query
+          required: true
+          schema:
+            type: string
+          description: File path in bucket
+      requestBody:
+        required: true
+        content:
+          application/octet-stream:
+            schema:
+              type: string
+              format: binary
+      responses:
+        '200':
+          description: Upload successful
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/StorageUpload'
+        '400':
+          description: Upload error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /storage/url:
+    get:
+      tags:
+        - storage
+      summary: Get public URL for file
+      description: |
+        Generate public URL for files in Supabase storage.
+
+        **URL Features:**
+        - Public URL generation
+        - Signed URL support
+        - Bucket and path specification
+        - Expiration handling
+
+        **Business Logic:**
+        - Returns accessible URL
+        - Handles public/private buckets
+        - Supports signed URLs
+        - Manages URL expiration
+      operationId: getPublicUrl
+      parameters:
+        - name: bucket
+          in: query
+          required: true
+          schema:
+            type: string
+          description: Storage bucket name
+        - name: path
+          in: query
+          required: true
+          schema:
+            type: string
+          description: File path in bucket
+      responses:
+        '200':
+          description: URL generated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/StorageUrl'
+        '404':
+          description: File not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /realtime/subscribe:
+    post:
+      tags:
+        - realtime
+      summary: Subscribe to real-time changes
+      description: |
+        Subscribe to real-time database changes.
+
+        **Subscription Features:**
+        - Table change notifications
+        - Event type filtering (INSERT, UPDATE, DELETE)
+        - Row filtering with filters
+        - Automatic reconnection
+        - Event payload data
+
+        **Business Logic:**
+        - Returns subscription object
+        - Handles connection management
+        - Provides change notifications
+        - Manages subscription lifecycle
+      operationId: subscribeToChanges
+      parameters:
+        - name: table
+          in: query
+          required: true
+          schema:
+            type: string
+          description: Table name to subscribe to
+        - name: event
+          in: query
+          required: false
+          schema:
+            type: string
+            enum: [INSERT, UPDATE, DELETE, '*']
+          description: Event type to listen for
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                filter:
+                  type: string
+                  description: Row filter expression
+                  example: "id=eq.123"
+      responses:
+        '200':
+          description: Subscription successful
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RealtimeSubscription'
+        '400':
+          description: Subscription error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /auth/signin:
+    post:
+      tags:
+        - auth
+      summary: Authenticate with Supabase Auth
+      description: |
+        Authenticate users using Supabase authentication.
+
+        **Auth Features:**
+        - Email/password authentication
+        - OAuth provider support
+        - Magic link authentication
+        - Phone authentication
+        - JWT token generation
+
+        **Business Logic:**
+        - Returns user and session data
+        - Handles authentication providers
+        - Manages token lifecycle
+        - Supports multi-factor auth
+      operationId: signIn
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                email:
+                  type: string
+                  format: email
+                  example: "user@example.com"
+                password:
+                  type: string
+                  format: password
+                  example: "securePassword123"
+                provider:
+                  type: string
+                  enum: [email, google, github, etc.]
+                  example: "email"
+      responses:
+        '200':
+          description: Authentication successful
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AuthResponse'
+        '401':
+          description: Authentication failed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'

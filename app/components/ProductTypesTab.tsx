@@ -278,7 +278,10 @@ export default function ProductTypesTab() {
                 ))
               ) : error ? (
                 <TableRow>
-                  <TableCell colSpan={4} className="text-xs text-red-600 p-4">
+                  <TableCell
+                    colSpan={4}
+                    className="text-xs text-destructive p-4"
+                  >
                     {error}
                   </TableCell>
                 </TableRow>
@@ -606,7 +609,7 @@ function ProductTypeSheet({
           </div>
 
           {name.length === 0 && (
-            <p className="text-red-500 text-sm italic">
+            <p className="text-destructive text-sm italic">
               *Product Type Name is required before saving.
             </p>
           )}
@@ -628,17 +631,17 @@ function ProductTypeSheet({
               }
             />
             <div
-              className={`group flex items-center justify-between p-3 rounded-xl border border-gray-200 transition-colors min-w-0 bg-gray-50/50 cursor-pointer ${assets.length < 2 ? "" : "hidden"}`}
+              className={`group flex items-center bg-gray-100 dark:bg-gray-800 justify-between p-3 rounded-xl border transition-colors cursor-pointer ${assets.length < 2 ? "" : "hidden"}`}
               onClick={() => {
                 if (assets.length < 2) {
                   fileInputRefs.current["image"]?.click();
                 }
               }}
             >
-              <span className="text-sm truncate mr-2 text-gray-600">
+              <span className="text-sm truncate mr-2">
                 Upload Product Type Image
               </span>
-              <Upload className="w-6 h-6 text-gray-400 group-hover:text-gray-600 mb-2" />
+              <Upload className="w-6 h-6 mb-2" />
             </div>
 
             {/* Image List */}
@@ -647,7 +650,7 @@ function ProductTypeSheet({
                 {assets.map((item, index) => (
                   <div
                     key={index}
-                    className="flex items-center justify-between p-2 rounded-lg border border-gray-200 bg-white"
+                    className="flex items-center justify-between p-2 rounded-lg border  bg-background"
                   >
                     <div className="flex items-center space-x-3 min-w-0 flex-1">
                       <div className="w-10 h-10 rounded border border-gray-100 shrink-0 overflow-hidden flex items-center justify-center bg-gray-50">
@@ -670,7 +673,7 @@ function ProductTypeSheet({
                         )}
                       </div>
                       <div className="flex flex-col min-w-0">
-                        <span className="text-xs font-semibold text-gray-900 truncate">
+                        <span className="text-xs font-semibold  truncate">
                           {item._isExisting
                             ? `Existing ${item.is_hasBack ? "Back" : "Front"} Image`
                             : item.file?.name || "Linked Image"}
@@ -693,7 +696,7 @@ function ProductTypeSheet({
                     <div className="flex items-center space-x-4 ml-4">
                       <div className="flex items-center space-x-2">
                         <span
-                          className={`text-[10px] ${!item.is_hasBack ? "text-gray-900 font-bold" : "text-gray-400"}`}
+                          className={`text-[10px] ${!item.is_hasBack ? " font-bold" : "text-gray-400"}`}
                         >
                           F
                         </span>
@@ -703,7 +706,7 @@ function ProductTypeSheet({
                           className="scale-75 data-[state=unchecked]:bg-primary"
                         />
                         <span
-                          className={`text-[10px] ${item.is_hasBack ? "text-gray-900 font-bold" : "text-gray-400"}`}
+                          className={`text-[10px] ${item.is_hasBack ? " font-bold" : "text-gray-400"}`}
                         >
                           B
                         </span>
@@ -714,7 +717,7 @@ function ProductTypeSheet({
                           e.stopPropagation();
                           removeAsset(index);
                         }}
-                        className="p-1 rounded-full hover:bg-red-50 text-red-500 transition-colors"
+                        className="p-1 rounded-full hover:bg-red-50 text-destructive transition-colors"
                       >
                         <X className="w-4 h-4" />
                       </button>
@@ -727,18 +730,18 @@ function ProductTypeSheet({
           <p className="text-muted-foreground">
             Need help? View a sample of an{" "}
             <ImageDialogShowcase>
-              <span className="underline font-medium text-black cursor-pointer">
+              <span className="underline font-medium text-black dark:text-white cursor-pointer">
                 accepted image.{" "}
               </span>
             </ImageDialogShowcase>
           </p>
 
           {assigned && assets.length !== 0 && (
-            <p className="text-red-500 text-sm italic">{assigned}</p>
+            <p className="text-destructive text-sm italic">{assigned}</p>
           )}
 
           {imageValidationError && (
-            <p className="text-red-500 text-sm italic">
+            <p className="text-destructive text-sm italic">
               {imageValidationError}
             </p>
           )}
@@ -785,7 +788,7 @@ function ProductTypeSheet({
           </div>
 
           {assets.length === 0 && (
-            <p className="text-red-500 text-sm italic">
+            <p className="text-destructive text-sm italic">
               *Product Type Image is required before saving.
             </p>
           )}

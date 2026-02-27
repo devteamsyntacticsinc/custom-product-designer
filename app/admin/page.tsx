@@ -66,8 +66,13 @@ export default function AdminDashboard() {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [isCollapsed, setIsCollapsed] = useState(false);
   const currentPath = usePathname();
-  const [productTypesData, setProductTypesData] = useState<{ data: Record<string, any>[]; types: string[] }>({ data: [], types: [] });
-  const [topCustomersList, setTopCustomersList] = useState<Array<{ id: string; name: string; email: string; count: number }>>([]);
+  const [productTypesData, setProductTypesData] = useState<{
+    data: Record<string, any>[];
+    types: string[];
+  }>({ data: [], types: [] });
+  const [topCustomersList, setTopCustomersList] = useState<
+    Array<{ id: string; name: string; email: string; count: number }>
+  >([]);
   const [dashboardData, setDashboardData] = useState<{
     stats: {
       totalOrders: number;
@@ -102,7 +107,8 @@ export default function AdminDashboard() {
     from: undefined,
     to: undefined,
   });
-  const [selectedProductTypeForCustomers, setSelectedProductTypeForCustomers] = useState<string>("all");
+  const [selectedProductTypeForCustomers, setSelectedProductTypeForCustomers] =
+    useState<string>("all");
   const itemsPerPage = 10; // Make it a constant instead of state
   const hasFetchedRef = useRef(false); // Use ref to track if we've already fetched
   const router = useRouter();
@@ -130,48 +136,41 @@ export default function AdminDashboard() {
     [], // Remove itemsPerPage since it's a constant
   );
 
-  const fetchProductTypes = useCallback(
-    async (from?: Date, to?: Date) => {
-      try {
-        setProductTypeLoading(true);
-        const params = new URLSearchParams();
-        if (from) params.set('from', from.toISOString());
-        if (to) params.set('to', to.toISOString());
-        const response = await fetch(`/api/dashboard?${params.toString()}`);
-        const data = await response.json();
-        if (data.success) {
-          setProductTypesData(data.data.ordersByProductTypeTimeSeries);
-        }
-      } catch (error) {
-        console.error("Error fetching product types:", error);
+  const fetchProductTypes = useCallback(async (from?: Date, to?: Date) => {
+    try {
+      setProductTypeLoading(true);
+      const params = new URLSearchParams();
+      if (from) params.set("from", from.toISOString());
+      if (to) params.set("to", to.toISOString());
+      const response = await fetch(`/api/dashboard?${params.toString()}`);
+      const data = await response.json();
+      if (data.success) {
+        setProductTypesData(data.data.ordersByProductTypeTimeSeries);
       }
-      finally {
-        setProductTypeLoading(false);
-      }
-    },
-    [],
-  );
+    } catch (error) {
+      console.error("Error fetching product types:", error);
+    } finally {
+      setProductTypeLoading(false);
+    }
+  }, []);
 
-  const fetchTopCustomers = useCallback(
-    async (productType: string) => {
-      try {
-        setTopCustomersLoading(true);
-        const params = new URLSearchParams();
-        if (productType && productType !== 'all') params.set('productType', productType);
-        const response = await fetch(`/api/dashboard?${params.toString()}`);
-        const data = await response.json();
-        if (data.success) {
-          setTopCustomersList(data.data.topCustomers);
-        }
-      } catch (error) {
-        console.error("Error fetching top customers:", error);
+  const fetchTopCustomers = useCallback(async (productType: string) => {
+    try {
+      setTopCustomersLoading(true);
+      const params = new URLSearchParams();
+      if (productType && productType !== "all")
+        params.set("productType", productType);
+      const response = await fetch(`/api/dashboard?${params.toString()}`);
+      const data = await response.json();
+      if (data.success) {
+        setTopCustomersList(data.data.topCustomers);
       }
-      finally {
-        setTopCustomersLoading(false);
-      }
-    },
-    [],
-  );
+    } catch (error) {
+      console.error("Error fetching top customers:", error);
+    } finally {
+      setTopCustomersLoading(false);
+    }
+  }, []);
 
   const handleRefresh = () => {
     setRefreshing(true);
@@ -232,11 +231,11 @@ export default function AdminDashboard() {
         <AdminSidebar
           user={null}
           sidebarOpen={false}
-          setSidebarOpen={() => { }}
-          onLogout={() => { }}
-          onNavigate={() => { }}
+          setSidebarOpen={() => {}}
+          onLogout={() => {}}
+          onNavigate={() => {}}
           isCollapsed={false}
-          onToggleCollapse={() => { }}
+          onToggleCollapse={() => {}}
           currentPath="/admin"
         />
         <div className="flex-1 lg:ml-64">
@@ -274,7 +273,7 @@ export default function AdminDashboard() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex">
+    <div className="min-h-screen bg-background flex">
       <AdminSidebar
         user={{
           id: session.user.id,
@@ -292,7 +291,7 @@ export default function AdminDashboard() {
       />
 
       {/* Mobile Header */}
-      <header className="bg-white shadow-sm border-b lg:hidden fixed top-0 left-0 right-0 z-40 px-4">
+      <header className="bg-background shadow-sm border-b lg:hidden fixed top-0 left-0 right-0 z-40 px-4">
         <div className="relative flex items-center justify-center h-16">
           <Button
             variant="ghost"
@@ -392,12 +391,18 @@ export default function AdminDashboard() {
               <Card className="p-6">
                 <CardHeader className="px-0 pt-0 flex flex-row items-center justify-between space-y-0 flex-wrap gap-4">
                   <div>
-                    <CardTitle className="text-sm lg:text-base font-medium">Most Ordered Products</CardTitle>
-                    <CardDescription className="text-xs lg:text-sm">Distribution by product type</CardDescription>
+                    <CardTitle className="text-sm lg:text-base font-medium">
+                      Most Ordered Products
+                    </CardTitle>
+                    <CardDescription className="text-xs lg:text-sm">
+                      Distribution by product type
+                    </CardDescription>
                   </div>
                   <div className="flex items-center gap-2">
                     <div className="flex flex-col gap-1">
-                      <span className="text-[10px] text-muted-foreground font-medium uppercase">Date Range</span>
+                      <span className="text-[10px] text-muted-foreground font-medium uppercase">
+                        Date Range
+                      </span>
                       <CalendarRange
                         date={ptDateRange}
                         onSelect={setPtDateRange}
@@ -409,7 +414,9 @@ export default function AdminDashboard() {
                         variant="ghost"
                         size="sm"
                         className="h-8 px-2 mt-5 text-[11px]"
-                        onClick={() => setPtDateRange({ from: undefined, to: undefined })}
+                        onClick={() =>
+                          setPtDateRange({ from: undefined, to: undefined })
+                        }
                       >
                         Clear
                       </Button>
@@ -421,16 +428,19 @@ export default function AdminDashboard() {
                     <div className="h-[300px] w-full">
                       <Skeleton className="h-full w-full rounded-md" />
                     </div>
-                  ) : (productTypesData.data.length) > 0 ? (
+                  ) : productTypesData.data.length > 0 ? (
                     <ChartAreaInteractive
                       data={productTypesData.data}
-                      config={productTypesData.types.reduce((acc: any, type: string, index: number) => ({
-                        ...acc,
-                        [type]: {
-                          label: type,
-                          color: "#3b82f6",
-                        }
-                      }), {})}
+                      config={productTypesData.types.reduce(
+                        (acc: any, type: string, index: number) => ({
+                          ...acc,
+                          [type]: {
+                            label: type,
+                            color: "#3b82f6",
+                          },
+                        }),
+                        {},
+                      )}
                     />
                   ) : (
                     <div className="h-[300px] w-full flex items-center justify-center text-muted-foreground">
@@ -444,12 +454,18 @@ export default function AdminDashboard() {
               <Card className="p-6">
                 <CardHeader className="px-0 pt-0 flex flex-row items-center justify-between space-y-0 flex-wrap gap-4">
                   <div>
-                    <CardTitle className="text-sm lg:text-base font-medium">Top Customers</CardTitle>
-                    <CardDescription className="text-xs lg:text-sm">Customers with the most orders</CardDescription>
+                    <CardTitle className="text-sm lg:text-base font-medium">
+                      Top Customers
+                    </CardTitle>
+                    <CardDescription className="text-xs lg:text-sm">
+                      Customers with the most orders
+                    </CardDescription>
                   </div>
                   <div className="flex items-center gap-4 flex-wrap">
                     <div className="flex flex-col gap-1">
-                      <span className="text-[10px] text-muted-foreground font-medium uppercase">Type</span>
+                      <span className="text-[10px] text-muted-foreground font-medium uppercase">
+                        Type
+                      </span>
                       <Select
                         value={selectedProductTypeForCustomers}
                         onValueChange={setSelectedProductTypeForCustomers}
@@ -458,9 +474,15 @@ export default function AdminDashboard() {
                           <SelectValue placeholder="All Types" />
                         </SelectTrigger>
                         <SelectContent>
-                          <SelectItem value="all" className="text-xs">All Types</SelectItem>
+                          <SelectItem value="all" className="text-xs">
+                            All Types
+                          </SelectItem>
                           {(productTypesData.types ?? []).map((type) => (
-                            <SelectItem key={type} value={type} className="text-xs">
+                            <SelectItem
+                              key={type}
+                              value={type}
+                              className="text-xs"
+                            >
                               {type}
                             </SelectItem>
                           ))}
@@ -505,12 +527,12 @@ export default function AdminDashboard() {
                     </div>
                   )}
                 </CardContent>
-              </Card >
+              </Card>
             </div>
 
             {/* Recent Activity */}
             <div className="h-fit">
-              < Card className="p-6" >
+              <Card className="p-6">
                 <div>
                   <CardTitle className="mb-2 text-sm lg:text-base">
                     Recent Activity
@@ -591,8 +613,7 @@ export default function AdminDashboard() {
                 </div>
 
                 {/* Pagination */}
-                {
-                  dashboardData?.recentActivity.totalPages &&
+                {dashboardData?.recentActivity.totalPages &&
                   dashboardData.recentActivity.totalPages > 1 && (
                     <div className="mt-6 flex justify-center">
                       <Pagination>
@@ -614,8 +635,10 @@ export default function AdminDashboard() {
                           ).map((page) => {
                             if (
                               page === 1 ||
-                              page === dashboardData.recentActivity.totalPages ||
-                              (page >= currentPage - 1 && page <= currentPage + 1)
+                              page ===
+                                dashboardData.recentActivity.totalPages ||
+                              (page >= currentPage - 1 &&
+                                page <= currentPage + 1)
                             ) {
                               return (
                                 <PaginationItem key={page}>
@@ -651,7 +674,7 @@ export default function AdminDashboard() {
                               className={
                                 currentPage ===
                                   dashboardData.recentActivity.totalPages ||
-                                  pageLoading
+                                pageLoading
                                   ? "pointer-events-none opacity-50"
                                   : "cursor-pointer"
                               }
@@ -660,14 +683,13 @@ export default function AdminDashboard() {
                         </PaginationContent>
                       </Pagination>
                     </div>
-                  )
-                }
-              </Card >
+                  )}
+              </Card>
             </div>
           </div>
-        </main >
-      </div >
-    </div >
+        </main>
+      </div>
+    </div>
   );
 }
 

@@ -1,0 +1,1351 @@
+openapi: 3.0.3
+info:
+  title: Product API
+  description: |
+    Product management service for handling products, brands, colors, sizes, and product types.
+
+    ## Module Purpose
+    Provides comprehensive product management functionality including CRUD operations
+    for all product-related entities with image handling and complex relationships.
+
+    ## Features
+    - Product, brand, color, and size management
+    - Product type creation with image support
+    - Complex brand-type relationship management
+    - File upload and storage operations
+    - Fallback data for offline scenarios
+
+    ## Business Logic
+    - Handles duplicate validation (case-insensitive)
+    - Manages brand-type associations with null brand support
+    - Supports product type images with front/back designation
+    - Provides fallback data when database is unavailable
+
+  version: 1.0.0
+  contact:
+    name: Custom Product Designer Development Team
+
+servers:
+  - url: http://localhost:3000/api
+    description: Local development
+  - url: https://your-domain.com/api
+    description: Production
+
+tags:
+  - name: products
+    description: Product management operations
+  - name: brands
+    description: Brand management operations
+  - name: colors
+    description: Color management operations
+  - name: sizes
+    description: Size management operations
+  - name: product-types
+    description: Product type management operations
+
+components:
+  schemas:
+    Product:
+      type: object
+      properties:
+        id:
+          type: string
+          description: Product unique identifier
+          example: "product-123"
+        product_name:
+          type: string
+          description: Generated product name
+          example: "Nike T-Shirt - M"
+        image:
+          type: string
+          nullable: true
+          description: Product image URL
+          example: null
+        brand_id:
+          type: string
+          nullable: true
+          description: Brand identifier
+          example: "brand-123"
+        color_id:
+          type: string
+          nullable: true
+          description: Color identifier
+          example: null
+        product_type_id:
+          type: string
+          nullable: true
+          description: Product type identifier
+          example: "type-123"
+        brand:
+          $ref: '#/components/schemas/Brand'
+        color:
+          $ref: '#/components/schemas/Color'
+        product_type:
+          $ref: '#/components/schemas/ProductType'
+        is_onlyType:
+          type: boolean
+          description: Whether product type is brand-independent
+          example: false
+
+    Brand:
+      type: object
+      properties:
+        id:
+          type: number
+          description: Brand unique identifier
+          example: 1
+        name:
+          type: string
+          description: Brand name
+          example: "Nike"
+        is_Active:
+          type: boolean
+          description: Brand active status
+          example: true
+        type_id:
+          type: number
+          nullable: true
+          description: Associated product type ID
+          example: 1
+
+    Color:
+      type: object
+      properties:
+        id:
+          type: string
+          description: Color unique identifier
+          example: "color-123"
+        value:
+          type: string
+          description: Color value/name
+          example: "Red"
+        is_Active:
+          type: boolean
+          description: Color active status
+          example: true
+
+    Size:
+      type: object
+      properties:
+        id:
+          type: string
+          description: Size unique identifier
+          example: "size-123"
+        value:
+          type: string
+          description: Size value
+          example: "M"
+        is_Active:
+          type: boolean
+          description: Size active status
+          example: true
+
+    ProductType:
+      type: object
+      properties:
+        id:
+          type: string
+          description: Product type unique identifier
+          example: "type-123"
+        name:
+          type: string
+          description: Product type name
+          example: "T-Shirt"
+        is_Active:
+          type: boolean
+          description: Product type active status
+          example: true
+        is_onlyType:
+          type: boolean
+          description: Whether product type is brand-independent
+          example: false
+        image_products:
+          type: array
+          items:
+            $ref: '#/components/schemas/ImageProduct'
+          description: Associated product images
+
+    ImageProduct:
+      type: object
+      properties:
+        id:
+          type: number
+          description: Image unique identifier
+          example: 1
+        productT_id:
+          type: string
+          description: Product type identifier
+          example: "type-123"
+        filepath:
+          type: string
+          description: Image file path/URL
+          example: "https://storage.example.com/image.jpg"
+        is_hasBack:
+          type: boolean
+          description: Whether image is back view
+          example: false
+
+    BrandType:
+      type: object
+      properties:
+        id:
+          type: string
+          description: Brand type unique identifier
+          example: "brand-type-123"
+        brand_id:
+          type: number
+          nullable: true
+          description: Brand identifier (null for is_onlyType)
+          example: 1
+        type_id:
+          type: number
+          description: Product type identifier
+          example: 1
+
+    CreateBrandRequest:
+      type: object
+      required:
+        - name
+      properties:
+        name:
+          type: string
+          description: Brand name
+          example: "Nike"
+        is_Active:
+          type: boolean
+          default: true
+          description: Brand active status
+          example: true
+
+    CreateBrandWithTypeRequest:
+      type: object
+      required:
+        - name
+        - type_id
+      properties:
+        name:
+          type: string
+          description: Brand name
+          example: "Nike"
+        type_id:
+          type: number
+          description: Product type identifier
+          example: 1
+        is_Active:
+          type: boolean
+          default: true
+          description: Brand active status
+          example: true
+
+    CreateBrandWithMultipleTypesRequest:
+      type: object
+      required:
+        - name
+        - type_ids
+      properties:
+        name:
+          type: string
+          description: Brand name
+          example: "Nike"
+        type_ids:
+          type: array
+          items:
+            type: number
+          description: Product type identifiers
+          example: [1, 2, 3]
+        is_Active:
+          type: boolean
+          default: true
+          description: Brand active status
+          example: true
+
+    UpdateBrandRequest:
+      type: object
+      properties:
+        name:
+          type: string
+          description: Brand name
+          example: "Adidas"
+        is_Active:
+          type: boolean
+          description: Brand active status
+          example: true
+
+    UpdateBrandWithTypesRequest:
+      type: object
+      required:
+        - brand_id
+        - type_ids
+      properties:
+        brand_id:
+          type: number
+          description: Brand identifier
+          example: 1
+        type_ids:
+          type: array
+          items:
+            type: number
+          description: Product type identifiers
+          example: [1, 2, 3]
+        name:
+          type: string
+          description: Brand name
+          example: "Adidas"
+        is_Active:
+          type: boolean
+          description: Brand active status
+          example: true
+
+    CreateColorRequest:
+      type: object
+      required:
+        - value
+      properties:
+        value:
+          type: string
+          description: Color value/name
+          example: "Red"
+        is_Active:
+          type: boolean
+          default: true
+          description: Color active status
+          example: true
+
+    UpdateColorRequest:
+      type: object
+      properties:
+        value:
+          type: string
+          description: Color value/name
+          example: "Blue"
+        is_Active:
+          type: boolean
+          description: Color active status
+          example: true
+
+    CreateSizeRequest:
+      type: object
+      required:
+        - value
+      properties:
+        value:
+          type: string
+          description: Size value
+          example: "M"
+        is_Active:
+          type: boolean
+          default: true
+          description: Size active status
+          example: true
+
+    UpdateSizeRequest:
+      type: object
+      properties:
+        value:
+          type: string
+          description: Size value
+          example: "L"
+        is_Active:
+          type: boolean
+          description: Size active status
+          example: true
+
+    CreateProductTypeRequest:
+      type: object
+      required:
+        - name
+      properties:
+        name:
+          type: string
+          description: Product type name
+          example: "T-Shirt"
+        is_Active:
+          type: boolean
+          default: true
+          description: Product type active status
+          example: true
+        is_onlyType:
+          type: boolean
+          default: false
+          description: Whether product type is brand-independent
+          example: false
+        images:
+          type: array
+          items:
+            type: object
+            properties:
+              file:
+                type: string
+                format: binary
+                description: Image file
+              is_hasBack:
+                type: boolean
+                description: Whether image is back view
+                example: false
+          description: Product type images
+
+    UpdateProductTypeRequest:
+      type: object
+      properties:
+        name:
+          type: string
+          description: Product type name
+          example: "Hoodie"
+        is_Active:
+          type: boolean
+          description: Product type active status
+          example: true
+        is_onlyType:
+          type: boolean
+          description: Whether product type is brand-independent
+          example: false
+        images:
+          type: array
+          items:
+            type: object
+            properties:
+              file:
+                type: string
+                format: binary
+                description: Image file
+              is_hasBack:
+                type: boolean
+                description: Whether image is back view
+                example: false
+          description: Product type images
+        imagesToDelete:
+          type: array
+          items:
+            type: number
+          description: Image IDs to delete
+          example: [1, 2]
+
+    ErrorResponse:
+      type: object
+      properties:
+        error:
+          type: string
+          description: Error message
+          example: "Brand with this name already exists"
+        message:
+          type: string
+          description: Detailed error description
+          example: "Validation failed"
+
+paths:
+  /products:
+    get:
+      tags:
+        - products
+      summary: Get all products
+      description: |
+        Retrieve all products with brand, type, and size information.
+
+        **Data Retrieval:**
+        - Joins size_product with sizes and brand_type tables
+        - Includes brand and product type information
+        - Generates product names from brand + type + size
+
+        **Business Logic:**
+        - Transforms nested arrays to objects for consistency
+        - Returns empty array on database errors
+      operationId: getProducts
+      responses:
+        '200':
+          description: Products retrieved successfully
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Product'
+        '500':
+          description: Database error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /products/{productId}:
+    get:
+      tags:
+        - products
+      summary: Get product by ID
+      description: |
+        Retrieve a specific product by ID with full details.
+
+        **Data Retrieval:**
+        - Fetches single product from size_product table
+        - Includes all related brand, type, and size information
+
+        **Business Logic:**
+        - Returns null if product not found
+        - Handles missing related data gracefully
+      operationId: getProductById
+      parameters:
+        - name: productId
+          in: path
+          required: true
+          schema:
+            type: string
+          description: Product unique identifier
+      responses:
+        '200':
+          description: Product retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Product'
+        '404':
+          description: Product not found
+          content:
+            application/json:
+              schema:
+                type: object
+                example: null
+        '500':
+          description: Database error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /brands:
+    get:
+      tags:
+        - brands
+      summary: Get brands
+      description: |
+        Retrieve brands, optionally filtered by product type.
+
+        **Data Retrieval:**
+        - If typeId provided: Gets brands associated with specific type
+        - If no typeId: Gets all brands with type associations
+
+        **Business Logic:**
+        - Transforms brand_type relationships to include type_id
+        - Returns empty array on database errors
+      operationId: getBrands
+      parameters:
+        - name: typeId
+          in: query
+          required: false
+          schema:
+            type: number
+          description: Filter by product type ID
+      responses:
+        '200':
+          description: Brands retrieved successfully
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Brand'
+        '500':
+          description: Database error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+    post:
+      tags:
+        - brands
+      summary: Create brand
+      description: |
+        Create a new brand with validation for duplicates.
+
+        **Validation:**
+        - Checks for duplicate brand names (case-insensitive)
+        - Returns error if brand already exists
+
+        **Business Logic:**
+        - Creates brand with default active status
+        - Returns created brand object
+      operationId: createBrand
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateBrandRequest'
+      responses:
+        '200':
+          description: Brand created successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Brand'
+        '400':
+          description: Brand already exists
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: Database error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /brands/with-type:
+    post:
+      tags:
+        - brands
+      summary: Create brand with type
+      description: |
+        Create a brand and associate it with a single product type.
+
+        **Workflow:**
+        1. Create the brand
+        2. Create brand-type association
+
+        **Business Logic:**
+        - Handles both brand creation and association
+        - Returns both brand and association data
+      operationId: createBrandWithType
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateBrandWithTypeRequest'
+      responses:
+        '200':
+          description: Brand and association created successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  brand:
+                    $ref: '#/components/schemas/Brand'
+                  brandType:
+                    $ref: '#/components/schemas/BrandType'
+        '400':
+          description: Brand already exists
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: Database error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /brands/with-multiple-types:
+    post:
+      tags:
+        - brands
+      summary: Create brand with multiple types
+      description: |
+        Create a brand and associate it with multiple product types.
+
+        **Workflow:**
+        1. Create the brand
+        2. Create brand-type associations for all types
+
+        **Business Logic:**
+        - Handles multiple type associations
+        - Returns brand and all associations
+      operationId: createBrandWithMultipleTypes
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateBrandWithMultipleTypesRequest'
+      responses:
+        '200':
+          description: Brand and associations created successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  brand:
+                    $ref: '#/components/schemas/Brand'
+                  brandTypes:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/BrandType'
+        '400':
+          description: Brand already exists
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: Database error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /brands/{brandId}:
+    put:
+      tags:
+        - brands
+      summary: Update brand
+      description: |
+        Update an existing brand with validation for duplicates.
+
+        **Validation:**
+        - Checks for duplicate names (excluding current brand)
+        - Updates only provided fields
+
+        **Business Logic:**
+        - Partial updates supported
+        - Returns updated brand object
+      operationId: updateBrand
+      parameters:
+        - name: brandId
+          in: path
+          required: true
+          schema:
+            type: number
+          description: Brand unique identifier
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateBrandRequest'
+      responses:
+        '200':
+          description: Brand updated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Brand'
+        '400':
+          description: Brand name already exists
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Brand not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: Database error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+    delete:
+      tags:
+        - brands
+      summary: Delete brand
+      description: |
+        Delete a brand and its type associations.
+
+        **Workflow:**
+        1. Delete brand-type associations first
+        2. Delete brand
+
+        **Business Logic:**
+        - Handles foreign key constraints
+        - Cascades deletions properly
+      operationId: deleteBrand
+      parameters:
+        - name: brandId
+          in: path
+          required: true
+          schema:
+            type: number
+          description: Brand unique identifier
+      responses:
+        '200':
+          description: Brand deleted successfully
+        '404':
+          description: Brand not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: Database error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /brands/{brandId}/types:
+    put:
+      tags:
+        - brands
+      summary: Update brand with types
+      description: |
+        Update brand and its type associations.
+
+        **Workflow:**
+        1. Remove old associations
+        2. Add new associations
+        3. Handle null brand claiming logic
+        4. Update brand details
+
+        **Business Logic:**
+        - Manages complex association updates
+        - Handles null brand_id records
+        - Claims existing null records when possible
+      operationId: updateBrandWithTypes
+      parameters:
+        - name: brandId
+          in: path
+          required: true
+          schema:
+            type: number
+          description: Brand unique identifier
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateBrandWithTypesRequest'
+      responses:
+        '200':
+          description: Brand and associations updated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Brand'
+        '404':
+          description: Brand not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: Database error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /colors:
+    get:
+      tags:
+        - colors
+      summary: Get colors
+      description: |
+        Retrieve all colors ordered by value.
+
+        **Business Logic:**
+        - Returns colors sorted alphabetically
+        - Returns empty array on database errors
+      operationId: getColors
+      responses:
+        '200':
+          description: Colors retrieved successfully
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Color'
+        '500':
+          description: Database error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+    post:
+      tags:
+        - colors
+      summary: Create color
+      description: |
+        Create a new color with validation for duplicates.
+
+        **Validation:**
+        - Checks for duplicate color values (case-insensitive)
+        - Returns error if color already exists
+
+        **Business Logic:**
+        - Creates color with default active status
+        - Returns created color object
+      operationId: createColor
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateColorRequest'
+      responses:
+        '200':
+          description: Color created successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Color'
+        '400':
+          description: Color already exists
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: Database error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /colors/{colorId}:
+    put:
+      tags:
+        - colors
+      summary: Update color
+      description: |
+        Update an existing color with validation for duplicates.
+
+        **Validation:**
+        - Checks for duplicate values (excluding current color)
+        - Updates only provided fields
+
+        **Business Logic:**
+        - Partial updates supported
+        - Returns updated color object
+      operationId: updateColor
+      parameters:
+        - name: colorId
+          in: path
+          required: true
+          schema:
+            type: string
+          description: Color unique identifier
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateColorRequest'
+      responses:
+        '200':
+          description: Color updated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Color'
+        '400':
+          description: Color value already exists
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Color not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: Database error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+    delete:
+      tags:
+        - colors
+      summary: Delete color
+      description: |
+        Delete a color by ID.
+
+        **Business Logic:**
+        - Direct deletion (no foreign key constraints)
+      operationId: deleteColor
+      parameters:
+        - name: colorId
+          in: path
+          required: true
+          schema:
+            type: string
+          description: Color unique identifier
+      responses:
+        '200':
+          description: Color deleted successfully
+        '404':
+          description: Color not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: Database error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /sizes:
+    get:
+      tags:
+        - sizes
+      summary: Get sizes
+      description: |
+        Retrieve all sizes ordered by value.
+
+        **Business Logic:**
+        - Returns sizes sorted alphabetically
+        - Returns empty array on database errors
+      operationId: getSizes
+      responses:
+        '200':
+          description: Sizes retrieved successfully
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Size'
+        '500':
+          description: Database error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+    post:
+      tags:
+        - sizes
+      summary: Create size
+      description: |
+        Create a new size with validation for duplicates.
+
+        **Validation:**
+        - Checks for duplicate size values (case-insensitive)
+        - Returns error if size already exists
+
+        **Business Logic:**
+        - Creates size with default active status
+        - Returns created size object
+      operationId: createSize
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateSizeRequest'
+      responses:
+        '200':
+          description: Size created successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Size'
+        '400':
+          description: Size already exists
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: Database error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /sizes/{sizeId}:
+    put:
+      tags:
+        - sizes
+      summary: Update size
+      description: |
+        Update an existing size with validation for duplicates.
+
+        **Validation:**
+        - Checks for duplicate values (excluding current size)
+        - Updates only provided fields
+
+        **Business Logic:**
+        - Partial updates supported
+        - Returns updated size object
+      operationId: updateSize
+      parameters:
+        - name: sizeId
+          in: path
+          required: true
+          schema:
+            type: string
+          description: Size unique identifier
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateSizeRequest'
+      responses:
+        '200':
+          description: Size updated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Size'
+        '400':
+          description: Size value already exists
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Size not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: Database error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+    delete:
+      tags:
+        - sizes
+      summary: Delete size
+      description: |
+        Delete a size by ID.
+
+        **Business Logic:**
+        - Direct deletion (no foreign key constraints)
+      operationId: deleteSize
+      parameters:
+        - name: sizeId
+          in: path
+          required: true
+          schema:
+            type: string
+          description: Size unique identifier
+      responses:
+        '200':
+          description: Size deleted successfully
+        '404':
+          description: Size not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: Database error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /product-types:
+    get:
+      tags:
+        - product-types
+      summary: Get product types
+      description: |
+        Retrieve all product types with optional images.
+
+        **Data Retrieval:**
+        - Fetches product types with associated images
+        - Returns fallback data if database is unavailable
+
+        **Business Logic:**
+        - Provides hardcoded fallback for offline scenarios
+        - Returns empty array on database errors
+      operationId: getProductTypes
+      responses:
+        '200':
+          description: Product types retrieved successfully
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  allOf:
+                    - $ref: '#/components/schemas/ProductType'
+                    - type: object
+                      properties:
+                        image_products:
+                          type: array
+                          items:
+                            allOf:
+                              - $ref: '#/components/schemas/ImageProduct'
+                              - type: object
+                                properties:
+                                  id:
+                                    type: number
+                                  filepath:
+                                    type: string
+                                  is_hasBack:
+                                    type: boolean
+        '500':
+          description: Database error (returns fallback data)
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    id:
+                      type: number
+                      example: 1
+                    name:
+                      type: string
+                      example: "T-Shirt"
+
+    post:
+      tags:
+        - product-types
+      summary: Create product type
+      description: |
+        Create a new product type with optional images.
+
+        **Validation:**
+        - Checks for duplicate product type names (case-insensitive)
+        - Returns error if product type already exists
+
+        **Business Logic:**
+        - Creates brand_type entry with null brand_id if is_onlyType
+        - Uploads images to Supabase storage if provided
+        - Returns created product type object
+      operationId: createProductType
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/CreateProductTypeRequest'
+      responses:
+        '200':
+          description: Product type created successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProductType'
+        '400':
+          description: Product type already exists
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: Database error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /product-types/{productTypeId}:
+    put:
+      tags:
+        - product-types
+      summary: Update product type
+      description: |
+        Update an existing product type with optional image management.
+
+        **Validation:**
+        - Checks for duplicate names (excluding current product type)
+        - Handles image deletion and upload
+
+        **Business Logic:**
+        - Deletes specified images first
+        - Uploads new images if provided
+        - Handles is_onlyType brand_type creation
+      operationId: updateProductType
+      parameters:
+        - name: productTypeId
+          in: path
+          required: true
+          schema:
+            type: string
+          description: Product type unique identifier
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/UpdateProductTypeRequest'
+      responses:
+        '200':
+          description: Product type updated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProductType'
+        '400':
+          description: Product type name already exists
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Product type not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: Database error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+    delete:
+      tags:
+        - product-types
+      summary: Delete product type
+      description: |
+        Delete a product type and its associated data.
+
+        **Workflow:**
+        1. Delete specified images
+        2. Handle is_onlyType brand_type cleanup
+        3. Check usage in transaction tables
+        4. Delete product type
+
+        **Business Logic:**
+        - Only deletes brand_type if not used in transactions
+        - Handles complex cleanup for is_onlyType products
+        - Requires image IDs for proper cleanup
+      operationId: deleteProductType
+      parameters:
+        - name: productTypeId
+          in: path
+          required: true
+          schema:
+            type: string
+          description: Product type unique identifier
+        - name: imagesToDelete
+          in: query
+          required: true
+          schema:
+            type: array
+            items:
+              type: number
+          description: Image IDs to delete (comma-separated or array format)
+          example: "1,2,3"
+      responses:
+        '200':
+          description: Product type deleted successfully
+        '404':
+          description: Product type not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: Database error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'

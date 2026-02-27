@@ -39,16 +39,17 @@ export default function ContactInformation({
   sizeSelection,
   assets,
   contactData,
-  setContactData
+  setContactData,
 }: ContactInformationProps) {
   const [showOrderSummary, setShowOrderSummary] = useState(false);
 
-  const handleInputChange = (field: keyof ContactData) => (e: React.ChangeEvent<HTMLInputElement>) => {
-    setContactData(prev => ({
-      ...prev,
-      [field]: e.target.value
-    }));
-  };
+  const handleInputChange =
+    (field: keyof ContactData) => (e: React.ChangeEvent<HTMLInputElement>) => {
+      setContactData((prev) => ({
+        ...prev,
+        [field]: e.target.value,
+      }));
+    };
 
   const handleSubmit = () => {
     setShowOrderSummary(true);
@@ -65,13 +66,11 @@ export default function ContactInformation({
 
   return (
     <div className="flex flex-col flex-1 h-full">
-      <h2 className="hidden lg:block text-2xl font-bold text-gray-900 mb-6">
+      <h2 className="hidden lg:block text-2xl font-bold  mb-6">
         Contact Information
       </h2>
 
-      <h2 className="lg:hidden text-xl font-bold text-gray-900 mb-6">
-        Contact Information
-      </h2>
+      <h2 className="lg:hidden text-xl font-bold  mb-6">Contact Information</h2>
 
       <div className="flex-1 space-y-6">
         {/* Full Name */}
@@ -148,11 +147,14 @@ export default function ContactInformation({
       </div>
 
       {/* Action Buttons */}
-      <div className="flex gap-3 mt-auto pt-6 bg-white border-t lg:border-none">
+      <div className="flex gap-3 mt-auto pt-6 bg-background border-t lg:border-none">
         <Button variant="outline" className="flex-1" onClick={onBack}>
           Back
         </Button>
-        <Button className="flex-1 bg-gray-800 hover:bg-gray-900" onClick={handleSubmit}>
+        <Button
+          className="flex-1"
+          onClick={handleSubmit}
+        >
           Submit
         </Button>
       </div>

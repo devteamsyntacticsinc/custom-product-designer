@@ -67,7 +67,7 @@ export function Combobox({
         >
           {loading ? (
             <span className="flex items-center gap-2">
-              <span className="h-4 w-4 animate-spin rounded-full border-2 border-gray-300 border-t-gray-600" />
+              <span className="h-4 w-4 animate-spin rounded-full border-2 border-gray-300 border-t-gray-600 dark:border-gray-400" />
               Loading...
             </span>
           ) : selectedOption ? (
@@ -84,7 +84,7 @@ export function Combobox({
         </Button>
       </PopoverTrigger>
       <PopoverContent
-        className="p-0 border border-gray-200 shadow-md"
+        className="p-0 border dark:border-gray-700 shadow-md"
         align="start"
         style={{ width: "var(--radix-popover-trigger-width)" }}
       >
