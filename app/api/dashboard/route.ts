@@ -10,17 +10,18 @@ export async function GET(request: Request) {
     const limit = parseInt(searchParams.get('limit') || '10')
     const ptfrom = searchParams.get('ptfrom') ?? undefined
     const ptto = searchParams.get('ptto') ?? undefined
-    const productType = searchParams.get('productType') ?? undefined
+    const productType = searchParams.get('productType') ? Number(searchParams.get('productType')) : undefined
     const obfrom = searchParams.get('obfrom') ?? undefined
     const obto = searchParams.get('obto') ?? undefined
 
 
-    const [statsResult, activityResult, topCustomersResult, ordersByProductTypeTimeSeriesResult, mostOrderedBrandResult] = await Promise.allSettled([
+    const [statsResult, activityResult, topCustomersResult, ordersByProductTypeTimeSeriesResult, mostOrderedBrandResult, productTypesResult] = await Promise.allSettled([
       ProductService.getDashboardStats(),
       OrderService.getRecentActivity(page, limit),
       ReportService.getTopCustomers(ptfrom, ptto, productType),
       ReportService.getOrdersByProductTypeTimeSeries(ptfrom, ptto),
       ReportService.getMostOrderedBrand(obfrom, obto),
+      ProductService.getProductTypes(),
     ])
 
     // Handle both results separately
@@ -29,6 +30,7 @@ export async function GET(request: Request) {
     const topCustomers = topCustomersResult.status === 'fulfilled' ? topCustomersResult.value : []
     const ordersByProductTypeTimeSeries = ordersByProductTypeTimeSeriesResult.status === 'fulfilled' ? ordersByProductTypeTimeSeriesResult.value : { data: [], types: [] }
     const mostOrderedBrand = mostOrderedBrandResult.status === 'fulfilled' ? mostOrderedBrandResult.value : []
+    const productTypes = productTypesResult.status === 'fulfilled' ? productTypesResult.value : []
 
     // Always return success with available data
     return NextResponse.json({
@@ -45,7 +47,8 @@ export async function GET(request: Request) {
         recentActivity: activity,
         topCustomers,
         ordersByProductTypeTimeSeries,
-        mostOrderedBrand
+        mostOrderedBrand,
+        productTypes
       }
     })
   } catch (error) {
@@ -70,7 +73,8 @@ export async function GET(request: Request) {
         },
         topCustomers: [],
         ordersByProductTypeTimeSeries: { data: [], types: [] },
-        mostOrderedBrand: []
+        mostOrderedBrand: [],
+        productTypes: []
       }
     })
   }

@@ -1,7 +1,7 @@
 import { supabase } from "@/lib/supabase";
 
 export class ReportService {
-    static async getTopCustomers(startDate?: string, endDate?: string, productType?: string) {
+    static async getTopCustomers(startDate?: string, endDate?: string, productType?: number) {
         try {
             let query = supabase
                 .from('product_orders')
@@ -10,6 +10,7 @@ export class ReportService {
                     created_at,
                     brand_type (
                         product_type (
+                            id,
                             name
                         )
                     ),
@@ -41,8 +42,9 @@ export class ReportService {
                 if (productType) {
                     const brandType = order.brand_type as any;
                     const pType = brandType?.product_type;
-                    const typeName = Array.isArray(pType) ? pType[0]?.name : pType?.name;
-                    if (typeName !== productType) return;
+                    const typeId = Array.isArray(pType) ? pType[0]?.id : pType?.id;
+
+                    if (Number(typeId) !== Number(productType)) return;
                 }
 
                 if (custResult && custResult.id) {

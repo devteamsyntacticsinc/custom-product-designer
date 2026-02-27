@@ -54,13 +54,8 @@ import {
   PaginationEllipsis,
 } from "@/components/ui/pagination";
 import Link from "next/link";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
+import { Combobox } from "@/components/ui/combobox";
+import { ProductType } from "@/types/product";
 
 type ChartDataItem = {
   date: string
@@ -72,7 +67,8 @@ export default function AdminDashboard() {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [isCollapsed, setIsCollapsed] = useState(false);
   const currentPath = usePathname();
-  const [productTypesData, setProductTypesData] = useState<{ data: ChartDataItem[]; types: string[] }>({ data: [], types: [] });
+  const [ordersByProductTypeTimeSeriesData, setOrdersByProductTypeTimeSeriesData] = useState<{ data: ChartDataItem[]; types: string[] }>({ data: [], types: [] });
+  const [productTypesData, setProductTypesData] = useState<ProductType[]>([]);
   const [topCustomersList, setTopCustomersList] = useState<Array<{ id: string; name: string; email: string; count: number }>>([]);
   const [mostOrderedBrand, setMostOrderedBrand] = useState<{ data: ChartDataItem[]; types: string[] }>({ data: [], types: [] });
   const [dashboardData, setDashboardData] = useState<{
@@ -103,7 +99,7 @@ export default function AdminDashboard() {
   const [currentPage, setCurrentPage] = useState(1);
   const [pageLoading, setPageLoading] = useState(false);
 
-  const [productTypeLoading, setProductTypeLoading] = useState(false);
+  const [ordersByProductTypeTimeSeriesLoading, setOrdersByProductTypeTimeSeriesLoading] = useState(false);
   const [topCustomersLoading, setTopCustomersLoading] = useState(false);
   const [mostOrderedBrandLoading, setMostOrderedBrandLoading] = useState(false);
   const [ptDateRange, setPtDateRange] = useState<DateRange | undefined>({
@@ -118,6 +114,8 @@ export default function AdminDashboard() {
   const itemsPerPage = 10; // Make it a constant instead of state
   const hasFetchedRef = useRef(false); // Use ref to track if we've already fetched
   const router = useRouter();
+  const [loadingProductTypes, setLoadingProductTypes] = useState(true);
+
 
   // Fetch dashboard data
   const fetchDashboardData = useCallback(
@@ -142,23 +140,23 @@ export default function AdminDashboard() {
     [], // Remove itemsPerPage since it's a constant
   );
 
-  const fetchProductTypes = useCallback(
+  const fetchOrdersByProductTypeTimeSeries = useCallback(
     async (ptfrom?: Date, ptto?: Date) => {
       try {
-        setProductTypeLoading(true);
+        setOrdersByProductTypeTimeSeriesLoading(true);
         const params = new URLSearchParams();
         if (ptfrom) params.set('ptfrom', ptfrom.toISOString());
         if (ptto) params.set('ptto', ptto.toISOString());
         const response = await fetch(`/api/dashboard?${params.toString()}`);
         const data = await response.json();
         if (data.success) {
-          setProductTypesData(data.data.ordersByProductTypeTimeSeries);
+          setOrdersByProductTypeTimeSeriesData(data.data.ordersByProductTypeTimeSeries);
         }
       } catch (error) {
         console.error("Error fetching product types:", error);
       }
       finally {
-        setProductTypeLoading(false);
+        setOrdersByProductTypeTimeSeriesLoading(false);
       }
     },
     [],
@@ -180,6 +178,25 @@ export default function AdminDashboard() {
       }
       finally {
         setTopCustomersLoading(false);
+      }
+    },
+    [],
+  );
+
+  const fetchProductTypes = useCallback(
+    async () => {
+      try {
+        setLoadingProductTypes(true);
+        const response = await fetch(`/api/dashboard`);
+        const data = await response.json();
+        if (data.success) {
+          setProductTypesData(data.data.productTypes);
+        }
+      } catch (error) {
+        console.error("Error fetching product types:", error);
+      }
+      finally {
+        setLoadingProductTypes(false);
       }
     },
     [],
@@ -210,17 +227,18 @@ export default function AdminDashboard() {
   const handleRefresh = () => {
     setRefreshing(true);
     fetchDashboardData(currentPage);
-    fetchProductTypes(ptDateRange?.from, ptDateRange?.to);
+    fetchOrdersByProductTypeTimeSeries(ptDateRange?.from, ptDateRange?.to);
     fetchTopCustomers(selectedProductTypeForCustomers);
     fetchMostOrderedBrand(obDateRange?.from, obDateRange?.to);
+    fetchProductTypes();
   };
 
   // Effect to refetch when product type date range changes
   useEffect(() => {
     if (ptDateRange?.from) {
-      fetchProductTypes(ptDateRange.from, ptDateRange.to);
+      fetchOrdersByProductTypeTimeSeries(ptDateRange.from, ptDateRange.to);
     } else if (hasFetchedRef.current) {
-      fetchProductTypes();
+      fetchOrdersByProductTypeTimeSeries();
     }
   }, [ptDateRange]);
 
@@ -258,9 +276,10 @@ export default function AdminDashboard() {
     // Only fetch on initial load when we haven't fetched yet
     if (!hasFetchedRef.current) {
       fetchDashboardData(currentPage);
-      fetchProductTypes(ptDateRange?.from, ptDateRange?.to);
+      fetchOrdersByProductTypeTimeSeries(ptDateRange?.from, ptDateRange?.to);
       fetchTopCustomers(selectedProductTypeForCustomers);
       fetchMostOrderedBrand(obDateRange?.from, obDateRange?.to);
+      fetchProductTypes();
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [session, status, router]); // Remove currentPage and fetchDashboardData to prevent re-runs - we use ref instead
@@ -461,21 +480,21 @@ export default function AdminDashboard() {
                   </div>
                 </CardHeader>
                 <CardContent className="px-0 pb-0">
-                  {productTypeLoading ? (
+                  {ordersByProductTypeTimeSeriesLoading ? (
                     <div className="h-[300px] w-full">
                       <Skeleton className="h-full w-full rounded-md" />
                     </div>
-                  ) : (productTypesData.data.length) > 0 ? (
+                  ) : (ordersByProductTypeTimeSeriesData.data.length) > 0 ? (
                     <ChartAreaInteractive
-                      data={productTypesData.data}
-                      config={productTypesData.types.reduce((acc: any, type: string, index: number) => ({
+                      data={ordersByProductTypeTimeSeriesData.data}
+                      config={ordersByProductTypeTimeSeriesData.types.reduce((acc: any, type: string, index: number) => ({
                         ...acc,
                         [type]: {
                           label: type,
                           color: "#3b82f6",
                         }
                       }), {})}
-                      types={productTypesData.types}
+                      types={ordersByProductTypeTimeSeriesData.types}
                     />
                   ) : (
                     <div className="h-[300px] w-full flex items-center justify-center text-muted-foreground">
@@ -495,36 +514,27 @@ export default function AdminDashboard() {
                   <div className="flex items-center gap-4 flex-wrap">
                     <div className="flex flex-col gap-1">
                       <span className="text-[10px] text-muted-foreground font-medium uppercase">Type</span>
-                      <Select
+                      <Combobox
+                        placeholder={
+                          loadingProductTypes
+                            ? "Loading product types..."
+                            : "Select product type"
+                        }
                         value={selectedProductTypeForCustomers}
-                        onValueChange={setSelectedProductTypeForCustomers}
-                      >
-                        <SelectTrigger className="w-[150px] h-8 text-[11px]">
-                          <SelectValue placeholder="All Types" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="all" className="text-xs">All Types</SelectItem>
-                          {(productTypesData.types ?? []).map((type) => (
-                            <SelectItem key={type} value={type} className="text-xs">
-                              {type}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                    </div>
-
-                    {selectedProductTypeForCustomers !== "all" && (
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        className="h-8 px-2 mt-5 text-[11px]"
-                        onClick={() => {
-                          setSelectedProductTypeForCustomers("all");
+                        onValueChange={(value) => {
+                          setSelectedProductTypeForCustomers(value);
                         }}
-                      >
-                        Clear Filter
-                      </Button>
-                    )}
+                        options={[
+                          ...productTypesData.map((type) => ({
+                            value: type.id.toString(),
+                            label: type.name,
+                          }))
+                        ]}
+                        className="w-[200px]"
+                        disabled={loadingProductTypes}
+                        loading={loadingProductTypes}
+                      />
+                    </div>
                   </div>
                 </CardHeader>
                 <CardContent className="px-0 pb-0">
