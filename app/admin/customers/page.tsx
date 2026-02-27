@@ -101,10 +101,8 @@ export default function CustomersPage() {
         <div className="p-4 sm:p-6 lg:p-8">
           {/* Header */}
           <div className="flex flex-row items-center justify-between gap-4 mb-6 sm:mb-8">
-            <div className="dark:text-gray-200">
-              <h1 className="text-xl sm:text-3xl font-bold  dark:text-gray-200">
-                Customers
-              </h1>
+            <div className="">
+              <h1 className="text-xl sm:text-3xl font-bold ">Customers</h1>
               <p className="text-xs lg:text-base text-gray-600 mt-1 sm:mt-2 dark:text-gray-400">
                 View customer accounts, contact information, and purchase
                 history.
