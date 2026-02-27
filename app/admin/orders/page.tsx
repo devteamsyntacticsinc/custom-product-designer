@@ -384,7 +384,7 @@ export default function OrdersPage() {
                             </span>
                             <Badge
                               variant="outline"
-                              className="text-[10px] sm:text-xs text-blue-600 border-blue-200 bg-blue-50 dark:bg-blue-600 dark:text-white "
+                              className="text-[10px] sm:text-xs text-blue-600 border-blue-200 bg-blue-50 dark:border-blue-800 dark:bg-blue-950 "
                             >
                               {totalQuantity} items
                             </Badge>
@@ -422,7 +422,7 @@ export default function OrdersPage() {
                                     <Badge
                                       key={size.id}
                                       variant="outline"
-                                      className="text-[10px] sm:text-xs px-2 py-0 h-5 dark:bg-blue-600 dark:text-white"
+                                      className="text-[10px] sm:text-xs px-2 py-0 h-5 text-blue-600 border-blue-200 bg-blue-50 dark:border-blue-800 dark:bg-blue-950"
                                     >
                                       {size.sizes?.value || "Unknown"} (
                                       {size.quantity})
