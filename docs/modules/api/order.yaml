@@ -1,0 +1,298 @@
+name: Order API
+description: Order processing and management service for handling product orders and customer creation
+version: 1.0.0
+base_path: /lib/api/order.ts
+
+service: OrderService
+
+methods:
+  createCustomer:
+    description: Create a new customer or update existing customer information
+    parameters:
+      contactInformation:
+        type: object
+        properties:
+          fullName: string
+          email: string
+          contactNumber: string
+          address: string
+        required: true
+    returns:
+      type: Promise<OrderResult["customerData"]>
+      description: Customer data object
+    database_tables:
+      - customers
+
+  getBrandTypeId:
+    description: Get brand type ID by brand and type combination
+    parameters:
+      brandId:
+        type: string | null
+        required: true
+        description: Brand ID (can be null for is_onlyType products)
+      typeId:
+        type: string
+        required: true
+        description: Product type ID
+    returns:
+      type: Promise<{ id: string }>
+      description: Brand type ID object
+    database_tables:
+      - brand_type
+
+  createProductOrder:
+    description: Create a new product order
+    parameters:
+      customerId:
+        type: string
+        required: true
+      brandTypeId:
+        type: string
+        required: true
+      colorId:
+        type: string | null
+        required: true
+    returns:
+      type: Promise<OrderResult["productOrderData"]>
+      description: Product order data object
+    database_tables:
+      - product_orders
+
+  createProductSizes:
+    description: Create size entries for a product order
+    parameters:
+      productOrderId:
+        type: string
+        required: true
+      sizeSelection:
+        type: array
+        items:
+          type: object
+          properties:
+            size: string
+            quantity: number
+        required: true
+    returns:
+      type: Promise<boolean>
+      description: Success status
+    database_tables:
+      - product_sizes
+
+  uploadProductImages:
+    description: Upload product images to storage and database
+    parameters:
+      productOrderId:
+        type: string
+        required: true
+      assets:
+        type: object
+        description: File objects mapped by placement position
+        required: true
+    returns:
+      type: Promise<boolean>
+      description: Success status
+    database_tables:
+      - product_images
+    storage:
+      bucket: product-images
+
+  processOrder:
+    description: Complete order processing workflow
+    parameters:
+      orderData:
+        type: OrderData
+        required: true
+        properties:
+          contactInformation: object
+          productTypeId: string
+          brandId: string | null
+          colorId: string | null
+          sizeSelection: array
+          assets: object
+    returns:
+      type: Promise<OrderResult>
+      description: Complete order result with customer and product data
+    workflow:
+      - createCustomer
+      - getBrandTypeId
+      - createProductOrder
+      - createProductSizes
+      - uploadProductImages
+
+  getProductOrdersCount:
+    description: Get total count of product orders
+    returns:
+      type: Promise<number>
+      description: Total number of orders
+    database_tables:
+      - product_orders
+
+  getCustomersCount:
+    description: Get total count of customers
+    returns:
+      type: Promise<number>
+      description: Total number of customers
+    database_tables:
+      - customers
+
+  getRecentActivity:
+    description: Get paginated recent activity (orders and new customers)
+    parameters:
+      page:
+        type: number
+        default: 1
+        description: Page number for pagination
+      limit:
+        type: number
+        default: 10
+        description: Number of items per page
+    returns:
+      type: Promise<{
+        activities: ActivityItem[];
+        total: number;
+        totalPages: number;
+        currentPage: number;
+      }>
+      description: Paginated activity data
+    database_tables:
+      - customers
+      - product_orders
+
+  getAllOrders:
+    description: Retrieve all orders with full details
+    returns:
+      type: Promise<OrderWithCustomer[]>
+      description: Array of orders with customer and product details
+    database_tables:
+      - product_orders
+      - customers
+      - brand_type
+      - brands
+      - product_type
+      - colors
+      - product_sizes
+      - sizes
+      - product_images
+
+  getOrdersByCustomerId:
+    description: Get all orders for a specific customer
+    parameters:
+      customerId:
+        type: number
+        required: true
+    returns:
+      type: Promise<CustomerWithOrdersForDashboard>
+      description: Customer with their orders
+    database_tables:
+      - customers
+      - product_orders
+      - brand_type
+      - brands
+      - product_type
+      - colors
+      - product_sizes
+      - sizes
+      - product_images
+
+  getOrderById:
+    description: Get order details by order ID
+    parameters:
+      orderId:
+        type: number
+        required: true
+    returns:
+      type: Promise<OrderWithCustomer>
+      description: Order with full details
+    database_tables:
+      - product_orders
+      - customers
+      - brand_type
+      - brands
+      - product_type
+      - colors
+      - product_sizes
+      - sizes
+      - product_images
+
+dependencies:
+  - "@/lib/supabase"
+  - "@/types/product"
+  - "@/types/order"
+  - "@/types/customer"
+
+types:
+  OrderData:
+    description: Complete order data structure
+    properties:
+      contactInformation: object
+      productTypeId: string
+      brandId: string | null
+      colorId: string | null
+      sizeSelection: array
+      assets: object
+
+  OrderResult:
+    description: Order processing result
+    properties:
+      customerData: object
+      productOrderData: object
+
+  OrderWithCustomer:
+    description: Order with customer details
+    properties:
+      id: string
+      created_at: string
+      customer_id: string
+      customers: object | null
+      brand_type: array
+      colors: array
+      product_sizes: array
+      product_images: array
+
+  ActivityItem:
+    description: Activity feed item
+    properties:
+      id: string
+      type: "order" | "user"
+      title: string
+      description: string
+      timestamp: string
+
+error_handling:
+  - Throws errors for database failures
+  - Logs errors to console
+  - Returns empty objects/arrays for missing data
+  - Handles file upload errors gracefully
+
+storage:
+  product-images:
+    description: Bucket for storing product images
+    public_access: true
+
+usage_example: |
+  // Process a complete order
+  const orderResult = await OrderService.processOrder({
+    contactInformation: {
+      fullName: "John Doe",
+      email: "john@example.com",
+      contactNumber: "+1234567890",
+      address: "123 Main St"
+    },
+    productTypeId: "1",
+    brandId: "2",
+    colorId: "3",
+    sizeSelection: [
+      { size: "M", quantity: 2 },
+      { size: "L", quantity: 1 }
+    ],
+    assets: {
+      "front-center": fileObject,
+      "back-top": fileObject
+    }
+  });
+  
+  // Get all orders
+  const orders = await OrderService.getAllOrders();
+  
+  // Get recent activity
+  const activity = await OrderService.getRecentActivity(1, 10);

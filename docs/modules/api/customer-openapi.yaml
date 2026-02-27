@@ -1,0 +1,261 @@
+openapi: 3.0.3
+info:
+  title: Customer API
+  description: |
+    Customer management service for handling customer data and orders.
+
+    ## Module Purpose
+    Provides comprehensive customer management functionality including customer retrieval,
+    order history, and filtering capabilities based on product attributes.
+
+    ## Features
+    - Customer data retrieval with optional filtering
+    - Order history for specific customers
+    - Product attribute-based filtering (brand, type, size, color)
+    - Customer order count tracking
+    - Brand association information
+
+    ## Business Logic
+    - Supports complex filtering through joins with orders and product data
+    - Returns customers with order counts and brand associations
+    - Handles missing data gracefully with empty arrays
+    - Provides detailed order information with product details
+
+  version: 1.0.0
+  contact:
+    name: Custom Product Designer Development Team
+
+servers:
+  - url: http://localhost:3000/api
+    description: Local development
+  - url: https://your-domain.com/api
+    description: Production
+
+tags:
+  - name: customers
+    description: Customer management operations
+
+components:
+  schemas:
+    Customer:
+      type: object
+      properties:
+        id:
+          type: string
+          description: Customer unique identifier
+          example: "123e4567-e89b-12d3-a456-426614174000"
+        name:
+          type: string
+          description: Customer full name
+          example: "John Doe"
+        email:
+          type: string
+          format: email
+          description: Customer email address
+          example: "john.doe@example.com"
+        contact_number:
+          type: string
+          description: Customer phone number
+          example: "+1234567890"
+        orders:
+          type: array
+          items:
+            type: object
+          description: Array of order placeholders for count
+        hasBrands:
+          type: boolean
+          description: Whether customer has orders with brand associations
+          example: true
+
+    CustomerOrder:
+      type: object
+      properties:
+        id:
+          type: string
+          description: Order unique identifier
+          example: "order-123"
+        created_at:
+          type: string
+          format: date-time
+          description: Order creation timestamp
+          example: "2024-01-27T10:30:00Z"
+        brand_type:
+          type: array
+          items:
+            type: object
+            properties:
+              id:
+                type: string
+              brands:
+                type: object
+                properties:
+                  id:
+                    type: string
+                  name:
+                    type: string
+              product_type:
+                type: object
+                properties:
+                  id:
+                    type: string
+                  name:
+                    type: string
+        colors:
+          type: array
+          items:
+            type: object
+            properties:
+              id:
+                type: string
+              value:
+                type: string
+        product_sizes:
+          type: array
+          items:
+            type: object
+            properties:
+              id:
+                type: string
+              quantity:
+                type: number
+              sizes:
+                type: object
+                properties:
+                  id:
+                    type: string
+                  value:
+                    type: string
+        product_images:
+          type: array
+          items:
+            type: object
+            properties:
+              id:
+                type: string
+              url:
+                type: string
+              place:
+                type: string
+
+    ErrorResponse:
+      type: object
+      properties:
+        error:
+          type: string
+          description: Error message
+          example: "Database connection failed"
+        data:
+          type: array
+          items:
+            type: object
+          description: Empty array returned on error
+          example: []
+
+paths:
+  /customers:
+    get:
+      tags:
+        - customers
+      summary: Get customers with optional filtering
+      description: |
+        Retrieve customers with optional filtering by product attributes.
+        Returns customers with their order counts and brand associations.
+
+        **Filtering Logic:**
+        - Joins with product_orders, brand_type, brands, and product_type tables
+        - Filters by product attributes if any filter is provided
+        - Returns only customers who have matching orders when filters are applied
+        - Includes brand association information
+
+        **Business Rules:**
+        - Returns empty array on database errors
+        - Gracefully handles missing data
+        - Orders results by customer name
+      operationId: getCustomers
+      parameters:
+        - name: product_type
+          in: query
+          required: false
+          schema:
+            type: string
+          description: Filter by product type name
+        - name: brand
+          in: query
+          required: false
+          schema:
+            type: string
+          description: Filter by brand name
+        - name: size
+          in: query
+          required: false
+          schema:
+            type: string
+          description: Filter by size value
+        - name: color
+          in: query
+          required: false
+          schema:
+            type: string
+          description: Filter by color value
+      responses:
+        '200':
+          description: Customers retrieved successfully
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Customer'
+        '500':
+          description: Database error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /customers/{customerId}/orders:
+    get:
+      tags:
+        - customers
+      summary: Get customer orders
+      description: |
+        Retrieve all orders for a specific customer with full product details.
+
+        **Data Retrieval:**
+        - Fetches orders with brand, type, color, size, and image information
+        - Joins multiple tables for complete product details
+        - Returns orders sorted by creation date (newest first)
+
+        **Business Logic:**
+        - Returns empty array if customer has no orders
+        - Handles missing related data gracefully
+        - Transforms nested arrays to objects for consistency
+      operationId: getCustomerOrders
+      parameters:
+        - name: customerId
+          in: path
+          required: true
+          schema:
+            type: string
+          description: Customer unique identifier
+      responses:
+        '200':
+          description: Customer orders retrieved successfully
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/CustomerOrder'
+        '404':
+          description: Customer not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: Database error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'

@@ -1,0 +1,307 @@
+openapi: 3.0.3
+info:
+  title: Authentication API
+  description: |
+    NextAuth.js configuration for user authentication with credentials provider.
+
+    ## Module Purpose
+    Provides secure user authentication using email/password credentials with
+    role-based access control and JWT session management.
+
+    ## Features
+    - Credentials-based authentication
+    - Role-based session management
+    - JWT token strategy
+    - Password hashing with bcrypt
+    - User role assignment from database
+    - Secure session handling
+
+    ## Business Logic
+    - Validates user credentials against database
+    - Compares passwords using bcrypt
+    - Includes user role in JWT token and session
+    - Handles authentication failures gracefully
+    - Provides custom sign-in page
+
+  version: 1.0.0
+  contact:
+    name: Custom Product Designer Development Team
+
+servers:
+  - url: http://localhost:3000/api/auth
+    description: Local development
+  - url: https://your-domain.com/api/auth
+    description: Production
+
+tags:
+  - name: authentication
+    description: User authentication operations
+
+components:
+  schemas:
+    LoginRequest:
+      type: object
+      required:
+        - email
+        - password
+      properties:
+        email:
+          type: string
+          format: email
+          description: User email address
+          example: "admin@example.com"
+        password:
+          type: string
+          format: password
+          description: User password
+          example: "securePassword123"
+
+    User:
+      type: object
+      properties:
+        id:
+          type: string
+          description: User unique identifier
+          example: "123e4567-e89b-12d3-a456-426614174000"
+        email:
+          type: string
+          format: email
+          description: User email address
+          example: "admin@example.com"
+        name:
+          type: string
+          description: User full name
+          example: "John Doe"
+        role:
+          type: string
+          description: User role from roles table
+          example: "admin"
+
+    Session:
+      type: object
+      properties:
+        user:
+          $ref: '#/components/schemas/User'
+        expires:
+          type: string
+          format: date-time
+          description: Session expiration time
+          example: "2024-01-28T10:30:00Z"
+
+    ErrorResponse:
+      type: object
+      properties:
+        error:
+          type: string
+          description: Error description
+          example: "Invalid credentials"
+        message:
+          type: string
+          description: Detailed error message
+          example: "Email or password is incorrect"
+
+paths:
+  /signin:
+    post:
+      tags:
+        - authentication
+      summary: Sign in with credentials
+      description: |
+        Authenticate user with email and password credentials.
+
+        **Authentication Flow:**
+        1. Validate email and password presence
+        2. Query users table with role information
+        3. Compare provided password with hashed password using bcrypt
+        4. Return user object with role if authentication successful
+        5. Create JWT token with user information
+        6. Establish session with user data
+
+        **Security Features:**
+        - Password hashing with bcrypt
+        - JWT token strategy for sessions
+        - Role-based access control
+        - Secure credential handling
+
+        **Business Rules:**
+        - Returns null on any authentication failure
+        - Includes user role from roles table join
+        - Logs authentication errors to console
+        - Handles missing user data gracefully
+      operationId: signIn
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/LoginRequest'
+            example:
+              email: "admin@example.com"
+              password: "securePassword123"
+      responses:
+        '200':
+          description: Authentication successful
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Session'
+              example:
+                user:
+                  id: "123e4567-e89b-12d3-a456-426614174000"
+                  email: "admin@example.com"
+                  name: "John Doe"
+                  role: "admin"
+                expires: "2024-01-28T10:30:00Z"
+        '401':
+          description: Authentication failed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                error: "Invalid credentials"
+                message: "Email or password is incorrect"
+        '400':
+          description: Missing credentials
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                error: "Missing credentials"
+                message: "Email and password are required"
+
+  /session:
+    get:
+      tags:
+        - authentication
+      summary: Get current session
+      description: |
+        Retrieve the current user session information.
+
+        **Session Data:**
+        - User information from JWT token
+        - Role information included in session
+        - Session expiration time
+
+        **Business Logic:**
+        - Extracts user data from JWT token
+        - Includes role information in session user object
+        - Returns null if no valid session
+      operationId: getSession
+      responses:
+        '200':
+          description: Session retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Session'
+        '401':
+          description: No active session
+          content:
+            application/json:
+              schema:
+                type: object
+                example: null
+
+  /signout:
+    post:
+      tags:
+        - authentication
+      summary: Sign out
+      description: |
+        Sign out the current user and invalidate the session.
+
+        **Sign Out Process:**
+        - Clear JWT token
+        - Invalidate session
+        - Redirect to sign-in page
+
+        **Business Logic:**
+        - Handles session cleanup
+        - Redirects to configured sign-in page
+      operationId: signOut
+      responses:
+        '200':
+          description: Sign out successful
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  message:
+                    type: string
+                    example: "Signed out successfully"
+
+  /callback:
+    post:
+      tags:
+        - authentication
+      summary: Authentication callback
+      description: |
+        Handle authentication callback for NextAuth.js.
+
+        **Callback Processing:**
+        - Processes authentication results
+        - Handles JWT token creation
+        - Manages session establishment
+
+        **Business Logic:**
+        - Internal NextAuth.js endpoint
+        - Handles various authentication providers
+      operationId: authCallback
+      responses:
+        '200':
+          description: Callback processed successfully
+        '400':
+          description: Callback error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /providers:
+    get:
+      tags:
+        - authentication
+      summary: Get authentication providers
+      description: |
+        Retrieve available authentication providers.
+
+        **Provider Information:**
+        - Lists configured authentication providers
+        - Includes provider configuration details
+
+        **Business Logic:**
+        - Returns credentials provider configuration
+        - Internal NextAuth.js endpoint
+      operationId: getProviders
+      responses:
+        '200':
+          description: Providers retrieved successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  credentials:
+                    type: object
+                    properties:
+                      id:
+                        type: string
+                        example: "credentials"
+                      name:
+                        type: string
+                        example: "credentials"
+                      type:
+                        type: string
+                        example: "credentials"
+                      signinUrl:
+                        type: string
+                        example: "http://localhost:3000/api/auth/signin/credentials"
+                      callbackUrl:
+                        type: string
+                        example: "http://localhost:3000/api/auth/callback/credentials"
