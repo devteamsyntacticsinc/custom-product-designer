@@ -173,7 +173,7 @@ export default function SettingsPage() {
 
   if (status === "loading" || !session) {
     return (
-      <div className="min-h-screen bg-background flex">
+      <div className="min-h-screen bg-background dark:bg-[#0d1117] flex">
         <AdminSidebar
           user={null}
           sidebarOpen={false}
@@ -201,7 +201,7 @@ export default function SettingsPage() {
   }
 
   return (
-    <div className="min-h-screen bg-background flex">
+    <div className="min-h-screen bg-background dark:bg-[#0d1117] flex">
       <AdminSidebar
         user={{
           id: session.user.id,
@@ -220,7 +220,7 @@ export default function SettingsPage() {
 
       {/* Main Content */}
       <div
-        className={`flex-1 transition-all duration-300 ${isCollapsed ? "lg:ml-16" : "lg:ml-64"} lg:pt-0 pt-16`}
+        className={`flex-1 bg-background dark:bg-[#0d1117] transition-all duration-300 ${isCollapsed ? "lg:ml-16" : "lg:ml-64"} lg:pt-0 pt-16`}
       >
         <main className="p-8">
           <div className="mb-10">

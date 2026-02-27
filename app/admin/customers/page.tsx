@@ -40,7 +40,7 @@ export default function CustomersPage() {
 
   if (status === "loading" || !session) {
     return (
-      <div className="min-h-screen bg-background flex">
+      <div className="min-h-screen bg-background dark:bg-[#0d1117] flex">
         <AdminSidebar
           user={null}
           sidebarOpen={false}
@@ -64,7 +64,7 @@ export default function CustomersPage() {
   }
 
   return (
-    <div className="min-h-screen bg-background flex">
+    <div className="min-h-screen bg-background dark:bg-[#0d1117] flex">
       <AdminSidebar
         user={{
           id: session.user.id,

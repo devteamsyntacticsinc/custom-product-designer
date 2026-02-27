@@ -55,7 +55,7 @@ export default function ProductPreview() {
   );
 
   return (
-    <div className="flex-1 p-4 lg:p-8 overflow-y-auto lg:overflow-hidden scrollbar-hide">
+    <div className="flex-1 p-4 lg:p-8 overflow-y-auto lg:overflow-hidden scrollbar-hide bg-background dark:bg-[#0d1117]">
       <div className="max-w-7xl mx-auto h-full pt-15 md:pt-10 lg:pt-5">
         <h2 className="text-lg md:text-xl lg:text-2xl font-bold  mb-8">
           Product Preview

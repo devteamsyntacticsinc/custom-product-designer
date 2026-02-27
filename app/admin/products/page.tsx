@@ -70,7 +70,7 @@ export default function ProductsPage() {
 
   if (status === "loading" || !session) {
     return (
-      <div className="min-h-screen bg-background flex">
+      <div className="min-h-screen bg-background dark:bg-[#0d1117] flex">
         <AdminSidebar
           user={null}
           sidebarOpen={false}
@@ -84,8 +84,8 @@ export default function ProductsPage() {
         <div className="flex-1 lg:ml-64">
           <div className="p-8">
             <div className="animate-pulse">
-              <div className="h-8 bg-gray-200 dark:bg-gray-700 rounded w-1/4 mb-4"></div>
-              <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded w-1/2"></div>
+              <div className="h-8 bg-gray-200 dark:bg-[#0d1117] rounded w-1/4 mb-4"></div>
+              <div className="h-4 bg-gray-200 dark:bg-[#0d1117] rounded w-1/2"></div>
             </div>
           </div>
         </div>
@@ -94,7 +94,7 @@ export default function ProductsPage() {
   }
 
   return (
-    <div className="min-h-screen bg-background flex">
+    <div className="min-h-screen bg-background dark:bg-[#0d1117] flex">
       <AdminSidebar
         user={{
           id: session.user.id,
@@ -111,7 +111,7 @@ export default function ProductsPage() {
         currentPath={currentPath}
       />
 
-      <header className="bg-background dark:bg-gray-800 shadow-sm border-b lg:hidden fixed top-0 left-0 right-0 z-40 px-4">
+      <header className="bg-background dark:bg-[#0d1117] shadow-sm border-b lg:hidden fixed top-0 left-0 right-0 z-40 px-4">
         <div className="relative flex items-center justify-center h-16">
           <Button
             variant="ghost"

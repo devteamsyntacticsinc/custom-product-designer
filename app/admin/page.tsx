@@ -288,7 +288,7 @@ export default function AdminDashboard() {
 
   if (status === "loading" || !session) {
     return (
-      <div className="min-h-screen bg-gray-50 flex">
+      <div className="min-h-screen bg-background dark:bg-[#0d1117] flex">
         <AdminSidebar
           user={null}
           sidebarOpen={false}
@@ -308,7 +308,7 @@ export default function AdminDashboard() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gray-50 flex">
+      <div className="min-h-screen bg-background dark:bg-[#0d1117] flex">
         <AdminSidebar
           user={{
             id: session.user.id,
@@ -334,7 +334,7 @@ export default function AdminDashboard() {
   }
 
   return (
-    <div className="min-h-screen bg-background flex">
+    <div className="min-h-screen bg-background dark:bg-[#0d1117] flex">
       <AdminSidebar
         user={{
           id: session.user.id,
@@ -352,7 +352,7 @@ export default function AdminDashboard() {
       />
 
       {/* Mobile Header */}
-      <header className="bg-background shadow-sm border-b lg:hidden fixed top-0 left-0 right-0 z-40 px-4">
+      <header className="bg-background dark:bg-[#0d1117] shadow-sm border-b lg:hidden fixed top-0 left-0 right-0 z-40 px-4">
         <div className="relative flex items-center justify-center h-16">
           <Button
             variant="ghost"
