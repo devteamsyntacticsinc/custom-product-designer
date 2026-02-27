@@ -12,6 +12,7 @@ import {
   X,
   ChevronLeft,
   ChevronRight,
+  Loader2,
 } from "lucide-react";
 
 const sidebarItems = [
@@ -36,6 +37,8 @@ interface AdminSidebarProps {
   isCollapsed?: boolean;
   onToggleCollapse?: () => void;
   currentPath?: string;
+  isLoggingOut?: boolean;
+  showToast?: (message: string, type: 'success' | 'error' | 'info') => void;
 }
 
 export default function AdminSidebar({
@@ -47,6 +50,8 @@ export default function AdminSidebar({
   isCollapsed = false,
   onToggleCollapse,
   currentPath = "",
+  isLoggingOut = false,
+  showToast,
 }: AdminSidebarProps) {
   return (
     <>
@@ -129,11 +134,21 @@ export default function AdminSidebar({
           <Button
             variant="outline"
             className={`w-full cursor-pointer ${isCollapsed ? "justify-center" : ""}`}
-            onClick={onLogout}
+            onClick={() => {
+              if (showToast) {
+                showToast("Logging out...", "info");
+              }
+              onLogout();
+            }}
+            disabled={isLoggingOut}
             title={isCollapsed ? "Logout" : undefined}
           >
-            <LogOut className={`${isCollapsed ? "" : "mr-2"} h-4 w-4`} />
-            {!isCollapsed && "Logout"}
+            {isLoggingOut ? (
+              <Loader2 className={`${isCollapsed ? "" : "mr-2"} h-4 w-4 animate-spin`} />
+            ) : (
+              <LogOut className={`${isCollapsed ? "" : "mr-2"} h-4 w-4`} />
+            )}
+            {!isCollapsed && (isLoggingOut ? "Logging out..." : "Logout")}
           </Button>
         </div>
       </div>
