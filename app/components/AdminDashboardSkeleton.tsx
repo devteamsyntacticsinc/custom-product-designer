@@ -1,9 +1,9 @@
-import { Card } from '@/components/ui/card'
-import { Skeleton } from '@/components/ui/skeleton'
+import { Card } from "@/components/ui/card";
+import { Skeleton } from "@/components/ui/skeleton";
 
 export default function AdminDashboardSkeleton() {
   return (
-    <div className="p-6">
+    <div className="p-6 bg-background">
       {/* Header Skeleton */}
       <div className="mb-8 flex items-center justify-between">
         <div>
@@ -116,5 +116,5 @@ export default function AdminDashboardSkeleton() {
         </div>
       </div>
     </div>
-  )
+  );
 }

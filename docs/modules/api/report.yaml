@@ -1,0 +1,169 @@
+name: Report API
+description: Reporting and analytics service for generating business insights
+version: 1.0.0
+base_path: /lib/api/report.ts
+
+service: ReportService
+
+methods:
+  getTopCustomers:
+    description: Get top 5 customers by order count with optional filtering
+    parameters:
+      startDate:
+        type: string
+        required: false
+        description: Start date for filtering (ISO format)
+      endDate:
+        type: string
+        required: false
+        description: End date for filtering (ISO format)
+      productType:
+        type: string
+        required: false
+        description: Filter by specific product type name
+    returns:
+      type: Promise<Array<{
+        id: string;
+        name: string;
+        email: string;
+        count: number;
+      }>>
+      description: Array of top customers sorted by order count (max 5)
+    database_tables:
+      - product_orders
+      - brand_type
+      - product_type
+      - customers
+    filtering:
+      - Date range filtering on created_at
+      - Product type filtering
+    aggregation:
+      - Groups orders by customer
+      - Counts orders per customer
+      - Sorts by count descending
+      - Limits to top 5
+
+  getOrdersByDay:
+    description: Get order statistics grouped by day
+    parameters:
+      startDate:
+        type: string
+        required: false
+        description: Start date for filtering (ISO format)
+      endDate:
+        type: string
+        required: false
+        description: End date for filtering (ISO format)
+    returns:
+      type: Promise<Array<{
+        date: string;
+        count: number;
+      }>>
+      description: Array of daily order counts sorted by date
+    database_tables:
+      - product_orders
+    filtering:
+      - Date range filtering on created_at
+    aggregation:
+      - Groups orders by date (YYYY-MM-DD format)
+      - Counts orders per day
+      - Sorts by date ascending
+
+  getOrdersByProductTypeTimeSeries:
+    description: Get time series data of orders grouped by product type
+    parameters:
+      startDate:
+        type: string
+        required: false
+        description: Start date for filtering (ISO format)
+      endDate:
+        type: string
+        required: false
+        description: End date for filtering (ISO format)
+    returns:
+      type: Promise<{
+        data: Array<{
+          date: string;
+          [productType: string]: number | string;
+        }>;
+        types: string[];
+      }>
+      description: Time series data with product type breakdown
+    database_tables:
+      - product_orders
+      - brand_type
+      - product_type
+    filtering:
+      - Date range filtering on created_at
+    aggregation:
+      - Groups orders by date and product type
+      - Creates matrix of dates vs product types
+      - Fills missing dates with zero counts
+      - Ensures all product types present in each entry
+
+dependencies:
+  - "@/lib/supabase"
+
+error_handling:
+  - Returns empty array on database errors
+  - Logs errors to console
+  - Graceful fallback for missing data
+
+data_formatting:
+  date_format: ISO 8601 (YYYY-MM-DD for daily grouping)
+  sorting:
+    - getTopCustomers: descending by count
+    - getOrdersByDay: ascending by date
+    - getOrdersByProductTypeTimeSeries: ascending by date
+
+usage_example: |
+  // Get top customers for last 30 days
+  const topCustomers = await ReportService.getTopCustomers(
+    "2024-01-01",
+    "2024-01-31",
+    "T-Shirt"
+  );
+  
+  // Get daily orders for a date range
+  const dailyOrders = await ReportService.getOrdersByDay(
+    "2024-01-01",
+    "2024-01-31"
+  );
+  
+  // Get product type time series
+  const timeSeries = await ReportService.getOrdersByProductTypeTimeSeries(
+    "2024-01-01",
+    "2024-01-31"
+  );
+  
+  console.log(timeSeries.data); // Array of date entries with product type counts
+  console.log(timeSeries.types); // Array of all product type names
+
+output_examples:
+  getTopCustomers:
+    - id: "123"
+      name: "John Doe"
+      email: "john@example.com"
+      count: 15
+    - id: "456"
+      name: "Jane Smith"
+      email: "jane@example.com"
+      count: 12
+
+  getOrdersByDay:
+    - date: "2024-01-01"
+      count: 25
+    - date: "2024-01-02"
+      count: 18
+
+  getOrdersByProductTypeTimeSeries:
+    data:
+      - date: "2024-01-01"
+        "T-Shirt": 10
+        "Hoodie": 5
+        "Mug": 8
+      - date: "2024-01-02"
+        "T-Shirt": 12
+        "Hoodie": 3
+        "Mug": 10
+    types: ["T-Shirt", "Hoodie", "Mug"]

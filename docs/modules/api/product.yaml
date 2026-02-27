@@ -1,0 +1,520 @@
+name: Product API
+description: Product management service for handling products, brands, colors, sizes, and product types
+version: 1.0.0
+base_path: /lib/api/product.ts
+
+service: ProductService
+
+methods:
+  getProducts:
+    description: Retrieve all products with brand, type, and size information
+    returns:
+      type: Promise<Product[]>
+      description: Array of products with full details
+    database_tables:
+      - size_product
+      - sizes
+      - brand_type
+      - brands
+      - product_type
+
+  getProductById:
+    description: Get a specific product by ID
+    parameters:
+      id:
+        type: string
+        required: true
+        description: Product ID
+    returns:
+      type: Promise<Product | null>
+      description: Product object or null if not found
+    database_tables:
+      - size_product
+      - sizes
+      - brand_type
+      - brands
+      - product_type
+
+  getBrands:
+    description: Retrieve brands, optionally filtered by product type
+    parameters:
+      typeId:
+        type: number
+        required: false
+        description: Filter brands by product type ID
+    returns:
+      type: Promise<Brand[]>
+      description: Array of brands with type associations
+    database_tables:
+      - brands
+      - brand_type
+      - product_type
+
+  createBrand:
+    description: Create a new brand
+    parameters:
+      name:
+        type: string
+        required: true
+        description: Brand name
+      is_Active:
+        type: boolean
+        default: true
+        description: Brand active status
+    returns:
+      type: Promise<Brand>
+      description: Created brand object
+    database_tables:
+      - brands
+    validation:
+      - Checks for duplicate brand names (case-insensitive)
+
+  createBrandWithType:
+    description: Create a brand and associate it with a product type
+    parameters:
+      name:
+        type: string
+        required: true
+      type_id:
+        type: number
+        required: true
+      is_Active:
+        type: boolean
+        default: true
+    returns:
+      type: Promise<{ brand: Brand; brandType: BrandType }>
+      description: Created brand and brand-type association
+    database_tables:
+      - brands
+      - brand_type
+
+  createBrandWithMultipleTypes:
+    description: Create a brand and associate it with multiple product types
+    parameters:
+      name:
+        type: string
+        required: true
+      type_ids:
+        type: number[]
+        required: true
+      is_Active:
+        type: boolean
+        default: true
+    returns:
+      type: Promise<{ brand: Brand; brandTypes: BrandType[] }>
+      description: Created brand and multiple brand-type associations
+    database_tables:
+      - brands
+      - brand_type
+
+  updateBrand:
+    description: Update an existing brand
+    parameters:
+      id:
+        type: number
+        required: true
+      name:
+        type: string
+        required: false
+      is_Active:
+        type: boolean
+        required: false
+    returns:
+      type: Promise<Brand>
+      description: Updated brand object
+    database_tables:
+      - brands
+    validation:
+      - Checks for duplicate names (excluding current brand)
+
+  updateBrandWithTypes:
+    description: Update brand and its type associations
+    parameters:
+      brand_id:
+        type: number
+        required: true
+      type_ids:
+        type: number[]
+        required: true
+      name:
+        type: string
+        required: false
+      is_Active:
+        type: boolean
+        required: false
+    returns:
+      type: Promise<Brand>
+      description: Updated brand object
+    database_tables:
+      - brands
+      - brand_type
+    workflow:
+      - Remove old associations
+      - Add new associations
+      - Handle null brand claiming logic
+      - Update brand details
+
+  deleteBrand:
+    description: Delete a brand and its type associations
+    parameters:
+      id:
+        type: number
+        required: true
+    returns:
+      type: Promise<void>
+    database_tables:
+      - brands
+      - brand_type
+    workflow:
+      - Delete brand-type associations first
+      - Delete brand
+
+  getColors:
+    description: Retrieve all colors
+    returns:
+      type: Promise<Color[]>
+      description: Array of colors
+    database_tables:
+      - colors
+
+  createColor:
+    description: Create a new color
+    parameters:
+      value:
+        type: string
+        required: true
+        description: Color value/name
+      is_Active:
+        type: boolean
+        default: true
+    returns:
+      type: Promise<Color>
+      description: Created color object
+    database_tables:
+      - colors
+    validation:
+      - Checks for duplicate color values (case-insensitive)
+
+  updateColor:
+    description: Update an existing color
+    parameters:
+      id:
+        type: string
+        required: true
+      value:
+        type: string
+        required: false
+      is_Active:
+        type: boolean
+        required: false
+    returns:
+      type: Promise<Color>
+      description: Updated color object
+    database_tables:
+      - colors
+    validation:
+      - Checks for duplicate values (excluding current color)
+
+  deleteColor:
+    description: Delete a color
+    parameters:
+      id:
+        type: string
+        required: true
+    returns:
+      type: Promise<void>
+    database_tables:
+      - colors
+
+  getProductTypes:
+    description: Retrieve all product types with optional images
+    returns:
+      type: Promise<(Omit<ProductType, "image_products"> & { image_products?: Pick<ImageProducts, "filepath" | "is_hasBack" | "id">[]; })[]>
+      description: Array of product types with images
+    database_tables:
+      - product_type
+      - image_products
+    fallback:
+      - Returns hardcoded data if Supabase is down
+
+  createProductType:
+    description: Create a new product type with optional images
+    parameters:
+      name:
+        type: string
+        required: true
+      is_Active:
+        type: boolean
+        default: true
+      is_onlyType:
+        type: boolean
+        default: false
+      images:
+        type: array
+        items:
+          type: object
+          properties:
+            file: File
+            is_hasBack: boolean
+        required: false
+    returns:
+      type: Promise<ProductType>
+      description: Created product type object
+    database_tables:
+      - product_type
+      - brand_type
+      - image_products
+    storage:
+      bucket: product-images
+    special_handling:
+      - Creates brand_type entry with null brand_id if is_onlyType
+
+  updateProductType:
+    description: Update an existing product type
+    parameters:
+      id:
+        type: string
+        required: true
+      name:
+        type: string
+        required: false
+      is_Active:
+        type: boolean
+        required: false
+      is_onlyType:
+        type: boolean
+        required: false
+      images:
+        type: array
+        required: false
+      imagesToDelete:
+        type: number[]
+        required: false
+    returns:
+      type: Promise<ProductType>
+      description: Updated product type object
+    database_tables:
+      - product_type
+      - brand_type
+      - image_products
+    storage:
+      bucket: product-images
+
+  deleteProductType:
+    description: Delete a product type and its associated data
+    parameters:
+      id:
+        type: string
+        required: true
+      imagesToDelete:
+        type: number[]
+        required: true
+    returns:
+      type: Promise<void>
+    database_tables:
+      - product_type
+      - brand_type
+      - image_products
+      - size_product
+      - color_products
+      - product_orders
+    workflow:
+      - Delete specified images
+      - Handle is_onlyType brand_type cleanup
+      - Check usage in transaction tables
+      - Delete product type
+
+  uploadImageProductType:
+    description: Upload images for product type
+    parameters:
+      productTypeId:
+        type: string
+        required: true
+      assets:
+        type: array
+        items:
+          type: object
+          properties:
+            file: File
+            is_hasBack: boolean
+        required: true
+    returns:
+      type: Promise<boolean>
+      description: Success status
+    database_tables:
+      - image_products
+    storage:
+      bucket: product-images
+
+  deleteProductTypeImages:
+    description: Delete product type images from storage and database
+    parameters:
+      imageIds:
+        type: number[]
+        required: true
+    returns:
+      type: Promise<void>
+    database_tables:
+      - image_products
+    storage:
+      bucket: product-images
+    workflow:
+      - Get file paths from database
+      - Delete from storage first
+      - Delete from database after
+
+  getSizes:
+    description: Retrieve all sizes
+    returns:
+      type: Promise<Size[]>
+      description: Array of sizes
+    database_tables:
+      - sizes
+
+  createSize:
+    description: Create a new size
+    parameters:
+      value:
+        type: string
+        required: true
+        description: Size value
+      is_Active:
+        type: boolean
+        default: true
+    returns:
+      type: Promise<Size>
+      description: Created size object
+    database_tables:
+      - sizes
+    validation:
+      - Checks for duplicate size values (case-insensitive)
+
+  updateSize:
+    description: Update an existing size
+    parameters:
+      id:
+        type: string
+        required: true
+      value:
+        type: string
+        required: false
+      is_Active:
+        type: boolean
+        required: false
+    returns:
+      type: Promise<Size>
+      description: Updated size object
+    database_tables:
+      - sizes
+    validation:
+      - Checks for duplicate values (excluding current size)
+
+  deleteSize:
+    description: Delete a size
+    parameters:
+      id:
+        type: string
+        required: true
+    returns:
+      type: Promise<void>
+    database_tables:
+      - sizes
+
+dependencies:
+  - "@/lib/supabase"
+  - "@/types/product"
+
+types:
+  Product:
+    description: Product object with full details
+    properties:
+      id: string
+      product_name: string
+      image: string | null
+      brand_id: string | null
+      color_id: string | null
+      product_type_id: string | null
+      brand: Brand | null
+      color: Color | null
+      product_type: ProductType | null
+      is_onlyType: boolean
+
+  Brand:
+    description: Brand object
+    properties:
+      id: number
+      name: string
+      is_Active: boolean
+      type_id: number | null
+
+  Color:
+    description: Color object
+    properties:
+      id: string
+      value: string
+      is_Active: boolean
+
+  ProductType:
+    description: Product type object
+    properties:
+      id: string
+      name: string
+      is_Active: boolean
+      is_onlyType: boolean
+      image_products: ImageProducts[]
+
+  Size:
+    description: Size object
+    properties:
+      id: string
+      value: string
+      is_Active: boolean
+
+  BrandType:
+    description: Brand-type association
+    properties:
+      id: string
+      brand_id: number | null
+      type_id: number
+
+  ImageProducts:
+    description: Product type images
+    properties:
+      id: number
+      productT_id: string
+      filepath: string
+      is_hasBack: boolean
+
+error_handling:
+  - Throws errors for database failures
+  - Logs errors to console
+  - Validates for duplicates (case-insensitive)
+  - Handles file upload/storage errors
+  - Graceful fallback for product types when Supabase is down
+
+storage:
+  product-images:
+    description: Bucket for storing product type images
+    public_access: true
+
+usage_example: |
+  // Create a brand with multiple types
+  const result = await ProductService.createBrandWithMultipleTypes(
+    "Nike",
+    [1, 2, 3], // T-Shirt, Hoodie, Mug type IDs
+    true
+  );
+  
+  // Create a product type with images
+  const productType = await ProductService.createProductType(
+    "T-Shirt",
+    true,
+    false,
+    [
+      { file: frontImageFile, is_hasBack: false },
+      { file: backImageFile, is_hasBack: true }
+    ]
+  );
+  
+  // Get brands for a specific type
+  const brands = await ProductService.getBrands(1); // Type ID 1
