@@ -60,7 +60,7 @@ export default function LoginPage() {
     <div className="min-h-screen flex items-center justify-center bg-linear-to-br from-gray-50 via-white to-gray-100 p-4 sm:p-6 lg:p-8">
       <Card className="w-full max-w-md border-none shadow-none sm:border sm:shadow-lg bg-transparent sm:bg-background">
         <CardHeader className="space-y-2 p-6 sm:p-8">
-          <CardTitle className="text-3xl sm:text-4xl font-extrabold text-center tracking-tight text-gray-900">
+          <CardTitle className="text-3xl sm:text-4xl font-extrabold text-center tracking-tight ">
             Print Pro
           </CardTitle>
           <CardDescription className="text-center text-sm sm:text-base text-gray-500">

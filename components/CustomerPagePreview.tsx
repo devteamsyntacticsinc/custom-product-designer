@@ -1030,7 +1030,7 @@ export default function CustomersTab() {
                         <TableRow className="bg-gray-50/50 dark:bg-gray-800/50">
                           <TableCell colSpan={5} className="p-0">
                             <div className="p-4 sm:p-6 space-y-4">
-                              <h4 className="text-sm font-semibold text-gray-900 dark:text-white flex items-center gap-2">
+                              <h4 className="text-sm font-semibold  dark:text-white flex items-center gap-2">
                                 <Package className="h-4 w-4" />
                                 Order History
                               </h4>
@@ -1116,7 +1116,7 @@ export default function CustomersTab() {
                                             <div className="flex flex-wrap items-center gap-x-3 gap-y-2 text-sm text-gray-700 dark:text-gray-300">
                                               {brandType?.product_type
                                                 ?.name && (
-                                                <span className="font-bold text-gray-900 dark:text-white bg-gray-100 dark:bg-gray-700 px-2 py-0.5 rounded italic">
+                                                <span className="font-bold  dark:text-white bg-gray-100 dark:bg-gray-700 px-2 py-0.5 rounded italic">
                                                   {brandType.product_type.name}
                                                 </span>
                                               )}

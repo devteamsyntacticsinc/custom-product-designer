@@ -121,9 +121,7 @@ export default function OrderSummaryDialog({
         <div className="p-6 space-y-6">
           {/* Product Details */}
           <div className="space-y-4">
-            <h3 className="text-lg font-medium text-gray-900">
-              Product Details
-            </h3>
+            <h3 className="text-lg font-medium ">Product Details</h3>
 
             <div className="grid grid-cols-1 gap-4 text-sm">
               <div>
@@ -147,9 +145,7 @@ export default function OrderSummaryDialog({
 
           {/* Sizing and Quantity */}
           <div className="space-y-4">
-            <h3 className="text-lg font-medium text-gray-900">
-              Sizing and Quantity
-            </h3>
+            <h3 className="text-lg font-medium ">Sizing and Quantity</h3>
 
             <div className="space-y-2">
               {sizeSelection
@@ -172,7 +168,7 @@ export default function OrderSummaryDialog({
 
           {/* Assets */}
           <div className="space-y-4">
-            <h3 className="text-lg font-medium text-gray-900">Assets</h3>
+            <h3 className="text-lg font-medium ">Assets</h3>
 
             <div className="space-y-2">
               {getAssetList().map((asset) => (
@@ -210,9 +206,7 @@ export default function OrderSummaryDialog({
 
           {/* Contact Information */}
           <div className="space-y-4">
-            <h3 className="text-lg font-medium text-gray-900">
-              Contact Information
-            </h3>
+            <h3 className="text-lg font-medium ">Contact Information</h3>
 
             <div className="grid grid-cols-1 gap-3 text-sm">
               <div>

@@ -60,7 +60,7 @@ export default function AdminSidebar({
       >
         <div className="flex items-center justify-between h-16 px-6 border-b border-gray-200 dark:border-gray-700">
           {!isCollapsed && (
-            <h1 className="text-xl font-bold text-gray-900 dark:text-white">
+            <h1 className="text-xl font-bold  dark:text-white">
               Print Pro Admin
             </h1>
           )}
@@ -98,7 +98,7 @@ export default function AdminSidebar({
                 <Button
                   key={item.label}
                   variant={isActive ? "secondary" : "ghost"}
-                  className={`w-full cursor-pointer ${isCollapsed ? "justify-center" : "justify-start"} ${isActive ? "bg-gray-100 dark:bg-gray-800 text-gray-900 dark:text-white" : "text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800"}`}
+                  className={`w-full cursor-pointer ${isCollapsed ? "justify-center" : "justify-start"} ${isActive ? "bg-gray-100 dark:bg-gray-800  dark:text-white" : "text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800"}`}
                   onClick={() => onNavigate(item.href)}
                   title={isCollapsed ? item.label : undefined}
                 >
@@ -115,7 +115,7 @@ export default function AdminSidebar({
         <div className="absolute bottom-0 left-0 right-0 p-4 border-t border-gray-200 dark:border-gray-700">
           {!isCollapsed && user && (
             <div className="mb-4">
-              <p className="text-sm font-medium text-gray-900 dark:text-white">
+              <p className="text-sm font-medium  dark:text-white">
                 {user.name}
               </p>
               <p className="text-xs text-gray-500 dark:text-gray-400">

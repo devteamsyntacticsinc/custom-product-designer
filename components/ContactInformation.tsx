@@ -66,13 +66,11 @@ export default function ContactInformation({
 
   return (
     <div className="flex flex-col flex-1 h-full">
-      <h2 className="hidden lg:block text-2xl font-bold text-gray-900 mb-6">
+      <h2 className="hidden lg:block text-2xl font-bold  mb-6">
         Contact Information
       </h2>
 
-      <h2 className="lg:hidden text-xl font-bold text-gray-900 mb-6">
-        Contact Information
-      </h2>
+      <h2 className="lg:hidden text-xl font-bold  mb-6">Contact Information</h2>
 
       <div className="flex-1 space-y-6">
         {/* Full Name */}

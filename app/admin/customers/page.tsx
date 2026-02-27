@@ -91,9 +91,7 @@ export default function CustomersPage() {
           >
             <Menu className="h-4 w-4" />
           </Button>
-          <h1 className="text-lg font-bold tracking-tight text-gray-900">
-            Print Pro
-          </h1>
+          <h1 className="text-lg font-bold tracking-tight ">Print Pro</h1>
         </div>
       </header>
 
@@ -104,7 +102,7 @@ export default function CustomersPage() {
           {/* Header */}
           <div className="flex flex-row items-center justify-between gap-4 mb-6 sm:mb-8">
             <div className="dark:text-gray-200">
-              <h1 className="text-xl sm:text-3xl font-bold text-gray-900 dark:text-gray-200">
+              <h1 className="text-xl sm:text-3xl font-bold  dark:text-gray-200">
                 Customers
               </h1>
               <p className="text-xs lg:text-base text-gray-600 mt-1 sm:mt-2 dark:text-gray-400">
@@ -117,7 +115,7 @@ export default function CustomersPage() {
               size="icon"
               onClick={handleRefresh}
               disabled={refreshing}
-              className="rounded-full h-8 w-8 sm:h-10 sm:w-10 text-gray-400 hover:bg-gray-200 hover:text-gray-900 dark:text-gray-400 dark:hover:bg-gray-700 dark:hover:text-gray-200 transition-colors shrink-0"
+              className="rounded-full h-8 w-8 sm:h-10 sm:w-10 text-gray-400 hover:bg-gray-200 hover: dark:text-gray-400 dark:hover:bg-gray-700 dark:hover:text-gray-200 transition-colors shrink-0"
             >
               <RefreshCw
                 className={`h-4 w-4 sm:h-5 sm:w-5 ${refreshing ? "animate-spin" : ""}`}

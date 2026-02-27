@@ -246,9 +246,7 @@ export default function OrdersPage() {
           >
             <Menu className="h-4 w-4" />
           </Button>
-          <h1 className="text-lg font-bold tracking-tight text-gray-900">
-            Print Pro
-          </h1>
+          <h1 className="text-lg font-bold tracking-tight ">Print Pro</h1>
         </div>
       </header>
 
@@ -261,7 +259,7 @@ export default function OrdersPage() {
           {/* Header */}
           <div className="flex flex-row items-center justify-between gap-4 mb-6 sm:mb-8">
             <div>
-              <h1 className="text-xl sm:text-3xl font-bold text-gray-900 dark:text-white">
+              <h1 className="text-xl sm:text-3xl font-bold  dark:text-white">
                 Orders
               </h1>
               <p className="text-xs lg:text-base text-gray-600 dark:text-gray-400 mt-1 sm:mt-2">
@@ -273,7 +271,7 @@ export default function OrdersPage() {
               size="icon"
               onClick={handleRefresh}
               disabled={refreshing}
-              className=" h-8 w-8 sm:h-10 sm:w-10 text-gray-400 hover:bg-gray-200 hover:text-gray-900 transition-colors shrink-0"
+              className=" h-8 w-8 sm:h-10 sm:w-10 text-gray-400 hover:bg-gray-200 hover: transition-colors shrink-0"
             >
               <RefreshCw
                 className={`h-4 w-4 sm:h-5 sm:w-5 ${refreshing ? "animate-spin" : ""}`}
@@ -287,7 +285,7 @@ export default function OrdersPage() {
             {orders.length === 0 ? (
               <Card className="p-8 sm:p-12 text-center">
                 <Package className="h-10 w-10 sm:h-12 sm:w-12 text-gray-400 mx-auto mb-4" />
-                <h3 className="text-base sm:text-lg font-semibold text-gray-900 dark:text-white mb-2">
+                <h3 className="text-base sm:text-lg font-semibold  dark:text-white mb-2">
                   No orders yet
                 </h3>
                 <p className="text-sm sm:text-base text-gray-600 dark:text-gray-400">
@@ -316,7 +314,7 @@ export default function OrdersPage() {
                       {/* Product Preview */}
                       <div>
                         <div className="flex items-center content-center justify-between mb-2">
-                          <h3 className="text-base lg:text-lg font-semibold text-gray-900 dark:text-white mb-3 sm:mb-4">
+                          <h3 className="text-base lg:text-lg font-semibold  dark:text-white mb-3 sm:mb-4">
                             Product Design
                           </h3>
                           <div className="flex items-center gap-2">
@@ -394,7 +392,7 @@ export default function OrdersPage() {
 
                           <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs sm:text-sm text-gray-600">
                             {order.brand_type?.[0]?.product_type?.name && (
-                              <span className="font-semibold text-gray-900 dark:text-gray-400">
+                              <span className="font-semibold  dark:text-gray-400">
                                 {order.brand_type[0].product_type.name}
                               </span>
                             )}
@@ -439,7 +437,7 @@ export default function OrdersPage() {
                         <div className="w-full sm:w-auto sm:text-right space-y-2 border-t sm:border-t-0 pt-4 sm:pt-0">
                           {customer ? (
                             <div className="flex flex-col sm:items-end gap-1 dark:text-gray-400">
-                              <div className="flex items-center sm:justify-end gap-2 text-sm font-bold text-gray-900 dark:text-white">
+                              <div className="flex items-center sm:justify-end gap-2 text-sm font-bold  dark:text-white">
                                 <UserIcon className="h-4 w-4 text-gray-400" />
                                 {customer.name}
                               </div>

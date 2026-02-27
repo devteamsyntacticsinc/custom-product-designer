@@ -108,7 +108,7 @@ export default function AdminLayout({
                 />
               </svg>
             </button>
-            <h1 className="text-lg font-bold tracking-tight text-gray-900 dark:text-white">
+            <h1 className="text-lg font-bold tracking-tight  dark:text-white">
               Print Pro
             </h1>
           </div>
@@ -122,7 +122,7 @@ export default function AdminLayout({
             {(title || description) && (
               <div className="mb-8">
                 {title && (
-                  <h1 className="text-2xl font-bold text-gray-900 dark:text-white mb-2">
+                  <h1 className="text-2xl font-bold  dark:text-white mb-2">
                     {title}
                   </h1>
                 )}

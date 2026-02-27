@@ -127,16 +127,16 @@ export default function OrderProductPreview({
   return (
     <div className="space-y-4">
       {/* Product Info & Actions */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 p-4 bg-background dark:bg-gray-700 border border-gray-100 dark:border-gray-800 rounded-xl shadow-sm">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 p-4 bg-background dark:bg-gray-700 border dark:border-gray-800 rounded-xl shadow-sm">
         <div className="flex items-center gap-4 text-sm text-gray-600 dark:text-gray-400">
           <div className="flex flex-col">
             {shouldDisplayBrand && (
-              <span className="font-semibold text-gray-900 dark:text-white text-sm lg:text-lg">
+              <span className="font-semibold  dark:text-white text-sm lg:text-lg">
                 {brandName}
               </span>
             )}
             <span
-              className={`text-xs lg:text-base text-gray-500 ${!shouldDisplayBrand ? "font-semibold text-gray-900 dark:text-white text-sm lg:text-lg" : ""}`}
+              className={`text-xs lg:text-base text-gray-500 ${!shouldDisplayBrand ? "font-semibold  dark:text-white text-sm lg:text-lg" : ""}`}
             >
               {productTypeName}
             </span>

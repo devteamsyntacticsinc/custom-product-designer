@@ -73,7 +73,7 @@ export default function AssetUpload({
           onClick={() => !asset && fileInputRefs.current[slot.id]?.click()}
         >
           <span
-            className={`text-sm truncate mr-2 ${asset ? "text-gray-900 font-medium" : "text-gray-600"}`}
+            className={`text-sm truncate mr-2 ${asset ? " font-medium" : "text-gray-600"}`}
           >
             {asset
               ? asset.name
@@ -113,7 +113,7 @@ export default function AssetUpload({
       ) : (
         sides.map((side) => (
           <div key={side}>
-            <h4 className="text-sm font-semibold text-gray-900 mb-3">{side}</h4>
+            <h4 className="text-sm font-semibold  mb-3">{side}</h4>
             <div className="space-y-2">
               {ASSET_SLOTS.filter((slot) => slot.side === side).map(renderSlot)}
             </div>

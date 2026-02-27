@@ -224,9 +224,7 @@ export default function SettingsPage() {
       >
         <main className="p-8">
           <div className="mb-10">
-            <h1 className="text-2xl font-bold text-gray-900 dark:text-white">
-              Settings
-            </h1>
+            <h1 className="text-2xl font-bold  dark:text-white">Settings</h1>
             <p className="text-gray-600 dark:text-gray-400">
               Manage your admin preferences and view system information
             </p>
@@ -310,7 +308,7 @@ export default function SettingsPage() {
                         <category.icon
                           className={`h-5 w-5 ${category.color}`}
                         />
-                        <h3 className="font-semibold text-gray-900 dark:text-white">
+                        <h3 className="font-semibold  dark:text-white">
                           {category.category}
                         </h3>
                       </div>
@@ -321,7 +319,7 @@ export default function SettingsPage() {
                             className="flex items-center justify-between p-3 bg-background rounded-lg"
                           >
                             <div>
-                              <div className="font-medium text-gray-900 dark:text-white">
+                              <div className="font-medium  dark:text-white">
                                 {item.name}
                               </div>
                               <div className="text-sm text-gray-600 dark:text-gray-400">
@@ -355,7 +353,7 @@ export default function SettingsPage() {
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div className="flex items-center justify-between p-3 bg-background rounded-lg">
                     <div>
-                      <div className="font-medium text-gray-900 dark:text-white">
+                      <div className="font-medium  dark:text-white">
                         Environment
                       </div>
                       <div className="text-sm text-gray-600 dark:text-gray-400">
@@ -372,7 +370,7 @@ export default function SettingsPage() {
 
                   <div className="flex items-center justify-between p-3 bg-background rounded-lg">
                     <div>
-                      <div className="font-medium text-gray-900 dark:text-white">
+                      <div className="font-medium  dark:text-white">
                         Admin Panel
                       </div>
                       <div className="text-sm text-gray-600 dark:text-gray-400">

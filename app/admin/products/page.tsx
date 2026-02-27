@@ -121,7 +121,7 @@ export default function ProductsPage() {
           >
             <Menu className="h-4 w-4" />
           </Button>
-          <h1 className="text-lg font-bold tracking-tight text-gray-900 dark:text-white">
+          <h1 className="text-lg font-bold tracking-tight  dark:text-white">
             Print Pro
           </h1>
         </div>
@@ -134,7 +134,7 @@ export default function ProductsPage() {
           {/* Header */}
           <div className="flex flex-row items-center justify-between gap-4 mb-6 sm:mb-8">
             <div>
-              <h1 className="text-xl sm:text-3xl font-bold text-gray-900 dark:text-white">
+              <h1 className="text-xl sm:text-3xl font-bold  dark:text-white">
                 Products
               </h1>
               <p className="text-xs lg:text-base text-gray-600 dark:text-gray-400 mt-1 sm:mt-2">
@@ -146,7 +146,7 @@ export default function ProductsPage() {
               size="icon"
               onClick={handleRefresh}
               disabled={refreshing}
-              className="rounded-full h-8 w-8 sm:h-10 sm:w-10 text-gray-400 hover:bg-gray-200 hover:text-gray-900 dark:text-gray-400 dark:hover:bg-gray-700 dark:hover:text-gray-200 transition-colors shrink-0"
+              className="rounded-full h-8 w-8 sm:h-10 sm:w-10 text-gray-400 hover:bg-gray-200 hover: dark:text-gray-400 dark:hover:bg-gray-700 dark:hover:text-gray-200 transition-colors shrink-0"
             >
               <RefreshCw
                 className={`h-4 w-4 sm:h-5 sm:w-5 ${refreshing ? "animate-spin" : ""}`}
@@ -245,7 +245,7 @@ function ProductTypesTabContent() {
               <Button
                 variant="ghost"
                 size="sm"
-                className={`h-8 w-8 p-0 rounded-md transition-colors ${isMoreActive ? "bg-background shadow-sm text-gray-900 border dark:bg-gray-700 dark:text-white dark:border-gray-600" : "text-gray-500 hover:bg-gray-200 dark:text-gray-400 dark:hover:bg-gray-700"}`}
+                className={`h-8 w-8 p-0 rounded-md transition-colors ${isMoreActive ? "bg-background shadow-sm  border dark:bg-gray-700 dark:text-white dark:border-gray-600" : "text-gray-500 hover:bg-gray-200 dark:text-gray-400 dark:hover:bg-gray-700"}`}
               >
                 <MoreHorizontal className="h-4 w-4" />
               </Button>

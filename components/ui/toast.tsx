@@ -62,7 +62,7 @@ export function Toast({ type, message, onClose }: ToastProps) {
       `}
     >
       {getIcon()}
-      <p className="text-sm font-medium text-gray-900">{message}</p>
+      <p className="text-sm font-medium ">{message}</p>
       <button
         onClick={() => {
           setIsVisible(false);

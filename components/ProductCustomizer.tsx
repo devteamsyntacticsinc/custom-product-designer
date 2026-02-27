@@ -254,7 +254,7 @@ export default function ProductCustomizer() {
         `}
         >
           <div className="lg:hidden flex items-center justify-between mb-6">
-            <h2 className="text-2xl font-bold text-gray-900">Print Pro</h2>
+            <h2 className="text-2xl font-bold ">Print Pro</h2>
             <button
               onClick={() => setIsMobileMenuOpen(false)}
               className="p-2 text-gray-500 hover:text-gray-700"
@@ -333,7 +333,7 @@ export default function ProductCustomizer() {
       `}
       >
         <div className="lg:hidden flex items-center justify-between mb-6">
-          <h2 className="text-2xl font-bold text-gray-900">Print Pro</h2>
+          <h2 className="text-2xl font-bold ">Print Pro</h2>
           <button
             onClick={() => setIsMobileMenuOpen(false)}
             className="p-2 text-gray-500 hover:text-gray-700"
@@ -342,9 +342,7 @@ export default function ProductCustomizer() {
           </button>
         </div>
 
-        <h2 className="hidden lg:block text-2xl font-bold text-gray-900 mb-6">
-          Print Pro
-        </h2>
+        <h2 className="hidden lg:block text-2xl font-bold  mb-6">Print Pro</h2>
 
         {/* Product Type */}
         <div className="mb-6">
@@ -456,17 +454,13 @@ export default function ProductCustomizer() {
 
         {/* Place Your Assets */}
         <div className="mb-6">
-          <h3 className="text-lg font-semibold text-gray-900 mb-4">
-            Place your assets
-          </h3>
+          <h3 className="text-lg font-semibold  mb-4">Place your assets</h3>
           <AssetUpload assets={assets} setAssets={setAssets} />
         </div>
 
         {/* Sizing and Quantity */}
         <div className="mb-6">
-          <h3 className="text-lg font-semibold text-gray-900 mb-4">
-            Sizing and Quantity
-          </h3>
+          <h3 className="text-lg font-semibold  mb-4">Sizing and Quantity</h3>
           <SizingAndQuantity
             brandId={brand}
             productTypeId={productType}
