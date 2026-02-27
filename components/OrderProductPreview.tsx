@@ -127,7 +127,7 @@ export default function OrderProductPreview({
   return (
     <div className="space-y-4">
       {/* Product Info & Actions */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 p-4 bg-background dark:bg-gray-700 border dark:border-gray-800 rounded-xl shadow-sm">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 p-4 bg-background dark:bg-[#0d1117] border rounded-xl shadow-sm">
         <div className="flex items-center gap-4 text-sm text-gray-600 dark:text-gray-400">
           <div className="flex flex-col">
             {shouldDisplayBrand && (

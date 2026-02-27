@@ -2,7 +2,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 
 export default function ProductCustomizerSkeleton() {
   return (
-    <div className="w-80 bg-background shadow-lg p-6 overflow-y-auto flex flex-col min-h-full">
+    <div className="w-80 bg-background dark:bg-[#010409] shadow-lg p-6 overflow-y-auto flex flex-col min-h-full">
       {/* Title */}
       <Skeleton className="h-8 w-48 mb-6" />
 
