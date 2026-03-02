@@ -49,8 +49,8 @@ async function sendPickupEmail(order: OrderWithCustomer) {
     });
 
     const customer = Array.isArray(order.customers) ? order.customers[0] : order.customers;
-    const brandName = order.brand_type?.[0]?.brands?.name || '';
-    const productTypeName = order.brand_type?.[0]?.product_type?.name || 'Product';
+    const brandName = order.products?.[0]?.brands?.name || '';
+    const productTypeName = order.products?.[0]?.product_type?.name || 'Product';
     const productColor = order.colors?.[0]?.value || '';
 
     const sizeRows = order.product_sizes?.map(item => `

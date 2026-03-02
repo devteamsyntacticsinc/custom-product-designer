@@ -877,7 +877,7 @@ export class ProductService {
 
           const { count: productOrderCount, error: productOrderError } =
             await supabase
-              .from("product_orders")
+              .from("invoices")
               .select("*", { count: "exact", head: true })
               .eq("product_id", productId);
 
@@ -1270,7 +1270,7 @@ export class ProductService {
         // Get customers count
         OrderService.getCustomersCount(),
         // Get orders count
-        OrderService.getProductOrdersCount(),
+        OrderService.getInvoicesCount(),
         // Get brands count
         this.getBrands().then((brands) => brands.length),
         // Get colors count

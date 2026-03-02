@@ -14,7 +14,6 @@ import {
   Package,
   RefreshCw,
   Phone,
-  Download,
   Check,
   File,
 } from "lucide-react";
@@ -393,15 +392,15 @@ export default function OrdersPage() {
                           </div>
 
                           <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs sm:text-sm text-gray-600">
-                            {order.brand_type?.[0]?.product_type?.name && (
+                            {order.products?.[0]?.product_type?.name && (
                               <span className="font-semibold  dark:text-gray-400">
-                                {order.brand_type[0].product_type.name}
+                                {order.products[0].product_type.name}
                               </span>
                             )}
-                            {order.brand_type?.[0]?.brands?.name && (
+                            {order.products?.[0]?.brands?.name && (
                               <span className="flex items-center gap-1 dark:text-gray-400">
                                 <span className="hidden sm:inline">•</span>
-                                {order.brand_type[0].brands.name}
+                                {order.products[0].brands.name}
                               </span>
                             )}
                             {order.colors?.[0]?.value && (

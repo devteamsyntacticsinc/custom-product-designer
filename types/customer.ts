@@ -61,6 +61,9 @@ export interface CustomerWithOrdersForDashboard {
   orders: Array<{
     id: string;
     created_at: string;
+    invoice_no?: string;
+    document_reference_number?: string | null;
+    status?: string;
     products?: {
       id: string;
       brands?: {

@@ -1106,6 +1106,11 @@ export default function CustomersTab() {
                                                   contact_number:
                                                     customer.contact_number,
                                                 },
+                                                product_id: order.products?.[0]?.id || '',
+                                                color_id: order.colors?.[0]?.id || null,
+                                                invoice_no: '',
+                                                document_reference_number: null,
+                                                status: 'pending',
                                               }}
                                             />
                                           </div>

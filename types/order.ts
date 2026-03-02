@@ -15,7 +15,7 @@ export interface OrderWithCustomer {
         contact_number: string;
       }[]
     | null;
-  products?: {
+  products?: Array<{
     id: string;
     brands?: {
       id: string;
@@ -30,7 +30,7 @@ export interface OrderWithCustomer {
         is_hasBack: boolean;
       }[];
     };
-  }[];
+  }>;
   colors?: {
     id: string;
     value: string;
@@ -102,7 +102,7 @@ export interface OrderWithInvoice {
   id: string;
   created_at: string;
   invoice_id: string;
-  brandT_id: string;
+  product_id: string;
   color_id: string;
   invoices: {
     id: string;
@@ -127,7 +127,7 @@ export interface OrderInDrawer {
   id: string;
   created_at: string;
   invoice_id: string;
-  brandT_id: string;
+  product_id: string;
   color_id: string;
   invoices: {
     id: string;

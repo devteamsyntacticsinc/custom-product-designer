@@ -2,7 +2,7 @@ import Image from "next/image";
 import { OrderWithCustomer } from "@/types/order";
 import { Box, Download, Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import React from "react";
+import React, { useMemo, useCallback } from "react";
 import {
   Card,
   CardContent,
@@ -13,7 +13,7 @@ import {
 import Link from "next/link";
 
 // Custom component for external URLs that bypasses Next.js Image requirements for some cases
-const ExternalImage = ({
+const ExternalImage = React.memo(({
   src,
   alt,
   className,
@@ -23,8 +23,10 @@ const ExternalImage = ({
   className: string;
 }) => (
   // eslint-disable-next-line @next/next/no-img-element
-  <img src={src} alt={alt} className={className} />
-);
+  <img src={src} alt={alt} className={className} loading="lazy" />
+));
+
+ExternalImage.displayName = "ExternalImage";
 
 interface OrderProductPreviewProps {
   order: OrderWithCustomer;
@@ -39,7 +41,7 @@ interface DesignAreaProps {
   orderId: string;
 }
 
-const DesignArea = ({
+const DesignArea = React.memo(({
   placement,
   label,
   customClass,
@@ -47,14 +49,26 @@ const DesignArea = ({
   onDownload,
   orderId,
 }: DesignAreaProps) => {
+  const handleClick = useCallback(() => {
+    if (imageUrl) {
+      onDownload(imageUrl, `${orderId}_${placement.replace(/\s+/g, "_")}.png`);
+    }
+  }, [imageUrl, onDownload, orderId, placement]);
+
   return (
     <div
-      className={`absolute ${customClass} border-2 border-dashed border-gray-400  rounded flex items-center justify-center transform -translate-x-1/2 -translate-y-1/2 overflow-hidden bg-white/50 z-10 transition-all duration-200 ${imageUrl ? "cursor-pointer hover:border-primary hover:bg-background group" : ""}`}
-      onClick={() =>
-        imageUrl &&
-        onDownload(imageUrl, `${orderId}_${placement.replace(/\s+/g, "_")}.png`)
-      }
+      className={`absolute ${customClass} border-2 border-dashed border-gray-400 rounded flex items-center justify-center transform -translate-x-1/2 -translate-y-1/2 overflow-hidden bg-white/50 z-10 transition-all duration-200 ${
+        imageUrl ? "cursor-pointer hover:border-primary hover:bg-background group" : ""
+      }`}
+      onClick={handleClick}
       title={imageUrl ? `Click to download ${label}` : ""}
+      role={imageUrl ? "button" : undefined}
+      tabIndex={imageUrl ? 0 : undefined}
+      onKeyDown={(e) => {
+        if (imageUrl && (e.key === "Enter" || e.key === " ")) {
+          handleClick();
+        }
+      }}
     >
       {imageUrl ? (
         <>
@@ -63,66 +77,108 @@ const DesignArea = ({
             alt={label}
             className="w-full h-full object-contain"
           />
-          <div className="absolute inset-0 bg-black/20  opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity">
+          <div className="absolute inset-0 bg-black/20 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity">
             <Download className="text-white w-4 h-4" />
           </div>
         </>
       ) : (
-        <span className="text-gray-400 text-[8px] sm:text-xs md:text-sm text-center px-1">
+        <span className="text-gray-400 text-[8px] sm:text-xs md:text-sm text-center px-1 select-none">
           {label}
         </span>
       )}
     </div>
   );
-};
+});
+
+DesignArea.displayName = "DesignArea";
 
 export default function OrderProductPreview({
   order,
 }: OrderProductPreviewProps) {
-  const productImages = order.product_images || [];
-  const productTypeImages =
-    order.products?.[0]?.product_type?.image_products || [];
-  // Check is is only type
-  const isOnlyType = order.products?.[0]?.product_type?.is_onlyType || false;
-  // Finds images that are front and back
-  const imageIsFront = productTypeImages.find(
-    (img) => img.is_hasBack === false,
-  );
-  const imageIsBack = productTypeImages.find((img) => img.is_hasBack === true);
+  // Memoize expensive computations
+  const {
+    productImages,
+    productTypeImages,
+    isOnlyType,
+    imageIsFront,
+    imageIsBack,
+    imagesByPlacement,
+    brandName,
+    productTypeName,
+    shouldDisplayBrand,
+  } = useMemo(() => {
+    const productImages = order.product_images || [];
+    const productTypeImages =
+      order.products?.[0]?.product_type?.image_products || [];
+    const isOnlyType = order.products?.[0]?.product_type?.is_onlyType || false;
+    const imageIsFront = productTypeImages.find(
+      (img) => img.is_hasBack === false,
+    );
+    const imageIsBack = productTypeImages.find((img) => img.is_hasBack === true);
 
-  // Create a record of images by placement using exact database values
-  const imagesByPlacement: Record<string, string> = {};
-  productImages.forEach((img) => {
-    imagesByPlacement[img.place] = img.url;
-  });
+    // Create a record of images by placement using exact database values
+    const imagesByPlacement: Record<string, string> = {};
+    productImages.forEach((img) => {
+      if (img.place && img.url) {
+        imagesByPlacement[img.place] = img.url;
+      }
+    });
 
-  // Extract brand and product type information
-  const brandType = order.products?.[0];
-  const brandName = brandType?.brands?.name || "Unknown Brand";
-  const productTypeName =
-    brandType?.product_type?.name || "Unknown Product Type";
+    // Extract brand and product type information
+    const brandType = order.products?.[0];
+    const brandName = brandType?.brands?.name || "Unknown Brand";
+    const productTypeName =
+      brandType?.product_type?.name || "Unknown Product Type";
 
-  // Check if brand should be displayed
-  const shouldDisplayBrand = !isOnlyType && brandName !== "Unknown Brand";
+    // Check if brand should be displayed
+    const shouldDisplayBrand = !isOnlyType && brandName !== "Unknown Brand";
 
-  const handleDownload = async (url: string, filename: string) => {
+    return {
+      productImages,
+      productTypeImages,
+      isOnlyType,
+      imageIsFront,
+      imageIsBack,
+      imagesByPlacement,
+      brandName,
+      productTypeName,
+      shouldDisplayBrand,
+    };
+  }, [order]);
+
+  const handleDownload = useCallback(async (url: string, filename: string) => {
+    if (!url) return;
+    
     try {
-      const response = await fetch(url);
+      // Add timeout to prevent hanging
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 10000);
+      
+      const response = await fetch(url, { signal: controller.signal });
+      clearTimeout(timeoutId);
+      
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+      
       const blob = await response.blob();
       const blobUrl = window.URL.createObjectURL(blob);
       const link = document.createElement("a");
       link.href = blobUrl;
       link.download = filename;
+      link.style.display = "none";
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);
-      window.URL.revokeObjectURL(blobUrl);
+      
+      // Clean up the blob URL after a short delay
+      setTimeout(() => window.URL.revokeObjectURL(blobUrl), 100);
     } catch (error) {
       console.error("Download failed:", error);
       // Fallback: open in new tab
-      window.open(url, "_blank");
+      window.open(url, "_blank", "noopener,noreferrer");
     }
-  };
+  }, []);
 
   return (
     <div className="space-y-4">
@@ -155,17 +211,21 @@ export default function OrderProductPreview({
             className="h-10"
             onClick={(e: React.MouseEvent) => {
               e.preventDefault();
+              e.stopPropagation();
               productImages.forEach((img, index) => {
-                setTimeout(() => {
-                  handleDownload(
-                    img.url,
-                    `${order.id}_${img.place.replace(/\s+/g, "_")}.png`,
-                  );
-                }, index * 500); // Stagger downloads to prevent browser blocking
+                if (img.url && img.place) {
+                  setTimeout(() => {
+                    handleDownload(
+                      img.url,
+                      `${order.id}_${img.place.replace(/\s+/g, "_")}.png`,
+                    );
+                  }, index * 500); // Stagger downloads to prevent browser blocking
+                }
               });
             }}
+            disabled={productImages.length === 0}
           >
-            <Download className="h-4 w-4 " />
+            <Download className="h-4 w-4" />
             Download All Designs ({productImages.length})
           </Button>
         )}
@@ -173,19 +233,22 @@ export default function OrderProductPreview({
 
       {/* T-shirt Mockup */}
       <div className="flex flex-col lg:flex-row w-full relative justify-center items-start">
-        {isOnlyType && imageIsFront && (
+        {isOnlyType && imageIsFront?.filepath && (
           <div className="relative w-fit flex items-center justify-center rounded-lg max-w-lg">
-            {imageIsFront && (
-              <Image
-                src={imageIsFront.filepath}
-                alt="Front View"
-                width={700}
-                height={700}
-                className="object-contain"
-              />
-            )}
+            <Image
+              src={imageIsFront.filepath}
+              alt="Front View"
+              width={700}
+              height={700}
+              className="object-contain"
+              onError={(e) => {
+                console.error("Failed to load front image:", imageIsFront.filepath);
+                e.currentTarget.style.display = "none";
+              }}
+              loading="lazy"
+            />
 
-            {/* Center area - Mug positioning */}
+            {/* Center area - positioning for single-type products */}
             <DesignArea
               placement="Front - Center"
               label="Front Center"
@@ -196,17 +259,20 @@ export default function OrderProductPreview({
             />
           </div>
         )}
-        {!isOnlyType && imageIsFront && (
+        {!isOnlyType && imageIsFront?.filepath && (
           <div className="relative w-fit flex items-center justify-center rounded-lg">
-            {imageIsFront && (
-              <Image
-                src={imageIsFront.filepath}
-                alt="Front View"
-                width={350}
-                height={350}
-                className="object-contain"
-              />
-            )}
+            <Image
+              src={imageIsFront.filepath}
+              alt="Front View"
+              width={350}
+              height={350}
+              className="object-contain"
+              onError={(e) => {
+                console.error("Failed to load front image:", imageIsFront.filepath);
+                e.currentTarget.style.display = "none";
+              }}
+              loading="lazy"
+            />
 
             <DesignArea
               placement="Front - Top Left"
@@ -228,17 +294,20 @@ export default function OrderProductPreview({
           </div>
         )}
 
-        {!isOnlyType && imageIsBack && (
+        {!isOnlyType && imageIsBack?.filepath && (
           <div className="relative w-fit flex items-center justify-center rounded-lg p-2">
-            {imageIsBack && (
-              <Image
-                src={imageIsBack.filepath}
-                alt="Back View"
-                width={350}
-                height={350}
-                className="object-contain"
-              />
-            )}
+            <Image
+              src={imageIsBack.filepath}
+              alt="Back View"
+              width={350}
+              height={350}
+              className="object-contain"
+              onError={(e) => {
+                console.error("Failed to load back image:", imageIsBack.filepath);
+                e.currentTarget.style.display = "none";
+              }}
+              loading="lazy"
+            />
 
             <DesignArea
               placement="Back - Top"
@@ -269,7 +338,7 @@ export default function OrderProductPreview({
                 configured.
               </CardDescription>
             </CardHeader>
-            <CardContent className="items-center justify-center flex ">
+            <CardContent className="items-center justify-center flex">
               <Link href="/admin/products">
                 <Button variant="outline">
                   <Plus className="mr-2 h-4 w-4" />

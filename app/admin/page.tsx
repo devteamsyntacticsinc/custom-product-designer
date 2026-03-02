@@ -518,7 +518,7 @@ export default function AdminDashboard() {
                     <div className="h-[300px] w-full flex items-center justify-center text-muted-foreground">
                       No product type data available
                     </div>
-                  )}
+                  )}z
                 </CardContent>
               </Card>
 
@@ -825,14 +825,13 @@ function CustomerDrawer({
   const [customerWithOrders, setCustomerWithOrders] =
     useState<CustomerWithOrdersForDashboard | null>(null);
 
-  const isOrderActivity = activity.id.includes("order");
+  const isOrderActivity = activity.id.includes("order") || activity.id.includes("invoice");
 
   useEffect(() => {
     // TODO: Fetch customer order data when drawer opens
     if (open) {
       const fetchCustomerOrderData = async (orderId: string) => {
         try {
-          console.log(orderId);
           setIsFetching(true);
 
           const response = await axios.get(`/api/admin/orders/${orderId}`);
@@ -841,11 +840,9 @@ function CustomerDrawer({
           if (orderId.includes("user")) {
             setCustomerWithOrders(data.data);
           }
-          if (orderId.includes("order")) {
+          if (orderId.includes("order") || orderId.includes("invoice")) {
             setOrderData(data.data);
           }
-
-          console.log(response.data);
 
           return data;
         } catch (error) {
@@ -943,8 +940,8 @@ function OrderDetails({ order }: { order: OrderWithCustomer }) {
           <div className="flex-1 space-y-3 w-full">
             <div className="flex flex-wrap items-center gap-2 sm:gap-4 mb-1">
               <Badge variant="secondary" className="text-[10px] sm:text-xs">
-                Reference No. {order.invoices?.document_types?.ref_c2} -{" "}
-                {order.invoices?.ref_no}
+                Reference No. {order.document_types?.ref_c2} -{" "}
+                {order.invoice_no}
               </Badge>
               <span className="text-xs sm:text-sm text-muted-foreground font-medium">
                 {formatDate(order.created_at)}
@@ -958,15 +955,15 @@ function OrderDetails({ order }: { order: OrderWithCustomer }) {
             </div>
 
             <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs sm:text-sm text-gray-600 dark:text-gray-400">
-              {order.brand_type?.[0]?.product_type?.name && (
+              {order.products?.[0]?.product_type?.name && (
                 <span className="font-semibold ">
-                  {order.brand_type[0].product_type.name}
+                  {order.products[0].product_type.name}
                 </span>
               )}
-              {order.brand_type?.[0]?.brands?.name && (
+              {order.products?.[0]?.brands?.name && (
                 <span className="flex items-center gap-1">
                   <span className="hidden sm:inline">•</span>
-                  {order.brand_type[0].brands.name}
+                  {order.products[0].brands.name}
                 </span>
               )}
               {order.colors?.[0]?.value && (
@@ -1153,7 +1150,11 @@ function CustomerOrderCard({
             order={{
               ...order,
               customers: customer,
-              invoices: null,
+              invoice_no: order.invoice_no || '',
+              document_reference_number: order.document_reference_number || null,
+              status: order.status || 'pending',
+              product_id: order.products?.[0]?.id || '',
+              color_id: order.colors?.[0]?.id || null,
             }}
           />
         </div>
@@ -1161,15 +1162,15 @@ function CustomerOrderCard({
         {/* Order Details */}
         <div className="space-y-2">
           <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-gray-600">
-            {order.brand_type?.[0]?.product_type?.name && (
+            {order.products?.[0]?.product_type?.name && (
               <span className="font-semibold ">
-                {order.brand_type[0].product_type.name}
+                {order.products[0].product_type.name}
               </span>
             )}
-            {order.brand_type?.[0]?.brands?.name && (
+            {order.products?.[0]?.brands?.name && (
               <span className="flex items-center gap-1">
                 <span>•</span>
-                {order.brand_type[0].brands.name}
+                {order.products[0].brands.name}
               </span>
             )}
             {order.colors?.[0]?.value && (

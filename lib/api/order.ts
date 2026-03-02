@@ -673,7 +673,7 @@ export class OrderService {
           id: invoice.id,
           created_at: invoice.created_at,
           customers: customer || null,
-          brand_type: transformedProduct,
+          products: transformedProduct,
           colors: color ? [color] : [],
           product_sizes: formattedSizes || [],
           product_images: images || [],
@@ -748,7 +748,11 @@ export class OrderService {
 
       if (customerError) {
         console.error("Error fetching customer:", customerError);
-        return { customer: null, orders: [] };
+        // If it's a "no rows" error, return empty result gracefully
+        if (customerError.code === 'PGRST116') {
+          return { customer: null, orders: [] };
+        }
+        throw customerError;
       }
 
       if (!customer) {
@@ -883,7 +887,7 @@ export class OrderService {
         return {
           id: invoice.id,
           created_at: invoice.created_at,
-          brand_type: transformedProduct,
+          products: transformedProduct,
           colors: color ? [color] : [],
           product_sizes: formattedSizes || [],
           product_images: images || [],
@@ -934,7 +938,11 @@ export class OrderService {
 
       if (invoiceError) {
         console.error("Error fetching invoice:", invoiceError);
-        return {} as OrderWithCustomer;
+        // If it's a "no rows" error, return empty result gracefully
+        if (invoiceError.code === 'PGRST116') {
+          return {} as OrderWithCustomer;
+        }
+        throw invoiceError;
       }
 
       if (!invoice) {
@@ -1026,7 +1034,7 @@ export class OrderService {
         id: invoice.id,
         created_at: invoice.created_at,
         customers: Array.isArray(customer) ? customer[0] : customer,
-        brand_type: transformedProduct,
+        products: transformedProduct,
         colors: color ? [color] : [],
         product_sizes: formattedSizes || [],
         product_images: productImages || [],

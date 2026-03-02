@@ -1,7 +1,7 @@
 export interface TopCustomers {
   id: string;
   created_at: string;
-  brand_type: {
+  products: {
     product_type: {
       id: string;
       name: string;
