@@ -148,7 +148,7 @@ export class OrderService {
     try {
       // Get document type ID for 'IN'
       const documentType = await this.getDocumentTypeIdByRef("ORD");
-      
+
       // Generate invoice reference number
       const refNo = await this.generateInvoiceRefNo();
 
@@ -471,9 +471,8 @@ export class OrderService {
               email,
               contact_number
             ),
-            document_types (*),
-            ref_no,
-            status
+            document_types (id, ref_c2, description),
+            ref_no
           )
         `,
         )
@@ -552,8 +551,7 @@ export class OrderService {
               ref_c2,
               description
             ),
-            ref_no,
-            status
+            ref_no
           )
         `,
         )
@@ -919,8 +917,7 @@ export class OrderService {
               ref_c2,
               description
             ),
-            ref_no,
-            status
+            ref_no
           )
         `,
         )
