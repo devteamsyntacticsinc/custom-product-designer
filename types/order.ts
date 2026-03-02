@@ -65,3 +65,20 @@ export interface ActivityItem {
   description: string;
   timestamp: string;
 }
+
+export interface RecentActivity {
+  id: string;
+  created_at: string;
+  invoices: {
+    id: string;
+    customer_id: string;
+    customers: {
+      id: string;
+      name: string;
+      email: string;
+      contact_number: string;
+    } | null;
+    ref_no: string;
+    status: string;
+  } | null;
+}
