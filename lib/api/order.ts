@@ -4,6 +4,9 @@ import {
   OrderWithCustomer,
   CustomerActivity,
   ActivityItem,
+  RecentActivity,
+  OrderWithInvoice,
+  OrderInDrawer,
 } from "@/types/order";
 import { CustomerWithOrdersForDashboard } from "@/types/customer";
 
@@ -90,7 +93,9 @@ export class OrderService {
     }
   }
 
-  static async getDocumentTypeIdByRef(refCode: string): Promise<{ id: string }> {
+  static async getDocumentTypeIdByRef(
+    refCode: string,
+  ): Promise<{ id: string }> {
     try {
       const { data, error } = await supabase
         .from("document_types")
@@ -121,7 +126,7 @@ export class OrderService {
         .single();
 
       let nextNumber = 1;
-      
+
       if (lastInvoice) {
         // Extract the numeric part - handle both INV-000001 and 000001 formats
         const numericPart = lastInvoice.ref_no.replace("INV-", "");
@@ -137,7 +142,9 @@ export class OrderService {
     }
   }
 
-  static async createInvoice(customerId: string): Promise<{ id: string; ref_no: string }> {
+  static async createInvoice(
+    customerId: string,
+  ): Promise<{ id: string; ref_no: string }> {
     try {
       // Get document type ID for 'IN'
       const documentType = await this.getDocumentTypeIdByRef("ORD");
@@ -167,11 +174,17 @@ export class OrderService {
     }
   }
 
-  static async getInvoiceByProductOrderId(productOrderId: string): Promise<{ id: string; ref_no: string; customer_id: string; status: string }> {
+  static async getInvoiceByProductOrderId(productOrderId: string): Promise<{
+    id: string;
+    ref_no: string;
+    customer_id: string;
+    status: string;
+  }> {
     try {
       const { data, error } = await supabase
         .from("product_orders")
-        .select(`
+        .select(
+          `
           invoice_id,
           invoices (
             id,
@@ -179,7 +192,8 @@ export class OrderService {
             customer_id,
             status
           )
-        `)
+        `,
+        )
         .eq("id", productOrderId)
         .single();
 
@@ -191,7 +205,12 @@ export class OrderService {
         throw new Error("Invoice not found for product order");
       }
 
-      return data.invoices[0] as { id: string; ref_no: string; customer_id: string; status: string };
+      return data.invoices[0] as {
+        id: string;
+        ref_no: string;
+        customer_id: string;
+        status: string;
+      };
     } catch (error) {
       console.error("Error fetching invoice by product order ID:", error);
       throw error;
@@ -316,7 +335,9 @@ export class OrderService {
     }
   }
 
-  static async processOrder(orderData: OrderData): Promise<OrderResult & { invoiceRefNo: string }> {
+  static async processOrder(
+    orderData: OrderData,
+  ): Promise<OrderResult & { invoiceRefNo: string }> {
     try {
       // Create customer
       const customerData = await this.createCustomer(
@@ -330,7 +351,7 @@ export class OrderService {
       // If brandId exists, use it to find the specific brand type
       // If no brandId (is_onlyType), find any brand type for this product type
       let brandTypeId: string;
-      
+
       if (orderData.brandId) {
         const brandTypeData = await this.getBrandTypeId(
           orderData.brandId,
@@ -444,13 +465,20 @@ export class OrderService {
           invoices (
             id,
             customer_id,
+            customers (
+              id,
+              name,
+              email,
+              contact_number
+            ),
+            document_types (*),
             ref_no,
             status
           )
         `,
         )
-        .order("created_at", { ascending: false });
-
+        .order("created_at", { ascending: false })
+        .overrideTypes<RecentActivity[]>();
       if (ordersError) {
         console.error("Error fetching orders:", ordersError);
         return {
@@ -461,24 +489,9 @@ export class OrderService {
         };
       }
 
-      // Get customer IDs from orders
-      const orderCustomerIds = allOrders
-        .map((order) => order.invoices?.[0]?.customer_id)
-        .filter(Boolean);
-
-      // Get customer information for orders
-      const { data: orderCustomers, error: orderCustomersError } = await supabase
-        .from("customers")
-        .select("id, name, email, contact_number, created_at")
-        .in("id", orderCustomerIds);
-
-      if (orderCustomersError) {
-        console.error("Error fetching order customers:", orderCustomersError);
-      }
-
       // Transform orders to include customer information for buildActivityFromOrders
       const transformedOrders = allOrders.map((order) => {
-        const customer = orderCustomers?.find((c) => c.id === order.invoices?.[0]?.customer_id);
+        const customer = order.invoices?.customers;
         return {
           ...order,
           customers: customer || null,
@@ -489,6 +502,7 @@ export class OrderService {
         transformedOrders,
         allCustomers || [],
       );
+
       const total = allActivities.length;
       const totalPages = Math.ceil(total / limit);
       const startIndex = (page - 1) * limit;
@@ -527,12 +541,24 @@ export class OrderService {
           invoices (
             id,
             customer_id,
+            customers (
+              id,
+              name,
+              email,
+              contact_number
+            ),
+            document_types (
+              id,
+              ref_c2,
+              description
+            ),
             ref_no,
             status
           )
         `,
         )
-        .order("created_at", { ascending: false });
+        .order("created_at", { ascending: false })
+        .overrideTypes<OrderWithInvoice[]>();
 
       if (ordersError) {
         console.error("Error fetching orders:", ordersError);
@@ -541,19 +567,6 @@ export class OrderService {
 
       if (!orders || orders.length === 0) {
         return [];
-      }
-
-      // Get customer information from invoices
-      const customerIds = orders
-        .map((order) => order.invoices?.[0]?.customer_id)
-        .filter(Boolean);
-      const { data: customers, error: customersError } = await supabase
-        .from("customers")
-        .select("id, name, email, contact_number")
-        .in("id", customerIds);
-
-      if (customersError) {
-        console.error("Error fetching customers:", customersError);
       }
 
       // Get brand type information
@@ -625,7 +638,7 @@ export class OrderService {
 
       // Combine all data
       const combinedOrders = orders.map((order) => {
-        const customer = customers?.find((c) => c.id === order.invoices?.[0]?.customer_id);
+        const customer = order.invoices?.customers;
         const brandType = brandTypes?.find((bt) => bt.id === order.brandT_id);
         const color = colors?.find((c) => c.id === order.color_id);
         const sizes = productSizes?.filter((ps) => ps.productO_id === order.id);
@@ -686,7 +699,7 @@ export class OrderService {
           id: `order-${order.id}`,
           type: "order" as const,
           title: "New order received",
-          description: `Order #${order.id.toString().slice(-6)} - ${customer?.name || "Unknown Customer"}`,
+          description: `Reference No. ${order.invoices?.document_types?.ref_c2} - ${order.invoices?.ref_no} - ${customer?.name || "Unknown Customer"}`,
           timestamp: order.created_at,
         });
       });
@@ -895,13 +908,25 @@ export class OrderService {
           invoices (
             id,
             customer_id,
+            customers (
+              id,
+              name,
+              email,
+              contact_number
+            ),
+            document_types (
+              id,
+              ref_c2,
+              description
+            ),
             ref_no,
             status
           )
         `,
         )
         .eq("id", orderId)
-        .single();
+        .single()
+        .overrideTypes<OrderInDrawer>();
 
       if (ordersError) {
         console.error("Error fetching order:", ordersError);
@@ -910,16 +935,6 @@ export class OrderService {
 
       if (!orders) {
         return {} as OrderWithCustomer;
-      }
-
-      // Get customer information from invoice
-      const { data: customers, error: customersError } = await supabase
-        .from("customers")
-        .select("id, name, email, contact_number")
-        .eq("id", orders.invoices?.[0]?.customer_id);
-
-      if (customersError) {
-        console.error("Error fetching customers:", customersError);
       }
 
       // Get brand type information
@@ -979,7 +994,7 @@ export class OrderService {
       }
 
       // Combine all data
-      const customer = customers?.[0] || null;
+      const customer = orders.invoices?.customers;
       const brandType = brandTypes?.[0];
       const color = colors?.[0];
 
@@ -1005,7 +1020,12 @@ export class OrderService {
 
       return {
         ...orders,
-        customers: customer,
+        customers: customer as {
+          id: string;
+          name: string;
+          email: string;
+          contact_number: string;
+        },
         brand_type: transformedBrandType,
         colors: color ? [color] : [],
         product_sizes: formattedSizes || [],

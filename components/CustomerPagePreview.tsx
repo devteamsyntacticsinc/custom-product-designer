@@ -1106,6 +1106,7 @@ export default function CustomersTab() {
                                                   contact_number:
                                                     customer.contact_number,
                                                 },
+                                                invoices: null,
                                               }}
                                             />
                                           </div>

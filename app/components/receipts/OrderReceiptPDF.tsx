@@ -187,7 +187,10 @@ export default function OrderReceiptPDF({ order }: OrderReceiptPDFProps) {
           <Text style={styles.sectionTitle}>Order Information</Text>
           <View style={styles.row}>
             <Text style={styles.label}>Order ID:</Text>
-            <Text style={styles.value}>#{order.id.toString().slice(-6)}</Text>
+            <Text style={styles.value}>
+              Reference No. {order.invoices?.document_types?.ref_c2} -{" "}
+              {order.invoices?.ref_no}
+            </Text>
           </View>
           <View style={styles.row}>
             <Text style={styles.label}>Order Date:</Text>
