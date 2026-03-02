@@ -15,7 +15,7 @@ export interface OrderWithCustomer {
         contact_number: string;
       }[]
     | null;
-  brand_type?: {
+  products?: {
     id: string;
     brands?: {
       id: string;
@@ -49,24 +49,16 @@ export interface OrderWithCustomer {
     url: string;
     place: string;
   }>;
-
-  invoices: {
-    id: string;
-    customer_id: string;
-    customers: {
-      id: string;
-      name: string;
-      email: string;
-      contact_number: string;
-    } | null;
-    document_types: {
-      id: number;
-      ref_c2: string;
-      description: string;
-    } | null;
-    ref_no: string;
-    status: string;
+  invoice_no: string;
+  document_reference_number: string | null;
+  document_types?: {
+    id: number;
+    ref_c2: string;
+    description: string;
   } | null;
+  status: string;
+  product_id: string;
+  color_id: string | null;
 }
 
 export interface CustomerActivity {
@@ -87,23 +79,23 @@ export interface ActivityItem {
 export interface RecentActivity {
   id: string;
   created_at: string;
-  invoices: {
+  customer_id: string;
+  customers: {
     id: string;
-    customer_id: string;
-    customers: {
-      id: string;
-      name: string;
-      email: string;
-      contact_number: string;
-    } | null;
-    document_types: {
-      id: number;
-      ref_c2: string;
-      description: string;
-    };
-    ref_no: string;
-    status: string;
+    name: string;
+    email: string;
+    contact_number: string;
   } | null;
+  document_types: {
+    id: number;
+    ref_c2: string;
+    description: string;
+  } | null;
+  invoice_no: string;
+  document_reference_number: string | null;
+  status: string;
+  product_id: string;
+  color_id: string | null;
 }
 
 export interface OrderWithInvoice {

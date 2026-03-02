@@ -13,7 +13,7 @@ export interface CustomerWithOrders {
   orders: {
     id: string | number;
     created_at: string;
-    brand_type?: {
+    products?: {
       id: string;
       brands?: {
         id: string;
@@ -29,7 +29,6 @@ export interface CustomerWithOrders {
         }[];
       };
     }[];
-
     colors?: {
       id: string;
       value: string;
@@ -62,7 +61,7 @@ export interface CustomerWithOrdersForDashboard {
   orders: Array<{
     id: string;
     created_at: string;
-    brand_type?: {
+    products?: {
       id: string;
       brands?: {
         id: string;
@@ -101,7 +100,7 @@ export interface CustomerWithOrdersForDashboard {
 
 export interface FilteredOrder {
   customer_id: string;
-  brand_type: {
+  products: {
     id: string;
     brands: {
       id: string;

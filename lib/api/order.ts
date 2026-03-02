@@ -76,10 +76,10 @@ export class OrderService {
   ): Promise<{ id: string }> {
     try {
       const { data, error } = await supabase
-        .from("brand_type")
+        .from("products")
         .select("id")
         .eq("brand_id", brandId)
-        .eq("type_id", typeId)
+        .eq("product_type_id", typeId)
         .single();
 
       if (error) {
@@ -88,7 +88,7 @@ export class OrderService {
 
       return data;
     } catch (error) {
-      console.error("Error fetching brand type ID:", error);
+      console.error("Error fetching product ID:", error);
       throw error;
     }
   }
@@ -119,9 +119,9 @@ export class OrderService {
       // Get the current highest invoice number
       const { data: lastInvoice } = await supabase
         .from("invoices")
-        .select("ref_no")
-        .like("ref_no", "%")
-        .order("ref_no", { ascending: false })
+        .select("invoice_no")
+        .like("invoice_no", "%")
+        .order("invoice_no", { ascending: false })
         .limit(1)
         .single();
 
@@ -129,7 +129,7 @@ export class OrderService {
 
       if (lastInvoice) {
         // Extract the numeric part - handle both INV-000001 and 000001 formats
-        const numericPart = lastInvoice.ref_no.replace("INV-", "");
+        const numericPart = lastInvoice.invoice_no.replace("INV-", "");
         const currentNumber = parseInt(numericPart);
         nextNumber = currentNumber + 1;
       }
@@ -137,45 +137,46 @@ export class OrderService {
       // Format as 000001 (6 digits with leading zeros)
       return nextNumber.toString().padStart(6, "0");
     } catch (error) {
-      console.error("Error generating invoice reference number:", error);
+      console.error("Error generating invoice number:", error);
       throw error;
     }
   }
 
   static async createInvoice(
     customerId: string,
-  ): Promise<{ id: string; ref_no: string }> {
+  ): Promise<{ id: string; invoice_no: string }> {
     try {
       // Get document type ID for 'IN'
       const documentType = await this.getDocumentTypeIdByRef("ORD");
 
       // Generate invoice reference number
-      const refNo = await this.generateInvoiceRefNo();
+      const invoiceNo = await this.generateInvoiceRefNo();
 
       const { data, error } = await supabase
         .from("invoices")
         .insert({
           customer_id: customerId,
           document_type_id: documentType.id,
-          ref_no: refNo,
+          invoice_no: invoiceNo,
+          status: 'Pending',
         })
-        .select("id, ref_no")
+        .select("id, invoice_no")
         .single();
 
       if (error) {
         throw error;
       }
 
-      // Insert into invoices_status table with status_id = 1
-      const { error: statusError } = await supabase
-        .from("invoices_status")
+      // Insert into invoice_logs table with default 'Pending' status
+      const { error: logError } = await supabase
+        .from("invoice_logs")
         .insert({
           invoice_id: data.id,
-          status_id: 1,
+          status: 'Pending',
         });
 
-      if (statusError) {
-        throw statusError;
+      if (logError) {
+        throw logError;
       }
 
       return data;
@@ -185,85 +186,79 @@ export class OrderService {
     }
   }
 
-  static async getInvoiceByProductOrderId(productOrderId: string): Promise<{
+  static async getInvoiceById(invoiceId: string): Promise<{
     id: string;
-    ref_no: string;
+    invoice_no: string;
+    document_reference_number: string | null;
     customer_id: string;
     status: string;
+    product_id: string;
+    color_id: string | null;
   }> {
     try {
       const { data, error } = await supabase
-        .from("product_orders")
+        .from("invoices")
         .select(
           `
-          invoice_id,
-          invoices (
-            id,
-            ref_no,
-            customer_id,
-            status
-          )
-        `,
+          id,
+          invoice_no,
+          document_reference_number,
+          customer_id,
+          status,
+          product_id,
+          color_id
+        `
         )
-        .eq("id", productOrderId)
+        .eq("id", invoiceId)
         .single();
 
       if (error) {
         throw error;
       }
 
-      if (!data || !data.invoices || data.invoices.length === 0) {
-        throw new Error("Invoice not found for product order");
-      }
-
-      return data.invoices[0] as {
-        id: string;
-        ref_no: string;
-        customer_id: string;
-        status: string;
-      };
-    } catch (error) {
-      console.error("Error fetching invoice by product order ID:", error);
-      throw error;
-    }
-  }
-
-  static async createProductOrder(
-    invoiceId: string,
-    brandTypeId: string,
-    colorId: string | null,
-  ): Promise<OrderResult["productOrderData"]> {
-    try {
-      const { data, error } = await supabase
-        .from("product_orders")
-        .insert({
-          invoice_id: invoiceId,
-          brandT_id: brandTypeId,
-          color_id: colorId,
-        })
-        .select()
-        .single();
-
-      if (error) {
-        throw error;
+      if (!data) {
+        throw new Error("Invoice not found");
       }
 
       return data;
     } catch (error) {
-      console.error("Error creating product order:", error);
+      console.error("Error fetching invoice by ID:", error);
+      throw error;
+    }
+  }
+
+  static async updateInvoiceWithProductDetails(
+    invoiceId: string,
+    productId: string,
+    colorId: string | null,
+  ): Promise<void> {
+    try {
+      const { error } = await supabase
+        .from("invoices")
+        .update({
+          product_id: productId,
+          color_id: colorId,
+        })
+        .eq("id", invoiceId);
+
+      if (error) {
+        throw error;
+      }
+    } catch (error) {
+      console.error("Error updating invoice with product details:", error);
       throw error;
     }
   }
 
   static async createProductSizes(
-    productOrderId: string,
+    invoiceId: string,
     sizeSelection: OrderData["sizeSelection"],
   ) {
     try {
       const sizeInserts = sizeSelection
         .filter((item) => item.quantity > 0)
         .map((item) => ({
-          productO_id: productOrderId,
+          invoice_id: invoiceId,
           size_id: item.size,
           quantity: item.quantity,
         }));
@@ -289,7 +284,7 @@ export class OrderService {
   }
 
   static async uploadProductImages(
-    productOrderId: string,
+    invoiceId: string,
     assets: OrderData["assets"],
   ) {
     try {
@@ -321,7 +316,7 @@ export class OrderService {
             .getPublicUrl(fileName);
 
           imageInserts.push({
-            productO_id: productOrderId,
+            invoice_id: invoiceId,
             url: urlData.publicUrl,
             place: placementMap[key] || key,
           });
@@ -348,7 +343,7 @@ export class OrderService {
 
   static async processOrder(
     orderData: OrderData,
-  ): Promise<OrderResult & { invoiceRefNo: string }> {
+  ): Promise<OrderResult & { invoiceNo: string }> {
     try {
       // Create customer
       const customerData = await this.createCustomer(
@@ -358,53 +353,58 @@ export class OrderService {
       // Create invoice
       const invoiceData = await this.createInvoice(customerData.id);
 
-      // Always get brand type ID for the product type
-      // If brandId exists, use it to find the specific brand type
-      // If no brandId (is_onlyType), find any brand type for this product type
-      let brandTypeId: string;
+      // Always get product ID for the product type
+      // If brandId exists, use it to find the specific product
+      // If no brandId (is_onlyType), find any product for this product type
+      let productId: string;
 
       if (orderData.brandId) {
-        const brandTypeData = await this.getBrandTypeId(
+        const productData = await this.getBrandTypeId(
           orderData.brandId,
           orderData.productTypeId,
         );
-        brandTypeId = brandTypeData.id;
+        productId = productData.id;
       } else {
-        // For is_onlyType products, find any brand type for this product type
-        const { data: defaultBrandType } = await supabase
-          .from("brand_type")
+        // For is_onlyType products, find any product for this product type
+        const { data: defaultProduct } = await supabase
+          .from("products")
           .select("id")
-          .eq("type_id", orderData.productTypeId)
+          .eq("product_type_id", orderData.productTypeId)
           .limit(1)
           .single();
 
-        if (!defaultBrandType) {
-          throw new Error("No brand type found for this product type");
+        if (!defaultProduct) {
+          throw new Error("No product found for this product type");
         }
 
-        brandTypeId = defaultBrandType.id;
+        productId = defaultProduct.id;
       }
 
-      // Create product order - now uses invoice_id instead of customer_id
-      const productOrderData = await this.createProductOrder(
+      // Update invoice with product details
+      await this.updateInvoiceWithProductDetails(
         invoiceData.id,
-        brandTypeId,
+        productId,
         orderData.colorId,
       );
 
       // Create product sizes
       await this.createProductSizes(
-        productOrderData.id,
+        invoiceData.id,
         orderData.sizeSelection,
       );
 
       // Upload product images
-      await this.uploadProductImages(productOrderData.id, orderData.assets);
+      await this.uploadProductImages(invoiceData.id, orderData.assets);
 
       return {
         customerData,
-        productOrderData,
-        invoiceRefNo: invoiceData.ref_no,
+        productOrderData: { 
+          id: invoiceData.id, 
+          customer_id: customerData.id,
+          product_id: productId,
+          color_id: orderData.colorId,
+        },
+        invoiceNo: invoiceData.invoice_no,
       };
     } catch (error) {
       console.error("Error processing order:", error);
@@ -412,16 +412,16 @@ export class OrderService {
     }
   }
 
-  static async getProductOrdersCount(): Promise<number> {
+  static async getInvoicesCount(): Promise<number> {
     try {
       const { count, error } = await supabase
-        .from("product_orders")
+        .from("invoices")
         .select("*", { count: "exact", head: true });
 
       if (error) throw error;
       return count || 0;
     } catch (error) {
-      console.error("Error fetching product orders count:", error);
+      console.error("Error fetching invoices count:", error);
       return 0;
     }
   }
@@ -466,31 +466,30 @@ export class OrderService {
         };
       }
 
-      // Get all orders
-      const { data: allOrders, error: ordersError } = await supabase
-        .from("product_orders")
+      // Get all invoices (now replacing product_orders)
+      const { data: allInvoices, error: invoicesError } = await supabase
+        .from("invoices")
         .select(
           `
           id,
           created_at,
-          invoices (
+          customer_id,
+          invoice_no,
+          document_reference_number,
+          status,
+          customers (
             id,
-            customer_id,
-            customers (
-              id,
-              name,
-              email,
-              contact_number
-            ),
-            document_types (id, ref_c2, description),
-            ref_no
-          )
+            name,
+            email,
+            contact_number
+          ),
+          document_types (id, ref_c2, description)
         `,
         )
-        .order("created_at", { ascending: false })
-        .overrideTypes<RecentActivity[]>();
-      if (ordersError) {
-        console.error("Error fetching orders:", ordersError);
+        .order("created_at", { ascending: false });
+
+      if (invoicesError) {
+        console.error("Error fetching invoices:", invoicesError);
         return {
           activities: [],
           total: 0,
@@ -499,17 +498,17 @@ export class OrderService {
         };
       }
 
-      // Transform orders to include customer information for buildActivityFromOrders
-      const transformedOrders = allOrders.map((order) => {
-        const customer = order.invoices?.customers;
+      // Transform invoices to include customer information for buildActivityFromInvoices
+      const transformedInvoices = allInvoices?.map((invoice) => {
+        const customer = invoice.customers;
         return {
-          ...order,
+          ...invoice,
           customers: customer || null,
         };
-      });
+      }) || [];
 
-      const allActivities = this.buildActivityFromOrders(
-        transformedOrders,
+      const allActivities = this.buildActivityFromInvoices(
+        transformedInvoices,
         allCustomers || [],
       );
 
@@ -538,70 +537,65 @@ export class OrderService {
 
   static async getAllOrders(): Promise<OrderWithCustomer[]> {
     try {
-      // First, get basic orders with invoice information
-      const { data: orders, error: ordersError } = await supabase
-        .from("product_orders")
+      // First, get basic invoices with customer information
+      const { data: invoices, error: invoicesError } = await supabase
+        .from("invoices")
         .select(
           `
           id,
           created_at,
-          invoice_id,
-          brandT_id,
+          customer_id,
+          product_id,
           color_id,
-          invoices (
+          invoice_no,
+          document_types!inner (
             id,
-            customer_id,
-            customers (
-              id,
-              name,
-              email,
-              contact_number
-            ),
-            document_types (
-              id,
-              ref_c2,
-              description
-            ),
-            ref_no
+            ref_c2
+          ),
+          status,
+          customers (
+            id,
+            name,
+            email,
+            contact_number
           )
         `,
         )
-        .order("created_at", { ascending: false })
-        .overrideTypes<OrderWithInvoice[]>();
+        .order("created_at", { ascending: false });
 
-      if (ordersError) {
-        console.error("Error fetching orders:", ordersError);
+      if (invoicesError) {
+        console.error("Error fetching invoices:", invoicesError);
         return [];
       }
 
-      if (!orders || orders.length === 0) {
+      if (!invoices || invoices.length === 0) {
         return [];
       }
 
-      // Get brand type information
-      const brandTypeIds = orders
-        .map((order) => order.brandT_id)
+      // Get product information
+      const productIds = invoices
+        .map((invoice) => invoice.product_id)
         .filter(Boolean);
 
-      const { data: brandTypes, error: brandTypesError } = await supabase
-        .from("brand_type")
+      const { data: products, error: productsError } = await supabase
+        .from("products")
         .select(
           `
           id,
           brand_id,
-          type_id,
+          product_type_id,
           brands (id, name),
           product_type (id, name, is_onlyType, image_products (filepath, is_hasBack))
         `,
         )
-        .in("id", brandTypeIds);
+        .in("id", productIds);
 
-      if (brandTypesError) {
-        console.error("Error fetching brand types:", brandTypesError);
+      if (productsError) {
+        console.error("Error fetching products:", productsError);
       }
 
       // Get color information
-      const colorIds = orders.map((order) => order.color_id).filter(Boolean);
+      const colorIds = invoices.map((invoice) => invoice.color_id).filter(Boolean);
       const { data: colors, error: colorsError } = await supabase
         .from("colors")
         .select("id, value")
@@ -611,34 +605,34 @@ export class OrderService {
         console.error("Error fetching colors:", colorsError);
       }
 
-      // Get product sizes for each order
+      // Get product sizes for each invoice
       const { data: productSizes, error: sizesError } = await supabase
         .from("product_sizes")
         .select(
           `
           id,
-          productO_id,
+          invoice_id,
           size_id,
           quantity,
           sizes (id, value)
         `,
         )
         .in(
-          "productO_id",
-          orders.map((order) => order.id),
+          "invoice_id",
+          invoices.map((invoice) => invoice.id),
         );
 
       if (sizesError) {
         console.error("Error fetching product sizes:", sizesError);
       }
 
-      // Get product images for each order
+      // Get product images for each invoice
       const { data: productImages, error: imagesError } = await supabase
         .from("product_images")
-        .select("id, productO_id, url, place")
+        .select("id, invoice_id, url, place")
         .in(
-          "productO_id",
-          orders.map((order) => order.id),
+          "invoice_id",
+          invoices.map((invoice) => invoice.id),
         );
 
       if (imagesError) {
@@ -646,13 +640,13 @@ export class OrderService {
       }
 
       // Combine all data
-      const combinedOrders = orders.map((order) => {
-        const customer = order.invoices?.customers;
-        const brandType = brandTypes?.find((bt) => bt.id === order.brandT_id);
-        const color = colors?.find((c) => c.id === order.color_id);
-        const sizes = productSizes?.filter((ps) => ps.productO_id === order.id);
+      const combinedOrders = invoices.map((invoice) => {
+        const customer = invoice.customers;
+        const product = products?.find((p) => p.id === invoice.product_id);
+        const color = colors?.find((c) => c.id === invoice.color_id);
+        const sizes = productSizes?.filter((ps) => ps.invoice_id === invoice.id);
         const images = productImages?.filter(
-          (pi) => pi.productO_id === order.id,
+          (pi) => pi.invoice_id === invoice.id,
         );
 
         // Ensure sizes is properly formatted
@@ -661,27 +655,33 @@ export class OrderService {
           sizes: Array.isArray(size.sizes) ? size.sizes[0] : size.sizes,
         }));
 
-        const transformedBrandType = brandType
+        const transformedProduct = product
           ? [
               {
-                id: brandType.id,
-                brands: Array.isArray(brandType.brands)
-                  ? brandType.brands[0]
-                  : brandType.brands || undefined,
-                product_type: Array.isArray(brandType.product_type)
-                  ? brandType.product_type[0]
-                  : brandType.product_type || undefined,
+                id: product.id,
+                brands: Array.isArray(product.brands)
+                  ? product.brands[0]
+                  : product.brands || undefined,
+                product_type: Array.isArray(product.product_type)
+                  ? product.product_type[0]
+                  : product.product_type || undefined,
               },
             ]
           : [];
 
         return {
-          ...order,
+          id: invoice.id,
+          created_at: invoice.created_at,
           customers: customer || null,
-          brand_type: transformedBrandType,
+          brand_type: transformedProduct,
           colors: color ? [color] : [],
           product_sizes: formattedSizes || [],
           product_images: images || [],
+          invoice_no: invoice.invoice_no,
+          document_types: invoice.document_types,
+          status: invoice.status,
+          product_id: invoice.product_id,
+          color_id: invoice.color_id,
         };
       });
 
@@ -692,24 +692,24 @@ export class OrderService {
     }
   }
 
-  private static buildActivityFromOrders(
-    recentOrders: OrderWithCustomer[],
+  private static buildActivityFromInvoices(
+    recentInvoices: any[],
     recentCustomers: CustomerActivity[],
   ): ActivityItem[] {
     const activities: ActivityItem[] = [];
 
-    // Add order activities
-    if (recentOrders) {
-      recentOrders.forEach((order) => {
-        const customer = Array.isArray(order.customers)
-          ? order.customers[0]
-          : order.customers;
+    // Add invoice activities
+    if (recentInvoices) {
+      recentInvoices.forEach((invoice) => {
+        const customer = Array.isArray(invoice.customers)
+          ? invoice.customers[0]
+          : invoice.customers;
         activities.push({
-          id: `order-${order.id}`,
+          id: `invoice-${invoice.id}`,
           type: "order" as const,
           title: "New order received",
-          description: `Reference No. ${order.invoices?.document_types?.ref_c2} - ${order.invoices?.ref_no} - ${customer?.name || "Unknown Customer"}`,
-          timestamp: order.created_at,
+          description: `Reference No. ${invoice.document_types?.ref_c2} - ${invoice.invoice_no} - ${customer?.name || "Unknown Customer"}`,
+          timestamp: invoice.created_at,
         });
       });
     }
@@ -755,60 +755,59 @@ export class OrderService {
         return { customer: null, orders: [] };
       }
 
-      // Fetch all orders for the customer through invoices
-      const { data: orders, error: ordersError } = await supabase
-        .from("product_orders")
+      // Fetch all invoices for the customer
+      const { data: invoices, error: invoicesError } = await supabase
+        .from("invoices")
         .select(
           `
           id,
           created_at,
-          invoice_id,
-          brandT_id,
+          product_id,
           color_id,
-          invoices!inner (
-            customer_id
-          )
+          invoice_no,
+          document_reference_number,
+          status
         `,
         )
-        .eq("invoices.customer_id", customerId)
+        .eq("customer_id", customerId)
         .order("created_at", { ascending: false });
 
-      if (ordersError) {
-        console.error("Error fetching orders:", ordersError);
+      if (invoicesError) {
+        console.error("Error fetching invoices:", invoicesError);
         return { customer, orders: [] };
       }
 
-      if (!orders || orders.length === 0) {
+      if (!invoices || invoices.length === 0) {
         return { customer, orders: [] };
       }
 
-      // Get all brand type IDs from orders
-      const brandTypeIds = orders
-        .map((order) => order.brandT_id)
+      // Get all product IDs from invoices
+      const productIds = invoices
+        .map((invoice) => invoice.product_id)
         .filter(Boolean);
 
-      // Fetch brand type details for all orders
-      const { data: brandTypes, error: brandTypesError } = await supabase
-        .from("brand_type")
+      // Fetch product details for all invoices
+      const { data: products, error: productsError } = await supabase
+        .from("products")
         .select(
           `
           id,
           brand_id,
-          type_id,
+          product_type_id,
           brands (id, name),
           product_type (id, name, is_onlyType, image_products (filepath, is_hasBack))
         `,
         )
-        .in("id", brandTypeIds);
+        .in("id", productIds);
 
-      if (brandTypesError) {
-        console.error("Error fetching brand types:", brandTypesError);
+      if (productsError) {
+        console.error("Error fetching products:", productsError);
       }
 
-      // Get all color IDs from orders
-      const colorIds = orders.map((order) => order.color_id).filter(Boolean);
+      // Get all color IDs from invoices
+      const colorIds = invoices.map((invoice) => invoice.color_id).filter(Boolean);
 
-      // Fetch color details for all orders
+      // Fetch color details for all invoices
       const { data: colors, error: colorsError } = await supabase
         .from("colors")
         .select("id, value")
@@ -818,47 +817,47 @@ export class OrderService {
         console.error("Error fetching colors:", colorsError);
       }
 
-      // Fetch product sizes for all orders
+      // Fetch product sizes for all invoices
       const { data: productSizes, error: sizesError } = await supabase
         .from("product_sizes")
         .select(
           `
           id,
-          productO_id,
+          invoice_id,
           size_id,
           quantity,
           sizes (id, value)
         `,
         )
         .in(
-          "productO_id",
-          orders.map((order) => order.id),
+          "invoice_id",
+          invoices.map((invoice) => invoice.id),
         );
 
       if (sizesError) {
         console.error("Error fetching product sizes:", sizesError);
       }
 
-      // Fetch product images for all orders
+      // Fetch product images for all invoices
       const { data: productImages, error: imagesError } = await supabase
         .from("product_images")
-        .select("id, productO_id, url, place")
+        .select("id, invoice_id, url, place")
         .in(
-          "productO_id",
-          orders.map((order) => order.id),
+          "invoice_id",
+          invoices.map((invoice) => invoice.id),
         );
 
       if (imagesError) {
         console.error("Error fetching product images:", imagesError);
       }
 
-      // Combine all data for each order
-      const combinedOrders = orders.map((order) => {
-        const brandType = brandTypes?.find((bt) => bt.id === order.brandT_id);
-        const color = colors?.find((c) => c.id === order.color_id);
-        const sizes = productSizes?.filter((ps) => ps.productO_id === order.id);
+      // Combine all data for each invoice
+      const combinedOrders = invoices.map((invoice) => {
+        const product = products?.find((p) => p.id === invoice.product_id);
+        const color = colors?.find((c) => c.id === invoice.color_id);
+        const sizes = productSizes?.filter((ps) => ps.invoice_id === invoice.id);
         const images = productImages?.filter(
-          (pi) => pi.productO_id === order.id,
+          (pi) => pi.invoice_id === invoice.id,
         );
 
         // Ensure sizes is properly formatted
@@ -867,24 +866,24 @@ export class OrderService {
           sizes: Array.isArray(size.sizes) ? size.sizes[0] : size.sizes,
         }));
 
-        const transformedBrandType = brandType
+        const transformedProduct = product
           ? [
               {
-                id: brandType.id,
-                brands: Array.isArray(brandType.brands)
-                  ? brandType.brands[0]
-                  : brandType.brands || undefined,
-                product_type: Array.isArray(brandType.product_type)
-                  ? brandType.product_type[0]
-                  : brandType.product_type || undefined,
+                id: product.id,
+                brands: Array.isArray(product.brands)
+                  ? product.brands[0]
+                  : product.brands || undefined,
+                product_type: Array.isArray(product.product_type)
+                  ? product.product_type[0]
+                  : product.product_type || undefined,
               },
             ]
           : [];
 
         return {
-          id: order.id,
-          created_at: order.created_at,
-          brand_type: transformedBrandType,
+          id: invoice.id,
+          created_at: invoice.created_at,
+          brand_type: transformedProduct,
           colors: color ? [color] : [],
           product_sizes: formattedSizes || [],
           product_images: images || [],
@@ -904,106 +903,103 @@ export class OrderService {
   // Get order details by id
   static async getOrderById(orderId: number): Promise<OrderWithCustomer> {
     try {
-      // First, get the specific order with invoice information
-      const { data: orders, error: ordersError } = await supabase
-        .from("product_orders")
+      // First, get the specific invoice with customer information
+      const { data: invoice, error: invoiceError } = await supabase
+        .from("invoices")
         .select(
           `
           id,
           created_at,
-          invoice_id,
-          brandT_id,
+          customer_id,
+          product_id,
           color_id,
-          invoices (
+          invoice_no,
+          document_reference_number,
+          status,
+          customers (
             id,
-            customer_id,
-            customers (
-              id,
-              name,
-              email,
-              contact_number
-            ),
-            document_types (
-              id,
-              ref_c2,
-              description
-            ),
-            ref_no
+            name,
+            email,
+            contact_number
+          ),
+          document_types (
+            id,
+            ref_c2,
+            description
           )
         `,
         )
         .eq("id", orderId)
-        .single()
-        .overrideTypes<OrderInDrawer>();
+        .single();
 
-      if (ordersError) {
-        console.error("Error fetching order:", ordersError);
+      if (invoiceError) {
+        console.error("Error fetching invoice:", invoiceError);
         return {} as OrderWithCustomer;
       }
 
-      if (!orders) {
+      if (!invoice) {
         return {} as OrderWithCustomer;
       }
 
-      // Get brand type information
-      const { data: brandTypes, error: brandTypesError } = await supabase
-        .from("brand_type")
+      // Get product information
+      const { data: products, error: productsError } = await supabase
+        .from("products")
         .select(
           `
           id,
           brand_id,
-          type_id,
+          product_type_id,
           brands (id, name),
           product_type (id, name, is_onlyType, image_products (filepath, is_hasBack))
         `,
         )
-        .eq("id", orders.brandT_id);
+        .eq("id", invoice.product_id);
 
-      if (brandTypesError) {
-        console.error("Error fetching brand types:", brandTypesError);
+      if (productsError) {
+        console.error("Error fetching products:", productsError);
       }
 
       // Get color information
       const { data: colors, error: colorsError } = await supabase
         .from("colors")
         .select("id, value")
-        .eq("id", orders.color_id);
+        .eq("id", invoice.color_id);
 
       if (colorsError) {
         console.error("Error fetching colors:", colorsError);
       }
 
-      // Get product sizes for the order
+      // Get product sizes for the invoice
       const { data: productSizes, error: sizesError } = await supabase
         .from("product_sizes")
         .select(
           `
           id,
-          productO_id,
+          invoice_id,
           size_id,
           quantity,
           sizes (id, value)
         `,
         )
-        .eq("productO_id", orders.id);
+        .eq("invoice_id", invoice.id);
 
       if (sizesError) {
         console.error("Error fetching product sizes:", sizesError);
       }
 
-      // Get product images for the order
+      // Get product images for the invoice
       const { data: productImages, error: imagesError } = await supabase
         .from("product_images")
-        .select("id, productO_id, url, place")
-        .eq("productO_id", orders.id);
+        .select("id, invoice_id, url, place")
+        .eq("invoice_id", invoice.id);
 
       if (imagesError) {
         console.error("Error fetching product images:", imagesError);
       }
 
       // Combine all data
-      const customer = orders.invoices?.customers;
-      const brandType = brandTypes?.[0];
+      const customer = invoice.customers;
+      const product = products?.[0];
       const color = colors?.[0];
 
       // Ensure sizes is properly formatted
@@ -1012,32 +1008,33 @@ export class OrderService {
         sizes: Array.isArray(size.sizes) ? size.sizes[0] : size.sizes,
       }));
 
-      const transformedBrandType = brandType
+      const transformedProduct = product
         ? [
             {
-              id: brandType.id,
-              brands: Array.isArray(brandType.brands)
-                ? brandType.brands[0]
-                : brandType.brands || undefined,
-              product_type: Array.isArray(brandType.product_type)
-                ? brandType.product_type[0]
-                : brandType.product_type || undefined,
+              id: product.id,
+              brands: Array.isArray(product.brands)
+                ? product.brands[0]
+                : product.brands || undefined,
+              product_type: Array.isArray(product.product_type)
+                ? product.product_type[0]
+                : product.product_type || undefined,
             },
           ]
         : [];
 
       return {
-        ...orders,
-        customers: customer as {
-          id: string;
-          name: string;
-          email: string;
-          contact_number: string;
-        },
-        brand_type: transformedBrandType,
+        id: invoice.id,
+        created_at: invoice.created_at,
+        customers: Array.isArray(customer) ? customer[0] : customer,
+        brand_type: transformedProduct,
         colors: color ? [color] : [],
         product_sizes: formattedSizes || [],
         product_images: productImages || [],
+        invoice_no: invoice.invoice_no,
+        document_reference_number: invoice.document_reference_number,
+        status: invoice.status,
+        product_id: invoice.product_id,
+        color_id: invoice.color_id,
       };
     } catch (error) {
       console.error("Error fetching order by ID:", error);

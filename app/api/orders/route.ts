@@ -24,21 +24,21 @@ export async function POST(request: NextRequest) {
     orderData.assets = assets;
 
     // Process order using OrderService
-    const { customerData, productOrderData, invoiceRefNo } = await OrderService.processOrder(orderData);
+    const { customerData, productOrderData, invoiceNo } = await OrderService.processOrder(orderData);
     
-    console.log("Order processed successfully with invoice reference:", invoiceRefNo);
+    console.log("Order processed successfully with invoice reference:", invoiceNo);
 
     // Send email notifications
     await Promise.allSettled([
-      sendOrderEmail(orderData, invoiceRefNo),
-      sendCustomerConfirmationEmail(orderData, invoiceRefNo)
+      sendOrderEmail(orderData, invoiceNo),
+      sendCustomerConfirmationEmail(orderData, invoiceNo)
     ]);
 
     return NextResponse.json({
       success: true,
       orderId: productOrderData.id,
       customerId: customerData.id,
-      invoiceRefNo: invoiceRefNo
+      invoiceNo: invoiceNo
     });
 
   } catch (error) {

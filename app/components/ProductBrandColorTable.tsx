@@ -63,16 +63,16 @@ const fetchColorProducts = async () => {
   }
 };
 
-const fetchBrandTypes = async () => {
+const fetchProducts = async () => {
   try {
     const response = await axios.get("/api/brand-types");
     if (!response.data) {
-      throw new Error("Failed to fetch brand types");
+      throw new Error("Failed to fetch products");
     }
     const data = response.data;
     return data;
   } catch (error) {
-    console.error("Error fetching brand types:", error);
+    console.error("Error fetching products:", error);
     return [];
   }
 };
@@ -98,7 +98,7 @@ export default function ProductBrandColorTable({
   refetchColor: number;
 }) {
   const [colorProducts, setColorProducts] = useState<ColorProduct[]>([]);
-  const [brandTypes, setBrandTypes] = useState<BrandTypeWithDetails[]>([]);
+  const [products, setProducts] = useState<BrandTypeWithDetails[]>([]);
   const [colors, setColors] = useState<Color[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
@@ -108,7 +108,7 @@ export default function ProductBrandColorTable({
   const [hasExpanded, setHasExpanded] = useState(false);
   const [originalState, setOriginalState] = useState<ColorProduct[]>([]);
   const [pendingChanges, setPendingChanges] = useState<{
-    toAdd: { brandT_id: number; color_id: number }[];
+    toAdd: { product_id: number; color_id: number }[];
     toDelete: number[];
   }>({ toAdd: [], toDelete: [] });
 
@@ -123,12 +123,12 @@ export default function ProductBrandColorTable({
         setColorProducts(data);
         setOriginalState(data);
 
-        const brandTypesData = await fetchBrandTypes();
-        const filteredBrandTypes = brandTypesData.filter(
-          (brandType: BrandTypeWithDetails) =>
-            brandType.product_type.is_onlyType === false,
+        const productsData = await fetchProducts();
+        const filteredProducts = productsData.filter(
+          (product: BrandTypeWithDetails) =>
+            product.product_type.is_onlyType === false,
         );
-        setBrandTypes(filteredBrandTypes);
+        setProducts(filteredProducts);
 
         // Fetch colors and set them
         const colorsData = await fetchColors();
@@ -149,7 +149,7 @@ export default function ProductBrandColorTable({
         (orig) =>
           !current.find(
             (curr) =>
-              curr.brandT_id === orig.brandT_id &&
+              curr.product_id === orig.product_id &&
               curr.color_id === orig.color_id,
           ),
       )
@@ -159,14 +159,14 @@ export default function ProductBrandColorTable({
       .filter((curr) => {
         const existsInOriginal = original.find(
           (orig) =>
-            orig.brandT_id === curr.brandT_id &&
+            orig.product_id === curr.product_id &&
             orig.color_id === curr.color_id,
         );
 
         return !existsInOriginal;
       })
       .map((item) => ({
-        brandT_id: item.brandT_id,
+        product_id: item.product_id,
         color_id: item.color_id,
       }));
 
@@ -187,10 +187,10 @@ export default function ProductBrandColorTable({
       }
     >();
 
-    // First, build complete structure from ALL brand-types relationships
-    brandTypes.forEach((brandType) => {
-      const productTypeName = brandType.product_type?.name || "Unknown";
-      const brandName = brandType.brands?.name || "Unknown";
+    // First, build complete structure from ALL product relationships
+    products.forEach((product) => {
+      const productTypeName = product.product_type?.name || "Unknown";
+      const brandName = product.brands?.name || "Unknown";
 
       if (!map.has(productTypeName)) {
         map.set(productTypeName, { productTypeName, brandTypes: new Map() });
@@ -198,16 +198,16 @@ export default function ProductBrandColorTable({
 
       const productGroup = map.get(productTypeName)!;
 
-      if (!productGroup.brandTypes.has(brandType.id)) {
-        productGroup.brandTypes.set(brandType.id, {
-          brandTypeId: brandType.id,
+      if (!productGroup.brandTypes.has(product.id)) {
+        productGroup.brandTypes.set(product.id, {
+          brandTypeId: product.id,
           brandName,
           colors: new Set(), // Start empty — colors will be populated below
           brandTypeRef: {
-            id: brandType.id,
+            id: product.id,
             brands: { name: brandName },
             product_type: { name: productTypeName },
-            brand_id: brandType.brand_id,
+            brand_id: product.brand_id,
           },
           colorId: 0, // Will be set when colors are added
         });
@@ -216,14 +216,14 @@ export default function ProductBrandColorTable({
 
     // Then, populate colors from existing color products
     colorProducts.forEach((item) => {
-      const productTypeName = item.brand_type?.product_type?.name || "Unknown";
+      const productTypeName = item.products?.product_type?.name || "Unknown";
       const productGroup = map.get(productTypeName);
       if (!productGroup) return;
 
-      const brandTypeGroup = productGroup.brandTypes.get(item.brand_type.id);
-      if (!brandTypeGroup) return;
+      const productGroupItem = productGroup.brandTypes.get(item.product_id);
+      if (!productGroupItem) return;
 
-      brandTypeGroup.colors.add(item.colors.value);
+      productGroupItem.colors.add(item.colors.value);
     });
 
     return Array.from(map.values())
@@ -238,7 +238,7 @@ export default function ProductBrandColorTable({
           a.brandName.localeCompare(b.brandName),
         ),
       }));
-  }, [brandTypes, colorProducts]);
+  }, [products, colorProducts]);
 
   // Handles the expansion of each product type using a button
   const toggleTypeExpanded = (
@@ -270,11 +270,11 @@ export default function ProductBrandColorTable({
     const brandTypeRef =
       brand.brandTypeRef ||
       colorProducts.find(
-        (item: ColorProduct) => item.brand_type.id === brand.brandTypeId,
-      )?.brand_type ||
+        (item: ColorProduct) => item.products.id === brand.brandTypeId,
+      )?.products ||
       originalState.find(
-        (item: ColorProduct) => item.brand_type.id === brand.brandTypeId,
-      )?.brand_type;
+        (item: ColorProduct) => item.products.id === brand.brandTypeId,
+      )?.products;
 
     if (!brandTypeRef) return;
 
@@ -286,7 +286,7 @@ export default function ProductBrandColorTable({
         colors.forEach(({ id: colorId, value }) => {
           const exists = newProducts.some(
             (item) =>
-              item.brand_type.id === brand.brandTypeId &&
+              item.products.id === brand.brandTypeId &&
               item.colors.value === value,
           );
 
@@ -297,8 +297,8 @@ export default function ProductBrandColorTable({
             newProducts.push({
               id: nextId,
               colors: { value },
-              brand_type: brandTypeRef,
-              brandT_id: brand.brandTypeId,
+              products: brandTypeRef,
+              product_id: brand.brandTypeId,
               color_id: colorId,
               brand_name: brandTypeRef.brands?.name || "Unknown",
               color_name: value,
@@ -308,7 +308,7 @@ export default function ProductBrandColorTable({
       } else {
         // Remove all colors for this brand
         newProducts = newProducts.filter(
-          (item) => item.brand_type.id !== brand.brandTypeId,
+          (item) => item.products.id !== brand.brandTypeId,
         );
       }
 
@@ -330,8 +330,8 @@ export default function ProductBrandColorTable({
     setColorProducts((prev: ColorProduct[]) => {
       const existingIndex = prev.findIndex(
         (item: ColorProduct) =>
-          item.brand_type.id === brandTypeId &&
-          (item.brand_type.brands?.name || "Unknown") === brandName &&
+          item.products.id === brandTypeId &&
+          (item.products.brands?.name || "Unknown") === brandName &&
           item.colors.value === color,
       );
 
@@ -348,11 +348,11 @@ export default function ProductBrandColorTable({
 
         const brandTypeRef =
           brandGroup?.brandTypeRef ||
-          prev.find((item: ColorProduct) => item.brand_type.id === brandTypeId)
-            ?.brand_type ||
+          prev.find((item: ColorProduct) => item.products.id === brandTypeId)
+            ?.products ||
           originalState.find(
-            (item: ColorProduct) => item.brand_type.id === brandTypeId,
-          )?.brand_type;
+            (item: ColorProduct) => item.products.id === brandTypeId,
+          )?.products;
 
         if (!brandTypeRef) return prev;
 
@@ -366,8 +366,8 @@ export default function ProductBrandColorTable({
           {
             id: nextId,
             colors: { value: color },
-            brand_type: brandTypeRef,
-            brandT_id: brandTypeId,
+            products: brandTypeRef,
+            product_id: brandTypeId,
             color_id: colorId, // Use the actual colorId passed from the checkbox
             brand_name: brandTypeRef.brands?.name || "Unknown",
             color_name: color,

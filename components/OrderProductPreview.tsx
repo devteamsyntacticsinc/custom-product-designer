@@ -81,9 +81,9 @@ export default function OrderProductPreview({
 }: OrderProductPreviewProps) {
   const productImages = order.product_images || [];
   const productTypeImages =
-    order.brand_type?.[0]?.product_type?.image_products || [];
+    order.products?.[0]?.product_type?.image_products || [];
   // Check is is only type
-  const isOnlyType = order.brand_type?.[0]?.product_type?.is_onlyType || false;
+  const isOnlyType = order.products?.[0]?.product_type?.is_onlyType || false;
   // Finds images that are front and back
   const imageIsFront = productTypeImages.find(
     (img) => img.is_hasBack === false,
@@ -97,7 +97,7 @@ export default function OrderProductPreview({
   });
 
   // Extract brand and product type information
-  const brandType = order.brand_type?.[0];
+  const brandType = order.products?.[0];
   const brandName = brandType?.brands?.name || "Unknown Brand";
   const productTypeName =
     brandType?.product_type?.name || "Unknown Product Type";

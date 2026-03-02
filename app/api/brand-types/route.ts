@@ -26,7 +26,7 @@ export async function GET() {
 export async function POST(request: Request) {
   try {
     const body = await request.json();
-    const { brand_id, type_id } = body;
+    const { brand_id, product_type_id } = body;
 
     if (!brand_id || typeof brand_id !== "number") {
       return NextResponse.json(
@@ -35,7 +35,7 @@ export async function POST(request: Request) {
       );
     }
 
-    if (!type_id || typeof type_id !== "number") {
+    if (!product_type_id || typeof product_type_id !== "number") {
       return NextResponse.json(
         { error: "Product Type ID is required and must be a number" },
         { status: 400 },
@@ -44,7 +44,7 @@ export async function POST(request: Request) {
 
     const createdProducts = await ProductService.createBrandType(
       brand_id,
-      type_id,
+      product_type_id,
     );
     return NextResponse.json(createdProducts, { status: 201 });
   } catch (error) {
@@ -52,7 +52,7 @@ export async function POST(request: Request) {
     if (
       error instanceof Error &&
       error.message ===
-        "Brand type with this brand and product type already exists"
+        "Product with this brand and product type already exists"
     ) {
       return NextResponse.json({ error: error.message }, { status: 409 });
     }
@@ -69,7 +69,7 @@ export async function POST(request: Request) {
 export async function PUT(request: Request) {
   try {
     const body = await request.json();
-    const { id, brand_id, type_id } = body;
+    const { id, brand_id, product_type_id } = body;
 
     if (!id || typeof id !== "number") {
       return NextResponse.json(
@@ -85,25 +85,25 @@ export async function PUT(request: Request) {
       );
     }
 
-    if (!type_id || typeof type_id !== "number") {
+    if (!product_type_id || typeof product_type_id !== "number") {
       return NextResponse.json(
         { error: "Product Type ID is required and must be a number" },
         { status: 400 },
       );
     }
 
-    const updatedBrandType = await ProductService.updateBrandType(
+    const updatedProduct = await ProductService.updateBrandType(
       id,
       brand_id,
-      type_id,
+      product_type_id,
     );
-    return NextResponse.json(updatedBrandType);
+    return NextResponse.json(updatedProduct);
   } catch (error) {
     console.error("API Error:", error);
     if (
       error instanceof Error &&
       error.message ===
-        "Brand type with this brand_id and type_id already exists"
+        "Product with this brand_id and product_type_id already exists"
     ) {
       return NextResponse.json({ error: error.message }, { status: 409 });
     }
@@ -130,7 +130,7 @@ export async function DELETE(request: Request) {
     }
 
     await ProductService.deleteBrandType(parseInt(id));
-    return NextResponse.json({ message: "Brand type deleted successfully" });
+    return NextResponse.json({ message: "Product deleted successfully" });
   } catch (error) {
     console.error("API Error:", error);
 
@@ -144,7 +144,7 @@ export async function DELETE(request: Request) {
           errorObj.code === "23503")
       ) {
         return NextResponse.json(
-          { error: "Cannot delete brand type that is being used by products" },
+          { error: "Cannot delete product that is being used by color products" },
           { status: 400 },
         );
       }

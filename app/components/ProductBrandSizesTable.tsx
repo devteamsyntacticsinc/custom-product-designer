@@ -81,16 +81,16 @@ const fetchSizeProducts = async () => {
   }
 };
 
-const fetchBrandTypes = async () => {
+const fetchProducts = async () => {
   try {
     const response = await axios.get("/api/brand-types");
     if (!response.data) {
-      throw new Error("Failed to fetch brand types");
+      throw new Error("Failed to fetch products");
     }
     const data = response.data;
     return data;
   } catch (error) {
-    console.error("Error fetching brand types:", error);
+    console.error("Error fetching products:", error);
     return [];
   }
 };
@@ -116,7 +116,7 @@ export default function ProductBrandSizesTable({
   refetchSize: number;
 }) {
   const [sizeProducts, setSizeProducts] = useState<SizeProduct[]>([]);
-  const [brandTypes, setBrandTypes] = useState<BrandTypeWithDetails[]>([]);
+  const [products, setProducts] = useState<BrandTypeWithDetails[]>([]);
   const [sizes, setSizes] = useState<Size[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
@@ -126,7 +126,7 @@ export default function ProductBrandSizesTable({
   const [hasExpanded, setHasExpanded] = useState(false);
   const [originalState, setOriginalState] = useState<SizeProduct[]>([]);
   const [pendingChanges, setPendingChanges] = useState<{
-    toAdd: { brandT_id: number; size_id: number }[];
+    toAdd: { product_id: number; size_id: number }[];
     toDelete: number[];
   }>({ toAdd: [], toDelete: [] });
 
@@ -141,9 +141,8 @@ export default function ProductBrandSizesTable({
         setSizeProducts(data);
         setOriginalState(data);
 
-        const brandTypesData = await fetchBrandTypes();
-
-        setBrandTypes(brandTypesData);
+        const productsData = await fetchProducts();
+        setProducts(productsData);
 
         // Fetch sizes and set them
         const sizesData = await fetchSizes();
@@ -164,7 +163,7 @@ export default function ProductBrandSizesTable({
         (orig) =>
           !current.find(
             (curr) =>
-              curr.brandT_id === orig.brandT_id &&
+              curr.product_id === orig.product_id &&
               curr.size_id === orig.size_id,
           ),
       )
@@ -174,13 +173,13 @@ export default function ProductBrandSizesTable({
       .filter((curr) => {
         const existsInOriginal = original.find(
           (orig) =>
-            orig.brandT_id === curr.brandT_id && orig.size_id === curr.size_id,
+            orig.product_id === curr.product_id && orig.size_id === curr.size_id,
         );
 
         return !existsInOriginal;
       })
       .map((item) => ({
-        brandT_id: item.brandT_id,
+        product_id: item.product_id,
         size_id: item.size_id,
       }));
 
@@ -201,10 +200,10 @@ export default function ProductBrandSizesTable({
       }
     >();
 
-    // First, build complete structure from ALL brand-types relationships
-    brandTypes.forEach((brandType) => {
-      const productTypeName = brandType.product_type.name;
-      const brandName = brandType.brands?.name ?? null;
+    // First, build complete structure from ALL product relationships
+    products.forEach((product) => {
+      const productTypeName = product.product_type.name;
+      const brandName = product.brands?.name ?? null;
       const hasBrandName = brandName !== null;
 
       if (!map.has(productTypeName)) {
@@ -216,13 +215,13 @@ export default function ProductBrandSizesTable({
 
       const productGroup = map.get(productTypeName)!;
 
-      if (!productGroup.brandTypes.has(brandType.id)) {
-        productGroup.brandTypes.set(brandType.id, {
-          brandTypeId: brandType.id,
+      if (!productGroup.brandTypes.has(product.id)) {
+        productGroup.brandTypes.set(product.id, {
+          brandTypeId: product.id,
           brandName,
           sizes: new Set<string>(), // Start empty — sizes will be populated below
           brandTypeRef: {
-            id: brandType.id,
+            id: product.id,
             brands: brandName ? { name: brandName } : { name: "" },
             product_type: { name: productTypeName },
           },
@@ -234,15 +233,15 @@ export default function ProductBrandSizesTable({
 
     // Then, populate sizes from existing size products
     sizeProducts.forEach((item) => {
-      const productTypeName = item.brand_type?.product_type?.name ?? "Unknown";
+      const productTypeName = item.products?.product_type?.name ?? "Unknown";
 
       const productGroup = map.get(productTypeName);
       if (!productGroup) return;
 
-      const brandTypeGroup = productGroup.brandTypes.get(item.brand_type.id);
-      if (!brandTypeGroup) return;
+      const productGroupItem = productGroup.brandTypes.get(item.product_id);
+      if (!productGroupItem) return;
 
-      brandTypeGroup.sizes.add(item.sizes.value);
+      productGroupItem.sizes.add(item.sizes.value);
     });
 
     return Array.from(map.values())
@@ -257,7 +256,7 @@ export default function ProductBrandSizesTable({
           (a.brandName ?? "").localeCompare(b.brandName ?? ""),
         ),
       }));
-  }, [brandTypes, sizeProducts]);
+  }, [products, sizeProducts]);
 
   // Handles the expansion of each product type using a button
   const toggleTypeExpanded = (
@@ -288,10 +287,10 @@ export default function ProductBrandSizesTable({
     // Use the brandTypeRef from the brand group, or find it from existing data
     const brandTypeRef =
       brand.brandTypeRef ||
-      sizeProducts.find((item) => item.brand_type?.id === brand.brandTypeId)
-        ?.brand_type ||
-      originalState.find((item) => item.brand_type?.id === brand.brandTypeId)
-        ?.brand_type;
+      sizeProducts.find((item) => item.products?.id === brand.brandTypeId)
+        ?.products ||
+      originalState.find((item) => item.products?.id === brand.brandTypeId)
+        ?.products;
 
     if (!brandTypeRef) return;
 
@@ -303,10 +302,7 @@ export default function ProductBrandSizesTable({
         sizes.forEach(({ id: sizeId, value }) => {
           const exists = newProducts.some(
             (item) =>
-              // Handle both cases: items with valid brand_type.id and items with brandT_id: null
-              (item.brand_type?.id === brand.brandTypeId ||
-                (item.brandT_id === null &&
-                  item.brand_type?.id === brand.brandTypeId)) &&
+              item.products?.id === brand.brandTypeId &&
               item.sizes.value === value,
           );
 
@@ -317,8 +313,8 @@ export default function ProductBrandSizesTable({
             newProducts.push({
               id: nextId,
               sizes: { value },
-              brand_type: brandTypeRef,
-              brandT_id: brand.brandTypeId,
+              products: brandTypeRef,
+              product_id: brand.brandTypeId,
               size_id: sizeId,
             });
           }
@@ -326,13 +322,7 @@ export default function ProductBrandSizesTable({
       } else {
         // Remove all sizes for this brand
         newProducts = newProducts.filter(
-          (item) =>
-            // Handle both cases: items with valid brand_type.id and items with brandT_id: null
-            !(
-              item.brand_type?.id === brand.brandTypeId ||
-              (item.brandT_id === null &&
-                item.brand_type?.id === brand.brandTypeId)
-            ),
+          (item) => item.products?.id !== brand.brandTypeId,
         );
       }
 
@@ -350,12 +340,11 @@ export default function ProductBrandSizesTable({
     brandName: string,
     size: string,
     sizeId: number,
-    isMug: boolean,
   ) => {
     setSizeProducts((prev) => {
       const existingIndex = prev.findIndex(
         (item) =>
-          item.brand_type?.id === brandTypeId && item.sizes.value === size,
+          item.products?.id === brandTypeId && item.sizes.value === size,
       );
 
       let newProducts;
@@ -369,10 +358,10 @@ export default function ProductBrandSizesTable({
 
         const brandTypeRef =
           brandGroup?.brandTypeRef ||
-          prev.find((item) => item.brand_type?.id === brandTypeId)
-            ?.brand_type ||
-          originalState.find((item) => item.brand_type?.id === brandTypeId)
-            ?.brand_type;
+          prev.find((item) => item.products?.id === brandTypeId)
+            ?.products ||
+          originalState.find((item) => item.products?.id === brandTypeId)
+            ?.products;
 
         if (!brandTypeRef) return prev;
 
@@ -383,8 +372,8 @@ export default function ProductBrandSizesTable({
           {
             id: nextId,
             sizes: { value: size },
-            brand_type: brandTypeRef,
-            brandT_id: brandTypeId,
+            products: brandTypeRef,
+            product_id: brandTypeId,
             size_id: sizeId, // Use the actual sizeId passed from the checkbox
           },
         ];
@@ -652,8 +641,6 @@ export default function ProductBrandSizesTable({
                                       brand.brandName,
                                       value,
                                       id,
-                                      productTypeGroup.productTypeName ===
-                                        "Mug",
                                     )
                                   }
                                   className="cursor-pointer size-4 sm:size-6"

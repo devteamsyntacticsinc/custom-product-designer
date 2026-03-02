@@ -38,12 +38,12 @@ export async function POST(request: Request) {
     // Validate each item structure
     for (const item of items) {
       if (
-        item.brandT_id !== undefined &&
-        item.brandT_id !== null &&
-        typeof item.brandT_id !== "number"
+        item.product_id !== undefined &&
+        item.product_id !== null &&
+        typeof item.product_id !== "number"
       ) {
         return NextResponse.json(
-          { error: "Each item must have a valid Brand Type or null for mugs" },
+          { error: "Each item must have a valid Product ID or null for mugs" },
           { status: 400 },
         );
       }
@@ -61,7 +61,7 @@ export async function POST(request: Request) {
     console.error("API Error:", error);
     if (
       error instanceof Error &&
-      error.message === "One or more brand types not found"
+      error.message === "One or more products not found"
     ) {
       return NextResponse.json({ error: error.message }, { status: 404 });
     }
