@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Menu, X } from "lucide-react";
 import { Combobox } from "@/components/ui/combobox";
 import { Label } from "@/components/ui/label";
-import { ProductType, Brand, Color, ColorProduct } from "@/types/product";
+import { ProductType, Brand, Color, ColorProduct, Size } from "@/types/product";
 import SizingAndQuantity from "@/components/SizingAndQuantity";
 import AssetUpload from "./AssetUpload";
 import { useAssets } from "@/contexts/AssetsContext";
@@ -43,6 +43,7 @@ export default function ProductCustomizer() {
   const [brands, setBrands] = useState<Brand[]>([]);
   const [colors, setColors] = useState<Color[]>([]);
   const [loadingBrandColors, setLoadingBrandColors] = useState(false);
+  const [sizes, setSizes] = useState<Size[]>([]);
 
   const handleNext = () => {
     setCurrentStep("contact");
@@ -74,6 +75,16 @@ export default function ProductCustomizer() {
       // Create FormData to handle file uploads
       const formData = new FormData();
 
+      // Map sizeSelection to include size values for email display
+      const sizeSelectionWithValues = sizeSelection.map(item => {
+        const size = sizes.find(s => s.id === item.size);
+        return {
+          size: item.size, // Keep ID for database
+          sizeValue: size?.value || `Size ${item.size}`, // Add value for email
+          quantity: item.quantity
+        };
+      });
+
       // Add all the order data as JSON with both IDs and display names
       const orderData = {
         // IDs for database insertion
@@ -85,7 +96,7 @@ export default function ProductCustomizer() {
         brand: brandName,
         color: colorName,
         is_onlyType: selectedProductType?.is_onlyType,
-        sizeSelection,
+        sizeSelection: sizeSelectionWithValues,
         contactInformation: contactData,
       };
 
@@ -147,6 +158,19 @@ export default function ProductCustomizer() {
       }
     };
     fetchProductTypes();
+  }, []);
+
+  useEffect(() => {
+    const fetchSizes = async () => {
+      try {
+        const res = await fetch("/api/sizes");
+        const data = await res.json();
+        setSizes(Array.isArray(data) ? data : []);
+      } catch (error) {
+        console.error("Failed to fetch sizes:", error);
+      }
+    };
+    fetchSizes();
   }, []);
 
   useEffect(() => {
@@ -481,6 +505,8 @@ export default function ProductCustomizer() {
               loadingBrands ||
               loadingBrandColors ||
               !productType ||
+              (!selectedProductType?.is_onlyType && !brand) ||
+              (!selectedProductType?.is_onlyType && !color) ||
               (!assets["front-top-left"] && !assets["front-center"]) ||
               !sizeSelection.some((item) => item.quantity > 0)
             }
