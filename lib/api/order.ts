@@ -173,11 +173,19 @@ export class OrderService {
     }
   }
 
-  static async getInvoiceByProductOrderId(productOrderId: string): Promise<{ id: string; ref_no: string; customer_id: string; status: string }> {
+  static async getInvoiceByProductOrderId(
+    productOrderId: string,
+  ): Promise<{
+    id: string;
+    ref_no: string;
+    customer_id: string;
+    status: string;
+  }> {
     try {
       const { data, error } = await supabase
         .from("product_orders")
-        .select(`
+        .select(
+          `
           invoice_id,
           invoices (
             id,
@@ -185,7 +193,8 @@ export class OrderService {
             customer_id,
             status
           )
-        `)
+        `,
+        )
         .eq("id", productOrderId)
         .single();
 
@@ -197,7 +206,12 @@ export class OrderService {
         throw new Error("Invoice not found for product order");
       }
 
-      return data.invoices[0] as { id: string; ref_no: string; customer_id: string; status: string };
+      return data.invoices[0] as {
+        id: string;
+        ref_no: string;
+        customer_id: string;
+        status: string;
+      };
     } catch (error) {
       console.error("Error fetching invoice by product order ID:", error);
       throw error;
@@ -322,7 +336,9 @@ export class OrderService {
     }
   }
 
-  static async processOrder(orderData: OrderData): Promise<OrderResult & { invoiceRefNo: string }> {
+  static async processOrder(
+    orderData: OrderData,
+  ): Promise<OrderResult & { invoiceRefNo: string }> {
     try {
       // Create customer
       const customerData = await this.createCustomer(
@@ -624,8 +640,6 @@ export class OrderService {
         const images = productImages?.filter(
           (pi) => pi.productO_id === order.id,
         );
-
-        console.log("customer", customer);
 
         // Ensure sizes is properly formatted
         const formattedSizes = sizes?.map((size) => ({

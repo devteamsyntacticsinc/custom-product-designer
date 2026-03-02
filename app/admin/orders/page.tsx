@@ -377,7 +377,7 @@ export default function OrdersPage() {
                               variant="secondary"
                               className="text-[10px] sm:text-xs"
                             >
-                              #{order.id.toString().slice(-6)}
+                              Reference No.: {order.invoices?.ref_no}
                             </Badge>
                             <span className="text-xs sm:text-sm text-gray-500 dark:text-gray-400 font-medium">
                               {formatDate(order.created_at)}
