@@ -147,7 +147,7 @@ export default function ContactInformation({
       </div>
 
       {/* Action Buttons */}
-      <div className="flex gap-3 mt-auto pt-6 bg-background border-t lg:border-none">
+      <div className="flex gap-3 mt-auto pt-6 border-t lg:border-none">
         <Button variant="outline" className="flex-1" onClick={onBack}>
           Back
         </Button>

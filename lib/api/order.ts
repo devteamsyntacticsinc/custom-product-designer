@@ -158,13 +158,24 @@ export class OrderService {
           customer_id: customerId,
           document_type_id: documentType.id,
           ref_no: refNo,
-          status: "Pending",
         })
         .select("id, ref_no")
         .single();
 
       if (error) {
         throw error;
+      }
+
+      // Insert into invoices_status table with status_id = 1
+      const { error: statusError } = await supabase
+        .from("invoices_status")
+        .insert({
+          invoice_id: data.id,
+          status_id: 1,
+        });
+
+      if (statusError) {
+        throw statusError;
       }
 
       return data;
