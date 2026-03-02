@@ -58,19 +58,30 @@ import { Combobox } from "@/components/ui/combobox";
 import { ProductType } from "@/types/product";
 
 type ChartDataItem = {
-  date: string
-  [key: string]: string | number
-}
+  date: string;
+  [key: string]: string | number;
+};
 
 export default function AdminDashboard() {
   const { data: session, status } = useSession();
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [isCollapsed, setIsCollapsed] = useState(false);
   const currentPath = usePathname();
-  const [ordersByProductTypeTimeSeriesData, setOrdersByProductTypeTimeSeriesData] = useState<{ data: ChartDataItem[]; types: string[] }>({ data: [], types: [] });
+  const [
+    ordersByProductTypeTimeSeriesData,
+    setOrdersByProductTypeTimeSeriesData,
+  ] = useState<{ data: ChartDataItem[]; types: string[] }>({
+    data: [],
+    types: [],
+  });
   const [productTypesData, setProductTypesData] = useState<ProductType[]>([]);
-  const [topCustomersList, setTopCustomersList] = useState<Array<{ id: string; name: string; email: string; count: number }>>([]);
-  const [mostOrderedBrand, setMostOrderedBrand] = useState<{ data: ChartDataItem[]; types: string[] }>({ data: [], types: [] });
+  const [topCustomersList, setTopCustomersList] = useState<
+    Array<{ id: string; name: string; email: string; count: number }>
+  >([]);
+  const [mostOrderedBrand, setMostOrderedBrand] = useState<{
+    data: ChartDataItem[];
+    types: string[];
+  }>({ data: [], types: [] });
   const [dashboardData, setDashboardData] = useState<{
     stats: {
       totalOrders: number;
@@ -99,7 +110,10 @@ export default function AdminDashboard() {
   const [currentPage, setCurrentPage] = useState(1);
   const [pageLoading, setPageLoading] = useState(false);
 
-  const [ordersByProductTypeTimeSeriesLoading, setOrdersByProductTypeTimeSeriesLoading] = useState(false);
+  const [
+    ordersByProductTypeTimeSeriesLoading,
+    setOrdersByProductTypeTimeSeriesLoading,
+  ] = useState(false);
   const [topCustomersLoading, setTopCustomersLoading] = useState(false);
   const [mostOrderedBrandLoading, setMostOrderedBrandLoading] = useState(false);
   const [ptDateRange, setPtDateRange] = useState<DateRange | undefined>({
@@ -110,12 +124,12 @@ export default function AdminDashboard() {
     from: undefined,
     to: undefined,
   });
-  const [selectedProductTypeForCustomers, setSelectedProductTypeForCustomers] = useState<string>("all");
+  const [selectedProductTypeForCustomers, setSelectedProductTypeForCustomers] =
+    useState<string>("all");
   const itemsPerPage = 10; // Make it a constant instead of state
   const hasFetchedRef = useRef(false); // Use ref to track if we've already fetched
   const router = useRouter();
   const [loadingProductTypes, setLoadingProductTypes] = useState(true);
-
 
   // Fetch dashboard data
   const fetchDashboardData = useCallback(
@@ -145,17 +159,18 @@ export default function AdminDashboard() {
       try {
         setOrdersByProductTypeTimeSeriesLoading(true);
         const params = new URLSearchParams();
-        if (ptfrom) params.set('ptfrom', ptfrom.toISOString());
-        if (ptto) params.set('ptto', ptto.toISOString());
+        if (ptfrom) params.set("ptfrom", ptfrom.toISOString());
+        if (ptto) params.set("ptto", ptto.toISOString());
         const response = await fetch(`/api/dashboard?${params.toString()}`);
         const data = await response.json();
         if (data.success) {
-          setOrdersByProductTypeTimeSeriesData(data.data.ordersByProductTypeTimeSeries);
+          setOrdersByProductTypeTimeSeriesData(
+            data.data.ordersByProductTypeTimeSeries,
+          );
         }
       } catch (error) {
         console.error("Error fetching product types:", error);
-      }
-      finally {
+      } finally {
         setOrdersByProductTypeTimeSeriesLoading(false);
       }
     },
@@ -180,32 +195,28 @@ export default function AdminDashboard() {
     }
   }, []);
 
-  const fetchProductTypes = useCallback(
-    async () => {
-      try {
-        setLoadingProductTypes(true);
-        const response = await fetch(`/api/dashboard`);
-        const data = await response.json();
-        if (data.success) {
-          setProductTypesData(data.data.productTypes);
-        }
-      } catch (error) {
-        console.error("Error fetching product types:", error);
+  const fetchProductTypes = useCallback(async () => {
+    try {
+      setLoadingProductTypes(true);
+      const response = await fetch(`/api/dashboard`);
+      const data = await response.json();
+      if (data.success) {
+        setProductTypesData(data.data.productTypes);
       }
-      finally {
-        setLoadingProductTypes(false);
-      }
-    },
-    [],
-  );
+    } catch (error) {
+      console.error("Error fetching product types:", error);
+    } finally {
+      setLoadingProductTypes(false);
+    }
+  }, []);
 
   const fetchMostOrderedBrand = useCallback(
     async (obfrom?: Date, obto?: Date) => {
       try {
         setMostOrderedBrandLoading(true);
         const params = new URLSearchParams();
-        if (obfrom) params.set('obfrom', obfrom.toISOString());
-        if (obto) params.set('obto', obto.toISOString());
+        if (obfrom) params.set("obfrom", obfrom.toISOString());
+        if (obto) params.set("obto", obto.toISOString());
         const response = await fetch(`/api/dashboard?${params.toString()}`);
         const data = await response.json();
         if (data.success) {
@@ -213,8 +224,7 @@ export default function AdminDashboard() {
         }
       } catch (error) {
         console.error("Error fetching most ordered brand:", error);
-      }
-      finally {
+      } finally {
         setMostOrderedBrandLoading(false);
       }
     },
@@ -292,11 +302,11 @@ export default function AdminDashboard() {
         <AdminSidebar
           user={null}
           sidebarOpen={false}
-          setSidebarOpen={() => { }}
-          onLogout={() => { }}
-          onNavigate={() => { }}
+          setSidebarOpen={() => {}}
+          onLogout={() => {}}
+          onNavigate={() => {}}
           isCollapsed={false}
-          onToggleCollapse={() => { }}
+          onToggleCollapse={() => {}}
           currentPath="/admin"
         />
         <div className="flex-1 lg:ml-64">
@@ -397,7 +407,7 @@ export default function AdminDashboard() {
             <Card className="p-6">
               <div className="flex flex-row items-center justify-between space-y-0 pb-2">
                 <CardTitle className="text-sm lg:text-base font-medium">
-                  Total Ordersh
+                  Total Orders
                 </CardTitle>
                 <ShoppingBag className="h-4 w-4 text-muted-foreground" />
               </div>
@@ -489,23 +499,26 @@ export default function AdminDashboard() {
                     <div className="h-[300px] w-full">
                       <Skeleton className="h-full w-full rounded-md" />
                     </div>
-                  ) : (ordersByProductTypeTimeSeriesData.data.length) > 0 ? (
+                  ) : ordersByProductTypeTimeSeriesData.data.length > 0 ? (
                     <ChartAreaInteractive
                       data={ordersByProductTypeTimeSeriesData.data}
-                      config={ordersByProductTypeTimeSeriesData.types.reduce((acc: any, type: string, index: number) => ({
-                        ...acc,
-                        [type]: {
-                          label: type,
-                          color: "#3b82f6",
-                        }
-                      }), {})}
+                      config={ordersByProductTypeTimeSeriesData.types.reduce(
+                        (acc: any, type: string, index: number) => ({
+                          ...acc,
+                          [type]: {
+                            label: type,
+                            color: "#3b82f6",
+                          },
+                        }),
+                        {},
+                      )}
                       types={ordersByProductTypeTimeSeriesData.types}
                     />
                   ) : (
                     <div className="h-[300px] w-full flex items-center justify-center text-muted-foreground">
                       No product type data available
                     </div>
-                  )}
+                  )}z
                 </CardContent>
               </Card>
 
@@ -522,7 +535,9 @@ export default function AdminDashboard() {
                   </div>
                   <div className="flex items-center gap-4 flex-wrap">
                     <div className="flex flex-col gap-1">
-                      <span className="text-[10px] text-muted-foreground font-medium uppercase">Type</span>
+                      <span className="text-[10px] text-muted-foreground font-medium uppercase">
+                        Type
+                      </span>
                       <Combobox
                         placeholder={
                           loadingProductTypes
@@ -537,7 +552,7 @@ export default function AdminDashboard() {
                           ...productTypesData.map((type) => ({
                             value: type.id.toString(),
                             label: type.name,
-                          }))
+                          })),
                         ]}
                         className="w-[200px]"
                         disabled={loadingProductTypes}
@@ -569,18 +584,24 @@ export default function AdminDashboard() {
                     </div>
                   )}
                 </CardContent>
-              </Card >
+              </Card>
 
               {/* Orders by Brand */}
               <Card className="p-6">
                 <CardHeader className="px-0 pt-0 flex flex-row items-center justify-between space-y-0 flex-wrap gap-4">
                   <div>
-                    <CardTitle className="text-sm lg:text-base font-medium">Most Ordered Brands</CardTitle>
-                    <CardDescription className="text-xs lg:text-sm">Distribution of orders by brand</CardDescription>
+                    <CardTitle className="text-sm lg:text-base font-medium">
+                      Most Ordered Brands
+                    </CardTitle>
+                    <CardDescription className="text-xs lg:text-sm">
+                      Distribution of orders by brand
+                    </CardDescription>
                   </div>
                   <div className="flex items-center gap-4 flex-wrap">
                     <div className="flex flex-col gap-1">
-                      <span className="text-[10px] text-muted-foreground font-medium uppercase">Date Range</span>
+                      <span className="text-[10px] text-muted-foreground font-medium uppercase">
+                        Date Range
+                      </span>
                       <CalendarRange
                         date={obDateRange}
                         onSelect={setObDateRange}
@@ -592,7 +613,9 @@ export default function AdminDashboard() {
                         variant="ghost"
                         size="sm"
                         className="h-8 px-2 mt-5 text-[11px]"
-                        onClick={() => setObDateRange({ from: undefined, to: undefined })}
+                        onClick={() =>
+                          setObDateRange({ from: undefined, to: undefined })
+                        }
                       >
                         Clear
                       </Button>
@@ -615,7 +638,7 @@ export default function AdminDashboard() {
                     </div>
                   )}
                 </CardContent>
-              </Card >
+              </Card>
             </div>
 
             {/* Recent Activity */}
@@ -724,7 +747,7 @@ export default function AdminDashboard() {
                             if (
                               page === 1 ||
                               page ===
-                              dashboardData.recentActivity.totalPages ||
+                                dashboardData.recentActivity.totalPages ||
                               (page >= currentPage - 1 &&
                                 page <= currentPage + 1)
                             ) {
@@ -762,7 +785,7 @@ export default function AdminDashboard() {
                               className={
                                 currentPage ===
                                   dashboardData.recentActivity.totalPages ||
-                                  pageLoading
+                                pageLoading
                                   ? "pointer-events-none opacity-50"
                                   : "cursor-pointer"
                               }
@@ -802,14 +825,13 @@ function CustomerDrawer({
   const [customerWithOrders, setCustomerWithOrders] =
     useState<CustomerWithOrdersForDashboard | null>(null);
 
-  const isOrderActivity = activity.id.includes("order");
+  const isOrderActivity = activity.id.includes("order") || activity.id.includes("invoice");
 
   useEffect(() => {
     // TODO: Fetch customer order data when drawer opens
     if (open) {
       const fetchCustomerOrderData = async (orderId: string) => {
         try {
-          console.log(orderId);
           setIsFetching(true);
 
           const response = await axios.get(`/api/admin/orders/${orderId}`);
@@ -818,7 +840,7 @@ function CustomerDrawer({
           if (orderId.includes("user")) {
             setCustomerWithOrders(data.data);
           }
-          if (orderId.includes("order")) {
+          if (orderId.includes("order") || orderId.includes("invoice")) {
             setOrderData(data.data);
           }
 
@@ -918,7 +940,8 @@ function OrderDetails({ order }: { order: OrderWithCustomer }) {
           <div className="flex-1 space-y-3 w-full">
             <div className="flex flex-wrap items-center gap-2 sm:gap-4 mb-1">
               <Badge variant="secondary" className="text-[10px] sm:text-xs">
-                #{order.id.toString().slice(-6)}
+                Reference No. {order.document_types?.ref_c2} -{" "}
+                {order.invoice_no}
               </Badge>
               <span className="text-xs sm:text-sm text-muted-foreground font-medium">
                 {formatDate(order.created_at)}
@@ -932,15 +955,15 @@ function OrderDetails({ order }: { order: OrderWithCustomer }) {
             </div>
 
             <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs sm:text-sm text-gray-600 dark:text-gray-400">
-              {order.brand_type?.[0]?.product_type?.name && (
+              {order.products?.[0]?.product_type?.name && (
                 <span className="font-semibold ">
-                  {order.brand_type[0].product_type.name}
+                  {order.products[0].product_type.name}
                 </span>
               )}
-              {order.brand_type?.[0]?.brands?.name && (
+              {order.products?.[0]?.brands?.name && (
                 <span className="flex items-center gap-1">
                   <span className="hidden sm:inline">•</span>
-                  {order.brand_type[0].brands.name}
+                  {order.products[0].brands.name}
                 </span>
               )}
               {order.colors?.[0]?.value && (
@@ -1058,7 +1081,11 @@ function CustomerWithOrdersDetails({
         ) : (
           <div className="space-y-4 max-h-[600px] overflow-y-auto pr-2">
             {orders.map((order) => (
-              <CustomerOrderCard key={order.id} order={order} />
+              <CustomerOrderCard
+                key={order.id}
+                order={order}
+                customer={customer}
+              />
             ))}
           </div>
         )}
@@ -1069,8 +1096,10 @@ function CustomerWithOrdersDetails({
 
 function CustomerOrderCard({
   order,
+  customer,
 }: {
   order: CustomerWithOrdersForDashboard["orders"][0];
+  customer: CustomerWithOrdersForDashboard["customer"];
 }) {
   const getTotalQuantity = (
     order: CustomerWithOrdersForDashboard["orders"][0],
@@ -1120,7 +1149,12 @@ function CustomerOrderCard({
           <OrderProductPreview
             order={{
               ...order,
-              customers: null,
+              customers: customer,
+              invoice_no: order.invoice_no || '',
+              document_reference_number: order.document_reference_number || null,
+              status: order.status || 'pending',
+              product_id: order.products?.[0]?.id || '',
+              color_id: order.colors?.[0]?.id || null,
             }}
           />
         </div>
@@ -1128,15 +1162,15 @@ function CustomerOrderCard({
         {/* Order Details */}
         <div className="space-y-2">
           <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-gray-600">
-            {order.brand_type?.[0]?.product_type?.name && (
+            {order.products?.[0]?.product_type?.name && (
               <span className="font-semibold ">
-                {order.brand_type[0].product_type.name}
+                {order.products[0].product_type.name}
               </span>
             )}
-            {order.brand_type?.[0]?.brands?.name && (
+            {order.products?.[0]?.brands?.name && (
               <span className="flex items-center gap-1">
                 <span>•</span>
-                {order.brand_type[0].brands.name}
+                {order.products[0].brands.name}
               </span>
             )}
             {order.colors?.[0]?.value && (

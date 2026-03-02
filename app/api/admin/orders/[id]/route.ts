@@ -13,23 +13,34 @@ export async function GET(
       { status: 400 },
     );
   }
+
   let orders;
+  let cleanedId = 0;
 
   try {
-    let type: "user" | "order" | "product" = "user";
-    let cleanedId = 0;
+    let type: "user" | "order" | "product" | "invoice" = "user";
+    
     // 1. If it contains user, set user
     if (id.includes("user")) {
       type = "user";
       cleanedId = parseInt(id.replace("user-", ""));
-    }
-    if (id.includes("order")) {
+    } else if (id.includes("order")) {
       type = "order";
       cleanedId = parseInt(id.replace("order-", ""));
-    }
-    if (id.includes("product")) {
+    } else if (id.includes("invoice")) {
+      type = "order"; // invoice is treated as order type
+      cleanedId = parseInt(id.replace("invoice-", ""));
+    } else if (id.includes("product")) {
       type = "product";
       cleanedId = parseInt(id.replace("product-", ""));
+    }
+
+    // Validate the cleaned ID
+    if (isNaN(cleanedId) || cleanedId <= 0) {
+      return NextResponse.json(
+        { success: false, error: "Invalid ID format" },
+        { status: 400 },
+      );
     }
     if (type === "user") {
       orders = await OrderService.getOrdersByCustomerId(cleanedId);

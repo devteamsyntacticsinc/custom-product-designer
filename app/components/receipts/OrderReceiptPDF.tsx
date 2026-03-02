@@ -4,8 +4,7 @@ import {
   Text,
   View,
   Image,
-  Font,
-  StyleSheet,
+  Font
 } from "@react-pdf/renderer";
 import { OrderWithCustomer } from "@/types/order";
 import { receiptStyles as styles } from "./styles";
@@ -152,10 +151,10 @@ export default function OrderReceiptPDF({ order }: OrderReceiptPDFProps) {
 
   // Get product images
   const productTypeImages =
-    order.brand_type?.[0]?.product_type?.image_products || [];
+    order.products?.[0]?.product_type?.image_products || [];
   const frontImage = productTypeImages.find((img) => img.is_hasBack === false);
   const backImage = productTypeImages.find((img) => img.is_hasBack === true);
-  const isOnlyType = order.brand_type?.[0]?.product_type?.is_onlyType || false;
+  const isOnlyType = order.products?.[0]?.product_type?.is_onlyType || false;
 
   // Create a record of images by placement using exact database values
   const imagesByPlacement: Record<string, string> = {};
@@ -187,7 +186,10 @@ export default function OrderReceiptPDF({ order }: OrderReceiptPDFProps) {
           <Text style={styles.sectionTitle}>Order Information</Text>
           <View style={styles.row}>
             <Text style={styles.label}>Order ID:</Text>
-            <Text style={styles.value}>#{order.id.toString().slice(-6)}</Text>
+            <Text style={styles.value}>
+              Reference No. {order.document_types?.ref_c2} -{" "}
+              {order.invoice_no}
+            </Text>
           </View>
           <View style={styles.row}>
             <Text style={styles.label}>Order Date:</Text>
@@ -340,15 +342,15 @@ export default function OrderReceiptPDF({ order }: OrderReceiptPDFProps) {
           <View style={styles.row}>
             <Text style={styles.label}>Product Type:</Text>
             <Text style={styles.value}>
-              {order.brand_type?.[0]?.product_type?.name || "Unknown"}
+              {order.products?.[0]?.product_type?.name || "Unknown"}
             </Text>
           </View>
 
-          {!isOnlyType && order.brand_type?.[0]?.brands?.name && (
+          {!isOnlyType && order.products?.[0]?.brands?.name && (
             <View style={styles.row}>
               <Text style={styles.label}>Brand:</Text>
               <Text style={styles.value}>
-                {order.brand_type[0].brands.name}
+                {order.products[0].brands.name}
               </Text>
             </View>
           )}

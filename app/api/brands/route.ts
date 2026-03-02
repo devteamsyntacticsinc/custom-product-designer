@@ -31,7 +31,7 @@ export async function GET(request: Request) {
 export async function POST(request: Request) {
   try {
     const body = await request.json();
-    const { name, is_Active, type_ids, type_id } = body;
+    const { name, is_Active, product_type_ids, product_type_id } = body;
 
     if (!name || typeof name !== "string" || name.trim() === "") {
       return NextResponse.json(
@@ -41,9 +41,9 @@ export async function POST(request: Request) {
     }
 
     let result;
-    if (type_ids && Array.isArray(type_ids)) {
-      // Create brand with multiple types
-      if (type_ids.length === 0) {
+    if (product_type_ids && Array.isArray(product_type_ids)) {
+      // Create brand with multiple product types
+      if (product_type_ids.length === 0) {
         return NextResponse.json(
           { error: "At least one product type must be selected" },
           { status: 400 },
@@ -51,18 +51,18 @@ export async function POST(request: Request) {
       }
       result = await ProductService.createBrandWithMultipleTypes(
         name.trim(),
-        type_ids,
+        product_type_ids,
         is_Active !== undefined ? is_Active : true,
       );
-    } else if (type_id !== undefined) {
-      // Create brand with single type (backward compatibility)
+    } else if (product_type_id !== undefined) {
+      // Create brand with single product type (backward compatibility)
       result = await ProductService.createBrandWithType(
         name.trim(),
-        type_id,
+        product_type_id,
         is_Active !== undefined ? is_Active : true,
       );
     } else {
-      // Create brand without type
+      // Create brand without product type
       result = await ProductService.createBrand(
         name.trim(),
         is_Active !== undefined ? is_Active : true,
@@ -91,7 +91,7 @@ export async function POST(request: Request) {
 export async function PUT(request: Request) {
   try {
     const body = await request.json();
-    const { id, name, is_Active, type_ids } = body;
+    const { id, name, is_Active, product_type_ids } = body;
 
     if (!id || typeof id !== "number") {
       return NextResponse.json(
@@ -100,17 +100,17 @@ export async function PUT(request: Request) {
       );
     }
 
-    if (!name && !type_ids) {
+    if (!name && !product_type_ids) {
       return NextResponse.json(
-        { error: "At least name or type_ids must be provided for update" },
+        { error: "At least name or product_type_ids must be provided for update" },
         { status: 400 },
       );
     }
 
-    // Update brand with multiple types
+    // Update brand with multiple product types
     const result = await ProductService.updateBrandWithTypes(
       id,
-      type_ids,
+      product_type_ids,
       name,
       is_Active,
     );
@@ -164,7 +164,7 @@ export async function DELETE(request: Request) {
           errorObj.code === "23503")
       ) {
         return NextResponse.json(
-          { error: "Cannot delete brand that is being used by product types" },
+          { error: "Cannot delete brand that is being used by products" },
           { status: 400 },
         );
       }

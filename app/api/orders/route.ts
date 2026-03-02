@@ -24,18 +24,21 @@ export async function POST(request: NextRequest) {
     orderData.assets = assets;
 
     // Process order using OrderService
-    const { customerData, productOrderData } = await OrderService.processOrder(orderData);
+    const { customerData, productOrderData, invoiceNo } = await OrderService.processOrder(orderData);
+    
+    console.log("Order processed successfully with invoice reference:", invoiceNo);
 
     // Send email notifications
     await Promise.allSettled([
-      sendOrderEmail(orderData, customerData.id),
-      sendCustomerConfirmationEmail(orderData, customerData.id)
+      sendOrderEmail(orderData, invoiceNo),
+      sendCustomerConfirmationEmail(orderData, invoiceNo)
     ]);
 
     return NextResponse.json({
       success: true,
       orderId: productOrderData.id,
-      customerId: customerData.id
+      customerId: customerData.id,
+      invoiceNo: invoiceNo
     });
 
   } catch (error) {
@@ -44,10 +47,10 @@ export async function POST(request: NextRequest) {
   }
 }
 
-async function sendOrderEmail(orderData: OrderData, customerId: string) {
+async function sendOrderEmail(orderData: OrderData, invoiceRefNo: string) {
   try {
     const transporter = createEmailTransporter();
-    const emailHTML = generateOrderEmailHTML(orderData, customerId, false);
+    const emailHTML = generateOrderEmailHTML(orderData, invoiceRefNo, false);
 
     await transporter.sendMail({
       from: process.env.MAIL_FROM,
@@ -62,10 +65,10 @@ async function sendOrderEmail(orderData: OrderData, customerId: string) {
   }
 }
 
-async function sendCustomerConfirmationEmail(orderData: OrderData, customerId: string) {
+async function sendCustomerConfirmationEmail(orderData: OrderData, invoiceRefNo: string) {
   try {
     const transporter = createEmailTransporter();
-    const emailHTML = generateOrderEmailHTML(orderData, customerId, true);
+    const emailHTML = generateOrderEmailHTML(orderData, invoiceRefNo, true);
 
     await transporter.sendMail({
       from: process.env.MAIL_FROM,
@@ -92,7 +95,7 @@ function createEmailTransporter() {
   });
 }
 
-function generateOrderEmailHTML(orderData: OrderData, customerId: string, isCustomer: boolean = false): string {
+function generateOrderEmailHTML(orderData: OrderData, invoiceRefNo: string, isCustomer: boolean = false): string {
   const title = isCustomer ? "Order Confirmation" : "New Order Received";
   const totalItems = orderData.sizeSelection.reduce((total, item) => total + item.quantity, 0);
 
@@ -100,7 +103,7 @@ function generateOrderEmailHTML(orderData: OrderData, customerId: string, isCust
     .filter(item => item.quantity > 0)
     .map(item => `
       <tr>
-        <td style="padding: 8px; border: 1px solid #ddd;">${item.size}</td>
+        <td style="padding: 8px; border: 1px solid #ddd;">${item.sizeValue}</td>
         <td style="padding: 8px; border: 1px solid #ddd;">${item.quantity}</td>
       </tr>
     `).join('');
@@ -139,7 +142,7 @@ function generateOrderEmailHTML(orderData: OrderData, customerId: string, isCust
         
         <div style="margin-bottom: 20px;">
           <h2 style="color: #555; font-size: 18px;">Order Information</h2>
-          <p><strong>Order ID:</strong> ${customerId}</p>
+          <p><strong>Order ID:</strong> ${invoiceRefNo}</p>
           <p><strong>Date:</strong> ${new Date().toLocaleString()}</p>
         </div>
 
