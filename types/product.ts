@@ -82,7 +82,7 @@ export interface OrderData {
   brand: string;
   color: string;
   is_onlyType?: boolean;
-  sizeSelection: { size: string; quantity: number }[];
+  sizeSelection: { size: string; sizeValue: string; quantity: number }[];
   assets: Record<string, File | null>;
   contactInformation: {
     fullName: string;

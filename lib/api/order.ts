@@ -90,8 +90,115 @@ export class OrderService {
     }
   }
 
+  static async getDocumentTypeIdByRef(refCode: string): Promise<{ id: string }> {
+    try {
+      const { data, error } = await supabase
+        .from("document_types")
+        .select("id")
+        .eq("ref_c2", refCode)
+        .single();
+
+      if (error) {
+        throw error;
+      }
+
+      return data;
+    } catch (error) {
+      console.error("Error fetching document type ID:", error);
+      throw error;
+    }
+  }
+
+  static async generateInvoiceRefNo(): Promise<string> {
+    try {
+      // Get the current highest invoice number
+      const { data: lastInvoice } = await supabase
+        .from("invoices")
+        .select("ref_no")
+        .like("ref_no", "INV-%")
+        .order("ref_no", { ascending: false })
+        .limit(1)
+        .single();
+
+      let nextNumber = 1;
+      
+      if (lastInvoice) {
+        // Extract the numeric part from INV-000001 format
+        const currentNumber = parseInt(lastInvoice.ref_no.replace("INV-", ""));
+        nextNumber = currentNumber + 1;
+      }
+
+      // Format as INV-000001 (6 digits with leading zeros)
+      return `INV-${nextNumber.toString().padStart(6, "0")}`;
+    } catch (error) {
+      console.error("Error generating invoice reference number:", error);
+      throw error;
+    }
+  }
+
+  static async createInvoice(customerId: string): Promise<{ id: string; ref_no: string }> {
+    try {
+      // Get document type ID for 'IN'
+      const documentType = await this.getDocumentTypeIdByRef("IN");
+      
+      // Generate invoice reference number
+      const refNo = await this.generateInvoiceRefNo();
+
+      const { data, error } = await supabase
+        .from("invoices")
+        .insert({
+          customer_id: customerId,
+          document_type_id: documentType.id,
+          ref_no: refNo,
+          status: "Pending",
+        })
+        .select("id, ref_no")
+        .single();
+
+      if (error) {
+        throw error;
+      }
+
+      return data;
+    } catch (error) {
+      console.error("Error creating invoice:", error);
+      throw error;
+    }
+  }
+
+  static async getInvoiceByProductOrderId(productOrderId: string): Promise<{ id: string; ref_no: string; customer_id: string; status: string }> {
+    try {
+      const { data, error } = await supabase
+        .from("product_orders")
+        .select(`
+          invoice_id,
+          invoices (
+            id,
+            ref_no,
+            customer_id,
+            status
+          )
+        `)
+        .eq("id", productOrderId)
+        .single();
+
+      if (error) {
+        throw error;
+      }
+
+      if (!data || !data.invoices || data.invoices.length === 0) {
+        throw new Error("Invoice not found for product order");
+      }
+
+      return data.invoices[0] as { id: string; ref_no: string; customer_id: string; status: string };
+    } catch (error) {
+      console.error("Error fetching invoice by product order ID:", error);
+      throw error;
+    }
+  }
+
   static async createProductOrder(
-    customerId: string,
+    invoiceId: string,
     brandTypeId: string,
     colorId: string | null,
   ): Promise<OrderResult["productOrderData"]> {
@@ -99,7 +206,7 @@ export class OrderService {
       const { data, error } = await supabase
         .from("product_orders")
         .insert({
-          customer_id: customerId,
+          invoice_id: invoiceId,
           brandT_id: brandTypeId,
           color_id: colorId,
         })
@@ -208,12 +315,15 @@ export class OrderService {
     }
   }
 
-  static async processOrder(orderData: OrderData): Promise<OrderResult> {
+  static async processOrder(orderData: OrderData): Promise<OrderResult & { invoiceRefNo: string }> {
     try {
       // Create customer
       const customerData = await this.createCustomer(
         orderData.contactInformation,
       );
+
+      // Create invoice
+      const invoiceData = await this.createInvoice(customerData.id);
 
       // Always get brand type ID for the product type
       // If brandId exists, use it to find the specific brand type
@@ -242,9 +352,9 @@ export class OrderService {
         brandTypeId = defaultBrandType.id;
       }
 
-      // Create product order - colorId can be null
+      // Create product order - now uses invoice_id instead of customer_id
       const productOrderData = await this.createProductOrder(
-        customerData.id,
+        invoiceData.id,
         brandTypeId,
         orderData.colorId,
       );
@@ -261,6 +371,7 @@ export class OrderService {
       return {
         customerData,
         productOrderData,
+        invoiceRefNo: invoiceData.ref_no,
       };
     } catch (error) {
       console.error("Error processing order:", error);
@@ -329,11 +440,11 @@ export class OrderService {
           `
           id,
           created_at,
-          customers (
+          invoices (
             id,
-            name,
-            email,
-            contact_number
+            customer_id,
+            ref_no,
+            status
           )
         `,
         )
@@ -349,9 +460,33 @@ export class OrderService {
         };
       }
 
+      // Get customer IDs from orders
+      const orderCustomerIds = allOrders
+        .map((order) => order.invoices?.[0]?.customer_id)
+        .filter(Boolean);
+
+      // Get customer information for orders
+      const { data: orderCustomers, error: orderCustomersError } = await supabase
+        .from("customers")
+        .select("id, name, email, contact_number, created_at")
+        .in("id", orderCustomerIds);
+
+      if (orderCustomersError) {
+        console.error("Error fetching order customers:", orderCustomersError);
+      }
+
+      // Transform orders to include customer information for buildActivityFromOrders
+      const transformedOrders = allOrders.map((order) => {
+        const customer = orderCustomers?.find((c) => c.id === order.invoices?.[0]?.customer_id);
+        return {
+          ...order,
+          customers: customer || null,
+        };
+      });
+
       const allActivities = this.buildActivityFromOrders(
-        allOrders,
-        allCustomers,
+        transformedOrders,
+        allCustomers || [],
       );
       const total = allActivities.length;
       const totalPages = Math.ceil(total / limit);
@@ -378,16 +513,22 @@ export class OrderService {
 
   static async getAllOrders(): Promise<OrderWithCustomer[]> {
     try {
-      // First, get basic orders with all required fields
+      // First, get basic orders with invoice information
       const { data: orders, error: ordersError } = await supabase
         .from("product_orders")
         .select(
           `
           id,
           created_at,
-          customer_id,
+          invoice_id,
           brandT_id,
-          color_id
+          color_id,
+          invoices (
+            id,
+            customer_id,
+            ref_no,
+            status
+          )
         `,
         )
         .order("created_at", { ascending: false });
@@ -401,9 +542,9 @@ export class OrderService {
         return [];
       }
 
-      // Get customer information
+      // Get customer information from invoices
       const customerIds = orders
-        .map((order) => order.customer_id)
+        .map((order) => order.invoices?.[0]?.customer_id)
         .filter(Boolean);
       const { data: customers, error: customersError } = await supabase
         .from("customers")
@@ -483,7 +624,7 @@ export class OrderService {
 
       // Combine all data
       const combinedOrders = orders.map((order) => {
-        const customer = customers?.find((c) => c.id === order.customer_id);
+        const customer = customers?.find((c) => c.id === order.invoices?.[0]?.customer_id);
         const brandType = brandTypes?.find((bt) => bt.id === order.brandT_id);
         const color = colors?.find((c) => c.id === order.color_id);
         const sizes = productSizes?.filter((ps) => ps.productO_id === order.id);
@@ -523,7 +664,7 @@ export class OrderService {
 
       return combinedOrders;
     } catch (error) {
-      console.error("Error fetching all orders:", error);
+      console.error("Error in getAllOrders:", error);
       return [];
     }
   }
@@ -591,19 +732,22 @@ export class OrderService {
         return { customer: null, orders: [] };
       }
 
-      // Fetch all orders for the customer
+      // Fetch all orders for the customer through invoices
       const { data: orders, error: ordersError } = await supabase
         .from("product_orders")
         .select(
           `
           id,
           created_at,
-          customer_id,
+          invoice_id,
           brandT_id,
-          color_id
+          color_id,
+          invoices!inner (
+            customer_id
+          )
         `,
         )
-        .eq("customer_id", customerId)
+        .eq("invoices.customer_id", customerId)
         .order("created_at", { ascending: false });
 
       if (ordersError) {
@@ -737,16 +881,22 @@ export class OrderService {
   // Get order details by id
   static async getOrderById(orderId: number): Promise<OrderWithCustomer> {
     try {
-      // First, get the specific order with all required fields
+      // First, get the specific order with invoice information
       const { data: orders, error: ordersError } = await supabase
         .from("product_orders")
         .select(
           `
           id,
           created_at,
-          customer_id,
+          invoice_id,
           brandT_id,
-          color_id
+          color_id,
+          invoices (
+            id,
+            customer_id,
+            ref_no,
+            status
+          )
         `,
         )
         .eq("id", orderId)
@@ -761,11 +911,11 @@ export class OrderService {
         return {} as OrderWithCustomer;
       }
 
-      // Get customer information
+      // Get customer information from invoice
       const { data: customers, error: customersError } = await supabase
         .from("customers")
         .select("id, name, email, contact_number")
-        .eq("id", orders.customer_id);
+        .eq("id", orders.invoices?.[0]?.customer_id);
 
       if (customersError) {
         console.error("Error fetching customers:", customersError);
