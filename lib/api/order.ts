@@ -115,7 +115,7 @@ export class OrderService {
       const { data: lastInvoice } = await supabase
         .from("invoices")
         .select("ref_no")
-        .like("ref_no", "INV-%")
+        .like("ref_no", "%")
         .order("ref_no", { ascending: false })
         .limit(1)
         .single();
@@ -123,13 +123,14 @@ export class OrderService {
       let nextNumber = 1;
       
       if (lastInvoice) {
-        // Extract the numeric part from INV-000001 format
-        const currentNumber = parseInt(lastInvoice.ref_no.replace("INV-", ""));
+        // Extract the numeric part - handle both INV-000001 and 000001 formats
+        const numericPart = lastInvoice.ref_no.replace("INV-", "");
+        const currentNumber = parseInt(numericPart);
         nextNumber = currentNumber + 1;
       }
 
-      // Format as INV-000001 (6 digits with leading zeros)
-      return `INV-${nextNumber.toString().padStart(6, "0")}`;
+      // Format as 000001 (6 digits with leading zeros)
+      return nextNumber.toString().padStart(6, "0");
     } catch (error) {
       console.error("Error generating invoice reference number:", error);
       throw error;
@@ -139,7 +140,7 @@ export class OrderService {
   static async createInvoice(customerId: string): Promise<{ id: string; ref_no: string }> {
     try {
       // Get document type ID for 'IN'
-      const documentType = await this.getDocumentTypeIdByRef("IN");
+      const documentType = await this.getDocumentTypeIdByRef("ORD");
       
       // Generate invoice reference number
       const refNo = await this.generateInvoiceRefNo();
