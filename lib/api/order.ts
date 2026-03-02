@@ -173,9 +173,7 @@ export class OrderService {
     }
   }
 
-  static async getInvoiceByProductOrderId(
-    productOrderId: string,
-  ): Promise<{
+  static async getInvoiceByProductOrderId(productOrderId: string): Promise<{
     id: string;
     ref_no: string;
     customer_id: string;
@@ -694,7 +692,7 @@ export class OrderService {
           id: `order-${order.id}`,
           type: "order" as const,
           title: "New order received",
-          description: `Order #${order.invoices?.ref_no} - ${customer?.name || "Unknown Customer"}`,
+          description: `Reference No.: ${order.invoices?.ref_no} - ${customer?.name || "Unknown Customer"}`,
           timestamp: order.created_at,
         });
       });
