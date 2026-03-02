@@ -5,6 +5,8 @@ import {
   CustomerActivity,
   ActivityItem,
   RecentActivity,
+  OrderWithInvoice,
+  OrderInDrawer,
 } from "@/types/order";
 import { CustomerWithOrdersForDashboard } from "@/types/customer";
 
@@ -443,7 +445,6 @@ export class OrderService {
       // Transform orders to include customer information for buildActivityFromOrders
       const transformedOrders = allOrders.map((order) => {
         const customer = order.invoices?.customers;
-        console.log(customer);
         return {
           ...order,
           customers: customer || null,
@@ -492,12 +493,19 @@ export class OrderService {
           invoices (
             id,
             customer_id,
+            customers (
+              id,
+              name,
+              email,
+              contact_number
+            ),
             ref_no,
             status
           )
         `,
         )
-        .order("created_at", { ascending: false });
+        .order("created_at", { ascending: false })
+        .overrideTypes<OrderWithInvoice[]>();
 
       if (ordersError) {
         console.error("Error fetching orders:", ordersError);
@@ -506,19 +514,6 @@ export class OrderService {
 
       if (!orders || orders.length === 0) {
         return [];
-      }
-
-      // Get customer information from invoices
-      const customerIds = orders
-        .map((order) => order.invoices?.[0]?.customer_id)
-        .filter(Boolean);
-      const { data: customers, error: customersError } = await supabase
-        .from("customers")
-        .select("id, name, email, contact_number")
-        .in("id", customerIds);
-
-      if (customersError) {
-        console.error("Error fetching customers:", customersError);
       }
 
       // Get brand type information
@@ -590,15 +585,15 @@ export class OrderService {
 
       // Combine all data
       const combinedOrders = orders.map((order) => {
-        const customer = customers?.find(
-          (c) => c.id === order.invoices?.[0]?.customer_id,
-        );
+        const customer = order.invoices?.customers;
         const brandType = brandTypes?.find((bt) => bt.id === order.brandT_id);
         const color = colors?.find((c) => c.id === order.color_id);
         const sizes = productSizes?.filter((ps) => ps.productO_id === order.id);
         const images = productImages?.filter(
           (pi) => pi.productO_id === order.id,
         );
+
+        console.log("customer", customer);
 
         // Ensure sizes is properly formatted
         const formattedSizes = sizes?.map((size) => ({
@@ -653,7 +648,7 @@ export class OrderService {
           id: `order-${order.id}`,
           type: "order" as const,
           title: "New order received",
-          description: `Order #${order.id.toString().slice(-6)} - ${customer?.name || "Unknown Customer"}`,
+          description: `Order #${order.invoices?.ref_no} - ${customer?.name || "Unknown Customer"}`,
           timestamp: order.created_at,
         });
       });
@@ -862,13 +857,20 @@ export class OrderService {
           invoices (
             id,
             customer_id,
+            customers (
+              id,
+              name,
+              email,
+              contact_number
+            ),
             ref_no,
             status
           )
         `,
         )
         .eq("id", orderId)
-        .single();
+        .single()
+        .overrideTypes<OrderInDrawer>();
 
       if (ordersError) {
         console.error("Error fetching order:", ordersError);
@@ -877,16 +879,6 @@ export class OrderService {
 
       if (!orders) {
         return {} as OrderWithCustomer;
-      }
-
-      // Get customer information from invoice
-      const { data: customers, error: customersError } = await supabase
-        .from("customers")
-        .select("id, name, email, contact_number")
-        .eq("id", orders.invoices?.[0]?.customer_id);
-
-      if (customersError) {
-        console.error("Error fetching customers:", customersError);
       }
 
       // Get brand type information
@@ -946,7 +938,7 @@ export class OrderService {
       }
 
       // Combine all data
-      const customer = customers?.[0] || null;
+      const customer = orders.invoices?.customers;
       const brandType = brandTypes?.[0];
       const color = colors?.[0];
 
@@ -972,7 +964,12 @@ export class OrderService {
 
       return {
         ...orders,
-        customers: customer,
+        customers: customer as {
+          id: string;
+          name: string;
+          email: string;
+          contact_number: string;
+        },
         brand_type: transformedBrandType,
         colors: color ? [color] : [],
         product_sizes: formattedSizes || [],

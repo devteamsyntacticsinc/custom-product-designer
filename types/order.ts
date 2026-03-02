@@ -49,6 +49,19 @@ export interface OrderWithCustomer {
     url: string;
     place: string;
   }>;
+
+  invoices: {
+    id: string;
+    customer_id: string;
+    customers: {
+      id: string;
+      name: string;
+      email: string;
+      contact_number: string;
+    } | null;
+    ref_no: string;
+    status: string;
+  } | null;
 }
 
 export interface CustomerActivity {
@@ -78,6 +91,46 @@ export interface RecentActivity {
       email: string;
       contact_number: string;
     } | null;
+    ref_no: string;
+    status: string;
+  } | null;
+}
+
+export interface OrderWithInvoice {
+  id: string;
+  created_at: string;
+  invoice_id: string;
+  brandT_id: string;
+  color_id: string;
+  invoices: {
+    id: string;
+    customer_id: string;
+    customers: {
+      id: string;
+      name: string;
+      email: string;
+      contact_number: string;
+    } | null;
+    ref_no: string;
+    status: string;
+  } | null;
+}
+
+export interface OrderInDrawer {
+  id: string;
+  created_at: string;
+  invoice_id: string;
+  brandT_id: string;
+  color_id: string;
+  invoices: {
+    id: string;
+    customer_id: string;
+    customers: {
+      id: string;
+      name: string;
+      email: string;
+      contact_number: string;
+    };
     ref_no: string;
     status: string;
   } | null;
