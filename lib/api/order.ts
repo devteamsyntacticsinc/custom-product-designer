@@ -173,6 +173,37 @@ export class OrderService {
     }
   }
 
+  static async getInvoiceByProductOrderId(productOrderId: string): Promise<{ id: string; ref_no: string; customer_id: string; status: string }> {
+    try {
+      const { data, error } = await supabase
+        .from("product_orders")
+        .select(`
+          invoice_id,
+          invoices (
+            id,
+            ref_no,
+            customer_id,
+            status
+          )
+        `)
+        .eq("id", productOrderId)
+        .single();
+
+      if (error) {
+        throw error;
+      }
+
+      if (!data || !data.invoices || data.invoices.length === 0) {
+        throw new Error("Invoice not found for product order");
+      }
+
+      return data.invoices[0] as { id: string; ref_no: string; customer_id: string; status: string };
+    } catch (error) {
+      console.error("Error fetching invoice by product order ID:", error);
+      throw error;
+    }
+  }
+
   static async createProductOrder(
     invoiceId: string,
     brandTypeId: string,
@@ -291,7 +322,7 @@ export class OrderService {
     }
   }
 
-  static async processOrder(orderData: OrderData): Promise<OrderResult> {
+  static async processOrder(orderData: OrderData): Promise<OrderResult & { invoiceRefNo: string }> {
     try {
       // Create customer
       const customerData = await this.createCustomer(
@@ -347,6 +378,7 @@ export class OrderService {
       return {
         customerData,
         productOrderData,
+        invoiceRefNo: invoiceData.ref_no,
       };
     } catch (error) {
       console.error("Error processing order:", error);
