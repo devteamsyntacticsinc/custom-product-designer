@@ -470,6 +470,7 @@ export class OrderService {
               email,
               contact_number
             ),
+            document_types (*),
             ref_no,
             status
           )
@@ -477,7 +478,6 @@ export class OrderService {
         )
         .order("created_at", { ascending: false })
         .overrideTypes<RecentActivity[]>();
-
       if (ordersError) {
         console.error("Error fetching orders:", ordersError);
         return {
@@ -501,6 +501,7 @@ export class OrderService {
         transformedOrders,
         allCustomers || [],
       );
+
       const total = allActivities.length;
       const totalPages = Math.ceil(total / limit);
       const startIndex = (page - 1) * limit;
@@ -544,6 +545,11 @@ export class OrderService {
               name,
               email,
               contact_number
+            ),
+            document_types (
+              id,
+              ref_c2,
+              description
             ),
             ref_no,
             status
@@ -692,7 +698,7 @@ export class OrderService {
           id: `order-${order.id}`,
           type: "order" as const,
           title: "New order received",
-          description: `Reference No.: ${order.invoices?.ref_no} - ${customer?.name || "Unknown Customer"}`,
+          description: `Reference No. ${order.invoices?.document_types?.ref_c2} - ${order.invoices?.ref_no} - ${customer?.name || "Unknown Customer"}`,
           timestamp: order.created_at,
         });
       });
@@ -906,6 +912,11 @@ export class OrderService {
               name,
               email,
               contact_number
+            ),
+            document_types (
+              id,
+              ref_c2,
+              description
             ),
             ref_no,
             status

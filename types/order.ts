@@ -59,6 +59,11 @@ export interface OrderWithCustomer {
       email: string;
       contact_number: string;
     } | null;
+    document_types: {
+      id: number;
+      ref_c2: string;
+      description: string;
+    } | null;
     ref_no: string;
     status: string;
   } | null;
@@ -91,6 +96,11 @@ export interface RecentActivity {
       email: string;
       contact_number: string;
     } | null;
+    document_types: {
+      id: number;
+      ref_c2: string;
+      description: string;
+    };
     ref_no: string;
     status: string;
   } | null;
@@ -111,6 +121,11 @@ export interface OrderWithInvoice {
       email: string;
       contact_number: string;
     } | null;
+    document_types:{
+      id: number;
+      ref_c2: string;
+      description: string;
+    } | null;
     ref_no: string;
     status: string;
   } | null;
@@ -130,6 +145,11 @@ export interface OrderInDrawer {
       name: string;
       email: string;
       contact_number: string;
+    };
+    document_types: {
+      id: number;
+      ref_c2: string;
+      description: string;
     };
     ref_no: string;
     status: string;

@@ -943,7 +943,8 @@ function OrderDetails({ order }: { order: OrderWithCustomer }) {
           <div className="flex-1 space-y-3 w-full">
             <div className="flex flex-wrap items-center gap-2 sm:gap-4 mb-1">
               <Badge variant="secondary" className="text-[10px] sm:text-xs">
-                Reference No.: {order.invoices?.ref_no}
+                Reference No. {order.invoices?.document_types?.ref_c2} -{" "}
+                {order.invoices?.ref_no}
               </Badge>
               <span className="text-xs sm:text-sm text-muted-foreground font-medium">
                 {formatDate(order.created_at)}
