@@ -103,8 +103,8 @@ export interface OrderResult {
   productOrderData: {
     id: string;
     customer_id: string;
-    brandT_id: string;
-    color_id: string;
+    product_id: string;
+    color_id: string | null;
   };
 }
 
@@ -126,9 +126,9 @@ export interface SizingAndQuantityProps {
 export interface SizeProduct {
   id: number;
   sizes: { value: string };
-  brandT_id: number;
+  product_id: number;
   size_id: number;
-  brand_type: {
+  products: {
     id: number;
     brands: { name: string };
     product_type: { name: string };
@@ -139,14 +139,14 @@ export interface BrandGroup {
   brandTypeId: number;
   brandName: string;
   sizes: Set<string>;
-  brandTypeRef: SizeProduct["brand_type"];
+  brandTypeRef: SizeProduct["products"];
   sizeId: number;
 }
 
 export interface BrandType {
   id: number;
   brand_id: number;
-  type_id: number;
+  product_type_id: number;
   brand_name?: string;
   product_type_name?: string;
 }
@@ -154,7 +154,7 @@ export interface BrandType {
 export interface BrandTypeWithDetails {
   id: number;
   brand_id: number;
-  type_id: number;
+  product_type_id: number;
   brands: {
     name: string;
   };
@@ -166,9 +166,9 @@ export interface BrandTypeWithDetails {
 
 export interface ColorBrandTypeWithDetails {
   id: number;
-  brandT_id: number;
+  product_id: number;
   color_id: number;
-  brand_type: {
+  products: {
     brand_id: number;
     brands: {
       name: string;
@@ -184,10 +184,10 @@ export interface ColorBrandTypeWithDetails {
 
 export interface ColorProduct {
   id: number;
-  brandT_id: number;
+  product_id: number;
   color_id: number;
   colors: { value: string };
-  brand_type: {
+  products: {
     id: number;
     brands: { name: string };
     product_type: { name: string };
@@ -201,7 +201,7 @@ export interface BrandGroup {
   brandTypeId: number;
   brandName: string;
   sizes: Set<string>;
-  brandTypeRef: SizeProduct["brand_type"];
+  brandTypeRef: SizeProduct["products"];
   sizeId: number;
 }
 
@@ -209,6 +209,6 @@ export interface ColorBrandGroup {
   brandTypeId: number;
   brandName: string;
   colors: Set<string>;
-  brandTypeRef: ColorProduct["brand_type"];
+  brandTypeRef: ColorProduct["products"];
   colorId: number;
 }

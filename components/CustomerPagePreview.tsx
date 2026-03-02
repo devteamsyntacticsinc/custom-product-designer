@@ -532,7 +532,7 @@ export default function CustomersTab() {
 
           // Process each filtered order to create individual rows
           filteredOrders.forEach((order: any) => {
-            const brandType = order.brand_type?.[0];
+            const brandType = order.products?.[0];
 
             allOrderRows.push({
               customerId: customer.id,
@@ -599,7 +599,7 @@ export default function CustomersTab() {
 
   const filterOrdersByValues = (orders: any[]) => {
     return orders.filter((order) => {
-      const brandType = order.brand_type?.[0];
+      const brandType = order.products?.[0];
 
       // Check product type filter
       if (filterValues.product_type && brandType?.product_type?.name) {
@@ -1051,7 +1051,7 @@ export default function CustomersTab() {
                                           total + (size.quantity || 0),
                                         0,
                                       ) || 0;
-                                    const brandType = order.brand_type?.[0];
+                                    const brandType = order.products?.[0];
 
                                     return (
                                       <div
@@ -1106,6 +1106,11 @@ export default function CustomersTab() {
                                                   contact_number:
                                                     customer.contact_number,
                                                 },
+                                                product_id: order.products?.[0]?.id || '',
+                                                color_id: order.colors?.[0]?.id || null,
+                                                invoice_no: '',
+                                                document_reference_number: null,
+                                                status: 'pending',
                                               }}
                                             />
                                           </div>

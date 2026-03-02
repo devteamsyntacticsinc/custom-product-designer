@@ -1,6 +1,8 @@
 import { supabase } from "@/lib/supabase";
 import { CustomerWithOrders, FilteredOrder } from "@/types/customer";
 
+type CustomerOrder = CustomerWithOrders["orders"][0];
+
 export class CustomerService {
   static async getCustomers(filters?: {
     product_type?: string;
@@ -18,15 +20,14 @@ export class CustomerService {
                     id, 
                     name, 
                     email, 
-                    contact_number,
-                    orders:product_orders(count)
+                    contact_number
                 `,
         )
         .order("name");
 
       let filterData: FilteredOrder[];
 
-      // If filters are applied, we need to join with orders and filter
+      // If filters are applied, we need to join with invoices and filter
       if (
         filters &&
         (filters.product_type ||
@@ -42,7 +43,7 @@ export class CustomerService {
           : "brands(id, name)";
         let selectQuery = `
           customer_id,
-          brand_type!inner(
+          products!inner(
             id,
             ${brandJoin},
             product_type!inner(id, name)
@@ -53,7 +54,7 @@ export class CustomerService {
         if (filters.size) {
           selectQuery += `,
             product_sizes!inner(
-              productO_id,
+              invoice_id,
               sizes!inner(id, value)
             )
           `;
@@ -73,17 +74,17 @@ export class CustomerService {
           `;
         }
 
-        let orderQuery = supabase.from("product_orders").select(selectQuery);
+        let orderQuery = supabase.from("invoices").select(selectQuery);
 
         // Apply filter conditions
         if (filters.product_type) {
           orderQuery = orderQuery.eq(
-            "brand_type.product_type.name",
+            "product_type.name",
             filters.product_type,
           );
         }
         if (filters.brand) {
-          orderQuery = orderQuery.eq("brand_type.brands.name", filters.brand);
+          orderQuery = orderQuery.eq("products.brands.name", filters.brand);
         }
         if (filters.size) {
           orderQuery = orderQuery.eq("product_sizes.sizes.value", filters.size);
@@ -132,9 +133,9 @@ export class CustomerService {
 
       return (data || []).map((customer) => ({
         ...customer,
-        orders: Array(customer.orders?.[0]?.count || 0).fill({}),
+        orders: [],
         hasBrands: filterData?.some(
-          (order) => order.brand_type?.brands !== null,
+          (order) => order.products?.brands !== null,
         ),
       })) as CustomerWithOrders[];
     } catch (error) {
@@ -145,16 +146,28 @@ export class CustomerService {
 
   static async getCustomerOrders(
     customerId: string,
-  ): Promise<CustomerWithOrders["orders"]> {
+  ): Promise<CustomerOrder[]> {
     try {
       const { data: orders, error: ordersError } = await supabase
-        .from("product_orders")
+        .from("invoices")
         .select(
           `
                     id,
                     created_at,
-                    brandT_id,
-                    color_id
+                    product_id,
+                    color_id,
+                    invoice_no,
+                    document_types!inner (
+                      id,
+                      ref_c2
+                    ),
+                    status,
+                    customers (
+                      id,
+                      name,
+                      email,
+                      contact_number
+                    )
                 `,
         )
         .eq("customer_id", customerId)
@@ -170,7 +183,7 @@ export class CustomerService {
       }
 
       const orderIds = orders.map((o) => o.id);
-      const brandTypeIds = orders.map((o) => o.brandT_id).filter(Boolean);
+      const brandTypeIds = orders.map((o) => o.product_id).filter(Boolean);
       const colorIds = orders.map((o) => o.color_id).filter(Boolean);
 
       const [
@@ -180,56 +193,57 @@ export class CustomerService {
         { data: productImages },
       ] = await Promise.all([
         supabase
-          .from("brand_type")
+          .from("products")
           .select(
-            "id, brands(id, name), product_type(id, name, is_onlyType, image_products(filepath, is_hasBack))",
+            `
+            id,
+            brand_id,
+            product_type_id,
+            brands (id, name),
+            product_type (id, name, is_onlyType, image_products (filepath, is_hasBack))
+          `,
           )
           .in("id", brandTypeIds),
         supabase.from("colors").select("id, value").in("id", colorIds),
         supabase
           .from("product_sizes")
-          .select("id, productO_id, size_id, quantity, sizes(id, value)")
-          .in("productO_id", orderIds),
+          .select("id, invoice_id, size_id, quantity, sizes(id, value)")
+          .in("invoice_id", orderIds),
         supabase
           .from("product_images")
-          .select("id, productO_id, url, place")
-          .in("productO_id", orderIds),
+          .select("id, invoice_id, url, place")
+          .in("invoice_id", orderIds),
       ]);
 
       return orders.map((order) => {
-        const brandType = brandTypes?.find((bt) => bt.id === order.brandT_id);
-        const color = colors?.find((c) => c.id === order.color_id);
-        const sizes = productSizes?.filter((ps) => ps.productO_id === order.id);
+        const brandType = brandTypes?.find((bt) => bt?.id === order.product_id);
+        const color = colors?.find((c) => c?.id === order.color_id);
+        const sizes = productSizes?.filter((ps) => ps?.invoice_id === order.id);
         const images = productImages?.filter(
-          (pi) => pi.productO_id === order.id,
+          (pi) => pi?.invoice_id === order.id,
         );
-
-        const transformedBrandType = brandType
-          ? [
-              {
-                id: brandType.id,
-                brands: Array.isArray(brandType.brands)
-                  ? brandType.brands[0]
-                  : brandType.brands || undefined,
-                product_type: Array.isArray(brandType.product_type)
-                  ? brandType.product_type[0]
-                  : brandType.product_type || undefined,
-              },
-            ]
-          : [];
 
         return {
           id: order.id,
           created_at: order.created_at,
-          brand_type: transformedBrandType,
-          colors: color ? [color] : [],
-          product_sizes: (sizes || []).map((size) => ({
-            ...size,
-            sizes: Array.isArray(size.sizes) ? size.sizes[0] : size.sizes,
-          })),
-          product_images: images || [],
-        };
-      }) as CustomerWithOrders["orders"];
+          products: brandType
+            ? [
+                {
+                  id: brandType.id,
+                  brands: Array.isArray(brandType.brands)
+                    ? brandType.brands[0]
+                    : brandType.brands ?? undefined,
+                  product_type: Array.isArray(brandType.product_type)
+                    ? brandType.product_type[0]
+                    : brandType.product_type ?? undefined,
+                },
+              ]
+            : undefined,
+          colors: color ? [color] : undefined,
+          product_sizes: sizes,
+          product_images: images,
+        } as CustomerOrder;
+      });
     } catch (error) {
       console.error("Error in getCustomerOrders:", error);
       return [];

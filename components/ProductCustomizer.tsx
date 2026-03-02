@@ -211,7 +211,7 @@ export default function ProductCustomizer() {
         // Filter colors for the selected brand
         const brandColorIds = colorProducts
           .filter(
-            (item: ColorProduct) => item.brand_type.brand_id === Number(brand),
+            (item: ColorProduct) => item.products.brand_id === Number(brand),
           )
           .map((item: ColorProduct) => item.color_id);
 

@@ -14,7 +14,6 @@ import {
   Package,
   RefreshCw,
   Phone,
-  Download,
   Check,
   File,
 } from "lucide-react";
@@ -377,7 +376,9 @@ export default function OrdersPage() {
                               variant="secondary"
                               className="text-[10px] sm:text-xs"
                             >
-                              #{order.id.toString().slice(-6)}
+                              Reference No.{" "}
+                              {order.document_types?.ref_c2} -{" "}
+                              {order.invoice_no}
                             </Badge>
                             <span className="text-xs sm:text-sm text-gray-500 dark:text-gray-400 font-medium">
                               {formatDate(order.created_at)}
@@ -391,15 +392,15 @@ export default function OrdersPage() {
                           </div>
 
                           <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs sm:text-sm text-gray-600">
-                            {order.brand_type?.[0]?.product_type?.name && (
+                            {order.products?.[0]?.product_type?.name && (
                               <span className="font-semibold  dark:text-gray-400">
-                                {order.brand_type[0].product_type.name}
+                                {order.products[0].product_type.name}
                               </span>
                             )}
-                            {order.brand_type?.[0]?.brands?.name && (
+                            {order.products?.[0]?.brands?.name && (
                               <span className="flex items-center gap-1 dark:text-gray-400">
                                 <span className="hidden sm:inline">•</span>
-                                {order.brand_type[0].brands.name}
+                                {order.products[0].brands.name}
                               </span>
                             )}
                             {order.colors?.[0]?.value && (

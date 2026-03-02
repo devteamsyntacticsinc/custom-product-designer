@@ -105,9 +105,9 @@ export default function OrderSummaryDialog({
 
   return createPortal(
     <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-100 p-4">
-      <div className="bg-background rounded-lg shadow-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
-        {/* Header */}
-        <div className="flex items-center justify-between p-6 border-b">
+      <div className="bg-background rounded-lg shadow-xl max-w-2xl w-full max-h-[90vh] flex flex-col">
+        {/* Fixed Header */}
+        <div className="flex items-center justify-between p-6 border-b shrink-0">
           <h2 className="text-xl font-semibold">Order Summary</h2>
           <button
             onClick={onClose}
@@ -117,8 +117,8 @@ export default function OrderSummaryDialog({
           </button>
         </div>
 
-        {/* Content */}
-        <div className="p-6 space-y-6">
+        {/* Scrollable Content */}
+        <div className="flex-1 overflow-y-auto p-6 space-y-6">
           {/* Product Details */}
           <div className="space-y-4">
             <h3 className="text-lg font-medium ">Product Details</h3>
@@ -235,8 +235,8 @@ export default function OrderSummaryDialog({
           </div>
         </div>
 
-        {/* Actions */}
-        <div className="flex gap-3 p-6 border-t bg-background">
+        {/* Fixed Actions */}
+        <div className="flex gap-3 p-6 border-t bg-background shrink-0">
           <Button
             variant="outline"
             onClick={onBack}

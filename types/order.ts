@@ -15,7 +15,7 @@ export interface OrderWithCustomer {
         contact_number: string;
       }[]
     | null;
-  brand_type?: {
+  products?: Array<{
     id: string;
     brands?: {
       id: string;
@@ -30,7 +30,7 @@ export interface OrderWithCustomer {
         is_hasBack: boolean;
       }[];
     };
-  }[];
+  }>;
   colors?: {
     id: string;
     value: string;
@@ -49,6 +49,16 @@ export interface OrderWithCustomer {
     url: string;
     place: string;
   }>;
+  invoice_no: string;
+  document_reference_number: string | null;
+  document_types?: {
+    id: number;
+    ref_c2: string;
+    description: string;
+  } | null;
+  status: string;
+  product_id: string;
+  color_id: string | null;
 }
 
 export interface CustomerActivity {
@@ -64,4 +74,76 @@ export interface ActivityItem {
   title: string;
   description: string;
   timestamp: string;
+}
+
+export interface RecentActivity {
+  id: string;
+  created_at: string;
+  customer_id: string;
+  customers: {
+    id: string;
+    name: string;
+    email: string;
+    contact_number: string;
+  } | null;
+  document_types: {
+    id: number;
+    ref_c2: string;
+    description: string;
+  } | null;
+  invoice_no: string;
+  document_reference_number: string | null;
+  status: string;
+  product_id: string;
+  color_id: string | null;
+}
+
+export interface OrderWithInvoice {
+  id: string;
+  created_at: string;
+  invoice_id: string;
+  product_id: string;
+  color_id: string;
+  invoices: {
+    id: string;
+    customer_id: string;
+    customers: {
+      id: string;
+      name: string;
+      email: string;
+      contact_number: string;
+    } | null;
+    document_types:{
+      id: number;
+      ref_c2: string;
+      description: string;
+    } | null;
+    ref_no: string;
+    status: string;
+  } | null;
+}
+
+export interface OrderInDrawer {
+  id: string;
+  created_at: string;
+  invoice_id: string;
+  product_id: string;
+  color_id: string;
+  invoices: {
+    id: string;
+    customer_id: string;
+    customers: {
+      id: string;
+      name: string;
+      email: string;
+      contact_number: string;
+    };
+    document_types: {
+      id: number;
+      ref_c2: string;
+      description: string;
+    };
+    ref_no: string;
+    status: string;
+  } | null;
 }

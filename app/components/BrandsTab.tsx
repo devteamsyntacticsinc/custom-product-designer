@@ -48,8 +48,8 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { useToast } from "@/contexts/ToastContext";
 
 interface BrandExtended extends Brand {
-  brand_type: {
-    type_id: 1;
+  products: {
+    product_type_id: number;
   }[];
 }
 
@@ -57,7 +57,7 @@ interface BrandUpdateData {
   id: number;
   name?: string;
   is_Active?: boolean;
-  type_ids?: number[];
+  product_type_ids?: number[];
 }
 
 export default function BrandsTab() {
@@ -112,21 +112,21 @@ export default function BrandsTab() {
   };
 
   const handleSubmitBrand = async (
-    payload: Brand & { is_Active: boolean; type_ids?: number[] },
+    payload: Brand & { is_Active: boolean; product_type_ids?: number[] },
   ) => {
-    const { type_ids, id: brand_id, name, is_Active } = payload;
+    const { product_type_ids, id: brand_id, name, is_Active } = payload;
 
     setIsMutating(true);
     try {
       if (brand_id) {
-        // UPDATE - Update brand info and types if provided
+        // UPDATE - Update brand info and product types if provided
         const updateData: BrandUpdateData = {
           id: brand_id,
         };
 
         if (name !== undefined) updateData.name = name;
         if (is_Active !== undefined) updateData.is_Active = is_Active;
-        if (type_ids !== undefined) updateData.type_ids = type_ids;
+        if (product_type_ids !== undefined) updateData.product_type_ids = product_type_ids;
 
         const res = await axios.put(`/api/brands`, updateData);
 
@@ -137,15 +137,15 @@ export default function BrandsTab() {
         }
         addToast("success", "Brand updated successfully");
       } else {
-        // SAVE - Create with multiple types
-        if (!type_ids || type_ids.length === 0) {
+        // SAVE - Create with multiple product types
+        if (!product_type_ids || product_type_ids.length === 0) {
           throw new Error("At least one product type must be selected");
         }
 
         const res = await axios.post("/api/brands", {
           name,
           is_Active,
-          type_ids,
+          product_type_ids,
         });
 
         // Check HTTP status
@@ -264,13 +264,13 @@ export default function BrandsTab() {
                       {brand.name}
                     </TableCell>
                     <TableCell>
-                      {brand.type_id ? (
-                        brand.brand_type.map(({ type_id }) => {
+                      {brand.products && brand.products.length > 0 ? (
+                        brand.products.map(({ product_type_id }) => {
                           const type = productTypes.find(
-                            (type) => type.id === type_id,
+                            (type) => type.id === product_type_id,
                           );
                           return (
-                            <Badge key={type_id} className="mr-2">
+                            <Badge key={product_type_id} className="mr-2">
                               {type?.name}
                             </Badge>
                           );
@@ -345,7 +345,7 @@ function BrandSheet({
   mode: "create" | "edit";
   initialData?: BrandExtended;
   onSubmit: (
-    data: Brand & { is_Active: boolean; type_ids?: number[] },
+    data: Brand & { is_Active: boolean; product_type_ids?: number[] },
   ) => Promise<void>;
   isLoading: boolean;
   productTypes: ProductType[];
@@ -356,19 +356,19 @@ function BrandSheet({
   const [active, setActive] = useState(true);
 
   const handleOpenChange = (nextOpen: boolean) => {
-    onOpenChange(nextOpen);
-
     if (nextOpen) {
+      // Reset form or populate with initial data
       setName(initialData?.name ?? "");
       setActive(initialData?.is_Active ?? true);
       setSelectedTypeIds(
-        initialData?.brand_type?.map((bt) => bt.type_id) ?? [],
+        initialData?.products?.map((product) => product.product_type_id) ?? [],
       );
     } else {
       setName("");
-      setActive(true);
       setSelectedTypeIds([]);
+      setActive(true);
     }
+    onOpenChange(nextOpen);
   };
 
   const handleSubmit = async () => {
@@ -377,13 +377,14 @@ function BrandSheet({
         id: initialData?.id ?? 0,
         name,
         is_Active: active,
-        type_ids: selectedTypeIds,
-      } as Brand & { is_Active: boolean; type_ids?: number[] });
+        product_type_ids: selectedTypeIds,
+      } as Brand & { is_Active: boolean; product_type_ids?: number[] });
       setName("");
       setSelectedTypeIds([]);
+      setActive(true);
       onOpenChange(false);
     } catch (error) {
-      console.error(error);
+      console.error("Submit error:", error);
     }
   };
 
