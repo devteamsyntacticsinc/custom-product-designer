@@ -158,7 +158,7 @@ export class OrderService {
           customer_id: customerId,
           document_type_id: documentType.id,
           invoice_no: invoiceNo,
-          status: 'Pending',
+          status: "Pending",
         })
         .select("id, invoice_no")
         .single();
@@ -168,12 +168,10 @@ export class OrderService {
       }
 
       // Insert into invoice_logs table with default 'Pending' status
-      const { error: logError } = await supabase
-        .from("invoice_logs")
-        .insert({
-          invoice_id: data.id,
-          status: 'Pending',
-        });
+      const { error: logError } = await supabase.from("invoice_logs").insert({
+        invoice_id: data.id,
+        status: "Pending",
+      });
 
       if (logError) {
         throw logError;
@@ -207,7 +205,7 @@ export class OrderService {
           status,
           product_id,
           color_id
-        `
+        `,
         )
         .eq("id", invoiceId)
         .single();
@@ -223,6 +221,70 @@ export class OrderService {
       return data;
     } catch (error) {
       console.error("Error fetching invoice by ID:", error);
+      throw error;
+    }
+  }
+
+  static async updateStatusToReadyToPickup(invoiceId: string) {
+    try {
+      const { data, error } = await supabase
+        .from("invoices")
+        .update({
+          status: "Ready for Pick-up",
+        })
+        .eq("id", invoiceId)
+        .select("id")
+        .single();
+
+      if (error) {
+        throw error;
+      }
+
+      // Insert into invoice_logs table with default 'Pending' status
+      const { error: logError } = await supabase.from("invoice_logs").insert({
+        invoice_id: data.id,
+        status: "Ready for Pick-up",
+      });
+
+      if (logError) {
+        throw logError;
+      }
+
+      return data;
+    } catch (error) {
+      console.error("Error updating invoice status:", error);
+      throw error;
+    }
+  }
+
+  static async updateStatusToClaimed(invoiceId: string) {
+    try {
+      const { data, error } = await supabase
+        .from("invoices")
+        .update({
+          status: "Claimed",
+        })
+        .eq("id", invoiceId)
+        .select("id")
+        .single();
+
+      if (error) {
+        throw error;
+      }
+
+      // Insert into invoice_logs table with default 'Pending' status
+      const { error: logError } = await supabase.from("invoice_logs").insert({
+        invoice_id: data.id,
+        status: "Claimed",
+      });
+
+      if (logError) {
+        throw logError;
+      }
+
+      return data;
+    } catch (error) {
+      console.error("Error updating invoice status:", error);
       throw error;
     }
   }
@@ -388,18 +450,15 @@ export class OrderService {
       );
 
       // Create product sizes
-      await this.createProductSizes(
-        invoiceData.id,
-        orderData.sizeSelection,
-      );
+      await this.createProductSizes(invoiceData.id, orderData.sizeSelection);
 
       // Upload product images
       await this.uploadProductImages(invoiceData.id, orderData.assets);
 
       return {
         customerData,
-        productOrderData: { 
-          id: invoiceData.id, 
+        productOrderData: {
+          id: invoiceData.id,
           customer_id: customerData.id,
           product_id: productId,
           color_id: orderData.colorId,
@@ -499,13 +558,14 @@ export class OrderService {
       }
 
       // Transform invoices to include customer information for buildActivityFromInvoices
-      const transformedInvoices = allInvoices?.map((invoice) => {
-        const customer = invoice.customers;
-        return {
-          ...invoice,
-          customers: customer || null,
-        };
-      }) || [];
+      const transformedInvoices =
+        allInvoices?.map((invoice) => {
+          const customer = invoice.customers;
+          return {
+            ...invoice,
+            customers: customer || null,
+          };
+        }) || [];
 
       const allActivities = this.buildActivityFromInvoices(
         transformedInvoices,
@@ -535,13 +595,13 @@ export class OrderService {
     }
   }
 
-static async getAllOrders(): Promise<OrderWithCustomer[]> {
-  try {
-    // First, get basic invoices with customer information
-    const { data: invoices, error: invoicesError } = await supabase
-      .from("invoices")
-      .select(
-        `
+  static async getAllOrders(): Promise<OrderWithCustomer[]> {
+    try {
+      // First, get basic invoices with customer information
+      const { data: invoices, error: invoicesError } = await supabase
+        .from("invoices")
+        .select(
+          `
         id,
         created_at,
         customer_id,
@@ -563,154 +623,160 @@ static async getAllOrders(): Promise<OrderWithCustomer[]> {
           contact_number
         )
       `,
-      )
-      .order("created_at", { ascending: false });
+        )
+        .order("created_at", { ascending: false });
 
-    if (invoicesError) {
-      console.error("Error fetching invoices:", invoicesError);
-      return [];
-    }
+      if (invoicesError) {
+        console.error("Error fetching invoices:", invoicesError);
+        return [];
+      }
 
-    if (!invoices || invoices.length === 0) {
-      return [];
-    }
+      if (!invoices || invoices.length === 0) {
+        return [];
+      }
 
-    // Get product information
-    const productIds = invoices
-      .map((invoice) => invoice.product_id)
-      .filter(Boolean);
+      // Get product information
+      const productIds = invoices
+        .map((invoice) => invoice.product_id)
+        .filter(Boolean);
 
-    const { data: products, error: productsError } = await supabase
-      .from("products")
-      .select(
-        `
+      const { data: products, error: productsError } = await supabase
+        .from("products")
+        .select(
+          `
         id,
         brand_id,
         product_type_id,
         brands (id, name),
         product_type (id, name, is_onlyType, image_products (filepath, is_hasBack))
       `,
-      )
-      .in("id", productIds);
+        )
+        .in("id", productIds);
 
-    if (productsError) {
-      console.error("Error fetching products:", productsError);
-    }
+      if (productsError) {
+        console.error("Error fetching products:", productsError);
+      }
 
-    // Get color information
-    const colorIds = invoices.map((invoice) => invoice.color_id).filter(Boolean);
-    const { data: colors, error: colorsError } = await supabase
-      .from("colors")
-      .select("id, value")
-      .in("id", colorIds);
+      // Get color information
+      const colorIds = invoices
+        .map((invoice) => invoice.color_id)
+        .filter(Boolean);
+      const { data: colors, error: colorsError } = await supabase
+        .from("colors")
+        .select("id, value")
+        .in("id", colorIds);
 
-    if (colorsError) {
-      console.error("Error fetching colors:", colorsError);
-    }
+      if (colorsError) {
+        console.error("Error fetching colors:", colorsError);
+      }
 
-    // Get product sizes for each invoice
-    const { data: productSizes, error: sizesError } = await supabase
-      .from("product_sizes")
-      .select(
-        `
+      // Get product sizes for each invoice
+      const { data: productSizes, error: sizesError } = await supabase
+        .from("product_sizes")
+        .select(
+          `
         id,
         invoice_id,
         size_id,
         quantity,
         sizes (id, value)
       `,
-      )
-      .in(
-        "invoice_id",
-        invoices.map((invoice) => invoice.id),
-      );
+        )
+        .in(
+          "invoice_id",
+          invoices.map((invoice) => invoice.id),
+        );
 
-    if (sizesError) {
-      console.error("Error fetching product sizes:", sizesError);
-    }
-
-    // Get product images for each invoice
-    const { data: productImages, error: imagesError } = await supabase
-      .from("product_images")
-      .select("id, invoice_id, url, place")
-      .in(
-        "invoice_id",
-        invoices.map((invoice) => invoice.id),
-      );
-
-    if (imagesError) {
-      console.error("Error fetching product images:", imagesError);
-    }
-
-    // Combine all data
-    const combinedOrders = invoices.map((invoice) => {
-      const customer = invoice.customers;
-      const product = products?.find((p) => p.id === invoice.product_id);
-      const color = colors?.find((c) => c.id === invoice.color_id);
-      const sizes = productSizes?.filter((ps) => ps.invoice_id === invoice.id);
-      const images = productImages?.filter(
-        (pi) => pi.invoice_id === invoice.id,
-      );
-
-      // Ensure sizes is properly formatted
-      const formattedSizes = sizes?.map((size) => ({
-        ...size,
-        sizes: Array.isArray(size.sizes) ? size.sizes[0] : size.sizes,
-      }));
-
-      const transformedProduct = product
-        ? [
-            {
-              id: product.id,
-              brands: Array.isArray(product.brands)
-                ? product.brands[0]
-                : product.brands || undefined,
-              product_type: Array.isArray(product.product_type)
-                ? product.product_type[0]
-                : product.product_type || undefined,
-            },
-          ]
-        : [];
-
-      // Handle document_types - could be object or array depending on Supabase version
-      let docType = null;
-      if (invoice.document_types) {
-        // If it's an array, take the first element
-        if (Array.isArray(invoice.document_types)) {
-          docType = invoice.document_types[0];
-        } else {
-          // It's a single object
-          docType = invoice.document_types;
-        }
+      if (sizesError) {
+        console.error("Error fetching product sizes:", sizesError);
       }
 
-      return {
-        id: invoice.id,
-        created_at: invoice.created_at,
-        customers: customer || null,
-        products: transformedProduct,
-        colors: color ? [color] : [],
-        product_sizes: formattedSizes || [],
-        product_images: images || [],
-        invoice_no: invoice.invoice_no,
-        document_reference_number: invoice.document_reference_number || null,
-        document_types: docType ? {
-          id: docType.id,
-          ref_c2: docType.ref_c2,
-          description: docType.description || ''
-        } : null,
-        status: invoice.status,
-        product_id: invoice.product_id,
-        color_id: invoice.color_id,
-      };
-    });
+      // Get product images for each invoice
+      const { data: productImages, error: imagesError } = await supabase
+        .from("product_images")
+        .select("id, invoice_id, url, place")
+        .in(
+          "invoice_id",
+          invoices.map((invoice) => invoice.id),
+        );
 
-    return combinedOrders;
-  } catch (error) {
-    console.error("Error in getAllOrders:", error);
-    return [];
+      if (imagesError) {
+        console.error("Error fetching product images:", imagesError);
+      }
+
+      // Combine all data
+      const combinedOrders = invoices.map((invoice) => {
+        const customer = invoice.customers;
+        const product = products?.find((p) => p.id === invoice.product_id);
+        const color = colors?.find((c) => c.id === invoice.color_id);
+        const sizes = productSizes?.filter(
+          (ps) => ps.invoice_id === invoice.id,
+        );
+        const images = productImages?.filter(
+          (pi) => pi.invoice_id === invoice.id,
+        );
+
+        // Ensure sizes is properly formatted
+        const formattedSizes = sizes?.map((size) => ({
+          ...size,
+          sizes: Array.isArray(size.sizes) ? size.sizes[0] : size.sizes,
+        }));
+
+        const transformedProduct = product
+          ? [
+              {
+                id: product.id,
+                brands: Array.isArray(product.brands)
+                  ? product.brands[0]
+                  : product.brands || undefined,
+                product_type: Array.isArray(product.product_type)
+                  ? product.product_type[0]
+                  : product.product_type || undefined,
+              },
+            ]
+          : [];
+
+        // Handle document_types - could be object or array depending on Supabase version
+        let docType = null;
+        if (invoice.document_types) {
+          // If it's an array, take the first element
+          if (Array.isArray(invoice.document_types)) {
+            docType = invoice.document_types[0];
+          } else {
+            // It's a single object
+            docType = invoice.document_types;
+          }
+        }
+
+        return {
+          id: invoice.id,
+          created_at: invoice.created_at,
+          customers: customer || null,
+          products: transformedProduct,
+          colors: color ? [color] : [],
+          product_sizes: formattedSizes || [],
+          product_images: images || [],
+          invoice_no: invoice.invoice_no,
+          document_reference_number: invoice.document_reference_number || null,
+          document_types: docType
+            ? {
+                id: docType.id,
+                ref_c2: docType.ref_c2,
+                description: docType.description || "",
+              }
+            : null,
+          status: invoice.status,
+          product_id: invoice.product_id,
+          color_id: invoice.color_id,
+        };
+      });
+
+      return combinedOrders;
+    } catch (error) {
+      console.error("Error in getAllOrders:", error);
+      return [];
+    }
   }
-}
 
   private static buildActivityFromInvoices(
     recentInvoices: any[],
@@ -769,7 +835,7 @@ static async getAllOrders(): Promise<OrderWithCustomer[]> {
       if (customerError) {
         console.error("Error fetching customer:", customerError);
         // If it's a "no rows" error, return empty result gracefully
-        if (customerError.code === 'PGRST116') {
+        if (customerError.code === "PGRST116") {
           return { customer: null, orders: [] };
         }
         throw customerError;
@@ -829,7 +895,9 @@ static async getAllOrders(): Promise<OrderWithCustomer[]> {
       }
 
       // Get all color IDs from invoices
-      const colorIds = invoices.map((invoice) => invoice.color_id).filter(Boolean);
+      const colorIds = invoices
+        .map((invoice) => invoice.color_id)
+        .filter(Boolean);
 
       // Fetch color details for all invoices
       const { data: colors, error: colorsError } = await supabase
@@ -879,7 +947,9 @@ static async getAllOrders(): Promise<OrderWithCustomer[]> {
       const combinedOrders = invoices.map((invoice) => {
         const product = products?.find((p) => p.id === invoice.product_id);
         const color = colors?.find((c) => c.id === invoice.color_id);
-        const sizes = productSizes?.filter((ps) => ps.invoice_id === invoice.id);
+        const sizes = productSizes?.filter(
+          (ps) => ps.invoice_id === invoice.id,
+        );
         const images = productImages?.filter(
           (pi) => pi.invoice_id === invoice.id,
         );
@@ -907,10 +977,16 @@ static async getAllOrders(): Promise<OrderWithCustomer[]> {
         return {
           id: invoice.id,
           created_at: invoice.created_at,
+          customers: customer,
           products: transformedProduct,
           colors: color ? [color] : [],
           product_sizes: formattedSizes || [],
           product_images: images || [],
+          invoice_no: invoice.invoice_no,
+          document_reference_number: invoice.document_reference_number,
+          status: invoice.status,
+          product_id: invoice.product_id,
+          color_id: invoice.color_id,
         };
       });
 
@@ -959,7 +1035,7 @@ static async getAllOrders(): Promise<OrderWithCustomer[]> {
       if (invoiceError) {
         console.error("Error fetching invoice:", invoiceError);
         // If it's a "no rows" error, return empty result gracefully
-        if (invoiceError.code === 'PGRST116') {
+        if (invoiceError.code === "PGRST116") {
           return {} as OrderWithCustomer;
         }
         throw invoiceError;

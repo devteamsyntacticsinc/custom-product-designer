@@ -1071,18 +1071,28 @@ export default function CustomersTab() {
                                             <OrderProductPreview
                                               order={{
                                                 ...order,
-                                                id: String(order.id),
+                                                id: Number(order.id),
+                                                colors: order.colors || [],
+                                                product_sizes:
+                                                  order.product_sizes || [],
+                                                product_images:
+                                                  order.product_images || [],
                                                 customers: {
-                                                  id: customer.id,
+                                                  id: Number(customer.id),
                                                   name: customer.name,
                                                   email: customer.email,
-                                                  contact_number:
+                                                  contact_number: Number(
                                                     customer.contact_number,
+                                                  ),
                                                 },
                                                 product_id:
-                                                  order.products?.[0]?.id || "",
+                                                  Number(
+                                                    order.products?.[0]?.id,
+                                                  ) || 0,
                                                 color_id:
-                                                  order.colors?.[0]?.id || null,
+                                                  Number(
+                                                    order.colors?.[0]?.id,
+                                                  ) || 0,
                                                 invoice_no: "",
                                                 document_reference_number: null,
                                                 status: "pending",
