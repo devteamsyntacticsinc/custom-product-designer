@@ -302,11 +302,11 @@ export default function AdminDashboard() {
         <AdminSidebar
           user={null}
           sidebarOpen={false}
-          setSidebarOpen={() => {}}
-          onLogout={() => {}}
-          onNavigate={() => {}}
+          setSidebarOpen={() => { }}
+          onLogout={() => { }}
+          onNavigate={() => { }}
           isCollapsed={false}
-          onToggleCollapse={() => {}}
+          onToggleCollapse={() => { }}
           currentPath="/admin"
         />
         <div className="flex-1 lg:ml-64">
@@ -518,7 +518,7 @@ export default function AdminDashboard() {
                     <div className="h-[300px] w-full flex items-center justify-center text-muted-foreground">
                       No product type data available
                     </div>
-                  )}z
+                  )}
                 </CardContent>
               </Card>
 
@@ -747,7 +747,7 @@ export default function AdminDashboard() {
                             if (
                               page === 1 ||
                               page ===
-                                dashboardData.recentActivity.totalPages ||
+                              dashboardData.recentActivity.totalPages ||
                               (page >= currentPage - 1 &&
                                 page <= currentPage + 1)
                             ) {
@@ -785,7 +785,7 @@ export default function AdminDashboard() {
                               className={
                                 currentPage ===
                                   dashboardData.recentActivity.totalPages ||
-                                pageLoading
+                                  pageLoading
                                   ? "pointer-events-none opacity-50"
                                   : "cursor-pointer"
                               }
@@ -825,7 +825,8 @@ function CustomerDrawer({
   const [customerWithOrders, setCustomerWithOrders] =
     useState<CustomerWithOrdersForDashboard | null>(null);
 
-  const isOrderActivity = activity.id.includes("order") || activity.id.includes("invoice");
+  const isOrderActivity =
+    activity.id.includes("order") || activity.id.includes("invoice");
 
   useEffect(() => {
     // TODO: Fetch customer order data when drawer opens
@@ -1150,11 +1151,12 @@ function CustomerOrderCard({
             order={{
               ...order,
               customers: customer,
-              invoice_no: order.invoice_no || '',
-              document_reference_number: order.document_reference_number || null,
-              status: order.status || 'pending',
-              product_id: order.products?.[0]?.id || '',
-              color_id: order.colors?.[0]?.id || null,
+              invoice_no: order.invoice_no || "",
+              document_reference_number:
+                order.document_reference_number || null,
+              status: order.status || "pending",
+              product_id: order.products?.[0]?.id || 0,
+              color_id: order.colors?.[0]?.id || 0,
             }}
           />
         </div>

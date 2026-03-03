@@ -1,11 +1,13 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import React, { useState, useEffect } from "react";
 import { useRouter, usePathname } from "next/navigation";
 import { useSession, signOut } from "next-auth/react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import { OrderWithCustomer } from "@/types/order";
 import {
   Menu,
@@ -24,6 +26,16 @@ import axios from "axios";
 import { useToast } from "@/contexts/ToastContext";
 import { PDFDownloadLink } from "@react-pdf/renderer";
 import OrderReceiptPDF from "@/app/components/receipts/OrderReceiptPDF";
+import {
+  Dialog,
+  DialogClose,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
 
 export default function OrdersPage() {
   const { data: session, status } = useSession();
@@ -87,6 +99,8 @@ export default function OrdersPage() {
 
       const data = res.data;
       addToast("success", data.message);
+      // Refetch orders after successful email send
+      fetchOrders();
     } catch (error: any) {
       console.error("Error sending pickup email:", error);
       const msg = error.response?.data?.error || "Failed to send pickup email";
@@ -295,6 +309,11 @@ export default function OrdersPage() {
               orders.map((order) => {
                 const customer = getCustomerInfo(order.customers);
                 const totalQuantity = getTotalQuantity(order);
+                const invoiceStatus = order.status as
+                  | "Pending"
+                  | "Ready for Pick-up"
+                  | "Claimed";
+
                 const customerName =
                   customer?.name
                     ?.trim()
@@ -313,11 +332,41 @@ export default function OrdersPage() {
                       {/* Product Preview */}
                       <div>
                         <div className="flex items-center content-center justify-between mb-2">
-                          <h3 className="text-base lg:text-lg font-semibold  dark:text-white mb-3 sm:mb-4">
-                            Product Design
-                          </h3>
+                          <div className="flex items-center gap-4">
+                            <h3 className="text-base lg:text-lg font-semibold  dark:text-white">
+                              Product Design
+                            </h3>
+                            <Badge variant="default">{invoiceStatus} </Badge>
+                          </div>
                           <div className="flex items-center gap-2">
-                            {cooldownIds.has(order.id) ? (
+                            {invoiceStatus === "Ready for Pick-up" && (
+                              <ConfirmClaimedDialog
+                                orderId={order.id}
+                                fetchOrders={fetchOrders}
+                              >
+                                <Button
+                                  variant="outline"
+                                  className="h-10 border-green-500 cursor-pointer"
+                                >
+                                  <Check
+                                    className="text-green-500"
+                                    strokeWidth={1.5}
+                                  />
+                                  Mark As Claimed
+                                </Button>
+                              </ConfirmClaimedDialog>
+                            )}
+                            {invoiceStatus === "Claimed" && (
+                              <Button
+                                variant="outline"
+                                className="h-10 border-green-500 bg-green-100 text-green-600 cursor-pointer"
+                                disabled
+                              >
+                                <Check className="" strokeWidth={1.5} />
+                                Claimed
+                              </Button>
+                            )}
+                            {cooldownIds.has(order.id.toString()) ? (
                               <Button
                                 variant="outline"
                                 size="sm"
@@ -339,7 +388,9 @@ export default function OrdersPage() {
                                 <Button
                                   variant="outline"
                                   size="sm"
-                                  onClick={() => handleDownload(order.id)}
+                                  onClick={() =>
+                                    handleDownload(order.id.toString())
+                                  }
                                   className="h-10"
                                 >
                                   <File className="h-4 w-4 sm:h-5 sm:w-5" />
@@ -350,15 +401,19 @@ export default function OrdersPage() {
                             <Button
                               variant="outline"
                               size="sm"
-                              onClick={() => handleSendPickupEmail(order.id)}
-                              disabled={sendingEmailIds.has(order.id)}
+                              onClick={() =>
+                                handleSendPickupEmail(order.id.toString())
+                              }
+                              disabled={sendingEmailIds.has(
+                                order.id.toString(),
+                              )}
                               className="h-10"
                             >
                               <Mail
-                                className={`h-4 w-4 sm:h-5 sm:w-5 ${sendingEmailIds.has(order.id) ? "animate-pulse" : ""}`}
+                                className={`h-4 w-4 sm:h-5 sm:w-5 ${sendingEmailIds.has(order.id.toString()) ? "animate-pulse" : ""}`}
                               />
                               <span>
-                                {sendingEmailIds.has(order.id)
+                                {sendingEmailIds.has(order.id.toString())
                                   ? "Sending..."
                                   : "Send Pickup Email"}
                               </span>
@@ -376,8 +431,7 @@ export default function OrdersPage() {
                               variant="secondary"
                               className="text-[10px] sm:text-xs"
                             >
-                              Reference No.{" "}
-                              {order.document_types?.ref_c2} -{" "}
+                              Reference No. {order.document_types?.ref_c2} -{" "}
                               {order.invoice_no}
                             </Badge>
                             <span className="text-xs sm:text-sm text-gray-500 dark:text-gray-400 font-medium">
@@ -467,5 +521,124 @@ export default function OrdersPage() {
         </main>
       </div>
     </div>
+  );
+}
+
+function ConfirmClaimedDialog({
+  children,
+  orderId,
+  fetchOrders,
+}: {
+  children: React.ReactNode;
+  orderId: number;
+  fetchOrders: () => Promise<void>;
+}) {
+  const { addToast } = useToast();
+  const [isOpen, setIsOpen] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
+  const [documentReferenceNumber, setDocumentReferenceNumber] = useState("");
+  const [error, setError] = useState("");
+
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = e.target.value;
+    setDocumentReferenceNumber(value);
+    setError("");
+  };
+
+  const isButtonDisabled = !documentReferenceNumber.trim() || isLoading;
+
+  const handleClaimed = async () => {
+    const trimmedRef = documentReferenceNumber.trim();
+
+    if (!trimmedRef) {
+      setError("Document reference number is required");
+      return;
+    }
+
+    if (trimmedRef.length > 50) {
+      setError("Document reference number must be 50 characters or less");
+      return;
+    }
+
+    try {
+      setIsLoading(true);
+      setError("");
+
+      const response = await axios.post(`/api/orders/${orderId}/claim`, {
+        document_reference_number: trimmedRef,
+      });
+
+      // Check HTTP status
+      if (response.status !== 201) {
+        const errorData = response.data;
+        throw new Error(errorData?.error || "Failed to mark order as claimed");
+      }
+
+      await fetchOrders();
+      addToast("success", "Order marked as claimed successfully");
+      setDocumentReferenceNumber("");
+      setIsOpen(false);
+    } catch (error: any) {
+      console.error("Error marking order as claimed:", error);
+      const errorMessage =
+        error.response?.data?.error || "Failed to mark order as claimed";
+      setError(errorMessage);
+      addToast("error", errorMessage);
+    } finally {
+      setIsLoading(false);
+      setDocumentReferenceNumber("");
+      setError("");
+      setIsOpen(false);
+    }
+  };
+
+  return (
+    <Dialog open={isOpen} onOpenChange={setIsOpen}>
+      <DialogTrigger asChild>{children}</DialogTrigger>
+      <DialogContent>
+        <DialogHeader>
+          <DialogTitle>Mark Order as Claimed</DialogTitle>
+          <DialogDescription>
+            Are you sure you want to mark this order as claimed? This action
+            cannot be undone.
+          </DialogDescription>
+        </DialogHeader>
+
+        <div className="space-y-4 py-4">
+          <div className="space-y-2">
+            <Label htmlFor="document_reference_number">
+              Document Reference Number <span className="text-red-500">*</span>
+            </Label>
+            <Input
+              id="document_reference_number"
+              value={documentReferenceNumber}
+              onChange={handleInputChange}
+              placeholder="Enter document reference number"
+              disabled={isLoading}
+              className={error ? "border-red-500" : ""}
+              maxLength={50}
+            />
+            {error && <p className="text-sm text-red-500">{error}</p>}
+            <p className="text-xs text-gray-500">Maximum 50 characters</p>
+          </div>
+        </div>
+
+        <DialogFooter>
+          <DialogClose asChild>
+            <Button variant="outline" disabled={isLoading}>
+              Cancel
+            </Button>
+          </DialogClose>
+          <Button
+            variant="outline"
+            className="bg-green-500 text-white hover:bg-green-600"
+            onClick={handleClaimed}
+            disabled={isButtonDisabled}
+          >
+            {isLoading ? "Updating..." : "Mark As Claimed"}
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
   );
 }

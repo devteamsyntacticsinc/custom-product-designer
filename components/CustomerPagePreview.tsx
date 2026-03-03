@@ -646,11 +646,11 @@ export default function CustomersTab() {
         prev.map((c) =>
           c.id === customerId
             ? {
-                ...c,
-                orders: filteredOrders,
-                isLoadingOrders: false,
-                ordersLoaded: true,
-              }
+              ...c,
+              orders: filteredOrders,
+              isLoadingOrders: false,
+              ordersLoaded: true,
+            }
             : c,
         ),
       );
@@ -900,20 +900,20 @@ export default function CustomersTab() {
                 />
                 {(filterValues.date_range?.from ||
                   filterValues.date_range?.to) && (
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    className="h-8 px-2"
-                    onClick={() =>
-                      setFilterValues((prev) => ({
-                        ...prev,
-                        date_range: undefined,
-                      }))
-                    }
-                  >
-                    <X className="h-3 w-3" />
-                  </Button>
-                )}
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="h-8 px-2"
+                      onClick={() =>
+                        setFilterValues((prev) => ({
+                          ...prev,
+                          date_range: undefined,
+                        }))
+                      }
+                    >
+                      <X className="h-3 w-3" />
+                    </Button>
+                  )}
               </div>
             </div>
 
@@ -1031,58 +1031,49 @@ export default function CustomersTab() {
                                         key={order.id}
                                         className="bg-background dark:bg-gray-800 border dark:border-gray-700 rounded-xl overflow-hidden shadow-sm hover:shadow-md transition-shadow"
                                       >
-                                        {/* Order Header */}
-                                        <div className="bg-gray-50/50 dark:bg-gray-700/50 px-4 py-3 border-b dark:border-gray-600 flex flex-wrap justify-between items-center gap-2">
-                                          <div className="flex items-center gap-3">
-                                            <Badge
-                                              variant="outline"
-                                              className="text-[10px] sm:text-xs font-bold bg-background dark:bg-gray-800"
-                                            >
-                                              #{String(order.id).slice(-6)}
-                                            </Badge>
-                                            <div className="flex items-center gap-1.5 text-gray-500 dark:text-gray-400">
-                                              <Calendar className="h-3.5 w-3.5" />
-                                              <span className="text-[11px] font-semibold">
-                                                {new Date(
-                                                  order.created_at,
-                                                ).toLocaleDateString("en-US", {
-                                                  year: "numeric",
-                                                  month: "short",
-                                                  day: "numeric",
-                                                })}
-                                              </span>
-                                            </div>
-                                          </div>
-                                          <Badge
-                                            variant="outline"
-                                            className="text-[10px] sm:text-xs text-blue-600 border-blue-200 bg-blue-50 dark:border-blue-800 dark:bg-blue-950 font-bold px-2 py-0.5"
-                                          >
-                                            {totalQuantity} items
-                                          </Badge>
-                                        </div>
-
                                         <div className="p-4 sm:p-6 space-y-6">
                                           {/* Product Preview Section */}
                                           <div>
-                                            <h5 className="text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-widest mb-3 flex items-center gap-2">
-                                              <ImageIcon className="h-3.5 w-3.5" />
-                                              Product Design
-                                            </h5>
+                                            <div className="flex items-center justify-between content-center mb-4">
+                                              <h5 className="text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-widest mb-3 flex items-center gap-2">
+                                                Product Design
+                                              </h5>
+                                              <div className="flex flex-col items-end gap-1.5 self-end sm:self-auto">
+                                                {order.status && (
+                                                  <Badge
+                                                    variant="outline"
+                                                    className="text-[10px] font-bold px-2 py-0.5 rounded-full"
+                                                  >
+                                                    {order.status}
+                                                  </Badge>
+                                                )}
+                                              </div>
+                                            </div>
                                             <OrderProductPreview
                                               order={{
                                                 ...order,
-                                                id: String(order.id),
+                                                id: Number(order.id),
+                                                colors: order.colors || [],
+                                                product_sizes:
+                                                  order.product_sizes || [],
+                                                product_images:
+                                                  order.product_images || [],
                                                 customers: {
-                                                  id: customer.id,
+                                                  id: Number(customer.id),
                                                   name: customer.name,
                                                   email: customer.email,
-                                                  contact_number:
+                                                  contact_number: Number(
                                                     customer.contact_number,
+                                                  ),
                                                 },
                                                 product_id:
-                                                  order.products?.[0]?.id || "",
+                                                  Number(
+                                                    order.products?.[0]?.id,
+                                                  ) || 0,
                                                 color_id:
-                                                  order.colors?.[0]?.id || null,
+                                                  Number(
+                                                    order.colors?.[0]?.id,
+                                                  ) || 0,
                                                 invoice_no: "",
                                                 document_reference_number: null,
                                                 status: "pending",
@@ -1091,83 +1082,106 @@ export default function CustomersTab() {
                                           </div>
 
                                           {/* Detailed Info Section */}
-                                          <div className="space-y-4 pt-4 border-t border-gray-100 dark:border-gray-700">
-                                            {/* Product & Brand Info */}
-                                            <div className="flex flex-wrap items-center gap-x-3 gap-y-2 text-sm text-gray-700 dark:text-gray-300">
-                                              {brandType?.product_type
-                                                ?.name && (
-                                                <span className="font-bold  dark:text-white bg-gray-100 dark:bg-gray-700 px-2 py-0.5 rounded italic">
-                                                  {brandType.product_type.name}
-                                                </span>
-                                              )}
-                                              {brandType?.brands?.name && (
-                                                <span className="flex items-center gap-2">
-                                                  <span className="text-gray-300 dark:text-gray-600">
-                                                    •
-                                                  </span>
-                                                  <span className="font-medium text-gray-600 dark:text-gray-400 flex items-center gap-1.5">
-                                                    <Package className="h-3.5 w-3.5" />
-                                                    {brandType.brands.name}
-                                                  </span>
-                                                </span>
-                                              )}
-                                              {order.colors?.[0]?.value && (
-                                                <span className="flex items-center gap-2">
-                                                  <span className="text-gray-300 dark:text-gray-600">
-                                                    •
-                                                  </span>
-                                                  <div className="flex items-center gap-1.5">
-                                                    <div
-                                                      className="w-3 h-3 rounded-full border dark:border-gray-600"
-                                                      style={{
-                                                        backgroundColor:
-                                                          order.colors[0].value,
-                                                      }}
-                                                    />
-                                                    <span className="font-bold text-gray-600 dark:text-gray-400 uppercase text-[11px]">
-                                                      {order.colors[0].value}
-                                                    </span>
-                                                  </div>
-                                                </span>
-                                              )}
+                                          <div className="space-y-4 pt-6 mt-6 border-t border-gray-100 dark:border-gray-800">
+                                            {/* Row 1: Order Info & Customer Info */}
+                                            <div className="flex flex-wrap items-center gap-3">
+                                              <Badge
+                                                variant="secondary"
+                                                className="bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 font-medium px-3 py-1 rounded-full border-none text-[11px]"
+                                              >
+                                                Reference No. {order.document_types?.ref_c2} - {order.invoice_no}
+                                              </Badge>
+                                              <span className="text-[11px] text-gray-500 dark:text-gray-400">
+                                                {new Date(order.created_at).toLocaleString("en-US", {
+                                                  month: "short",
+                                                  day: "numeric",
+                                                  year: "numeric",
+                                                  hour: "2-digit",
+                                                  minute: "2-digit",
+                                                  hour12: true,
+                                                })}
+                                              </span>
+                                              <Badge
+                                                variant="secondary"
+                                                className="bg-blue-50 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 font-medium px-3 py-1 rounded-full border-none text-[11px]"
+                                              >
+                                                {totalQuantity} items
+                                              </Badge>
                                             </div>
 
-                                            {/* Sizes & Quantities */}
-                                            {order.product_sizes &&
-                                              order.product_sizes.length >
-                                                0 && (
-                                                <div className="gap-2 flex flex-col">
-                                                  <div className="flex items-center gap-1.5 text-[11px] font-bold text-gray-400 dark:text-gray-500 uppercase tracking-wider">
-                                                    <Ruler className="h-3 w-3" />
-                                                    Sizes & Quantities
-                                                  </div>
+                                            {/* Row 2: Product & Brand Info */}
+                                            <div className="flex flex-wrap items-center gap-x-2 gap-y-1 text-sm text-gray-700 dark:text-gray-300">
+                                              <span className="font-bold text-gray-900 dark:text-white">
+                                                {brandType?.product_type?.name || "Product"}
+                                              </span>
+                                              <span className="text-gray-300 dark:text-gray-600">
+                                                •
+                                              </span>
+                                              <span className="text-gray-500 dark:text-gray-400">
+                                                {brandType?.brands?.name || "N/A"}
+                                              </span>
+                                              <span className="text-gray-300 dark:text-gray-600">
+                                                •
+                                              </span>
+                                              <span className="text-gray-500 dark:text-gray-400">
+                                                {order.colors?.[0]?.value || "N/A"}
+                                              </span>
+                                            </div>
+
+                                            {/* Row 3: Sizes & Quantities */}
+                                            {order.product_sizes && order.product_sizes.length > 0 && (
+                                              <div className="flex justify-between align-center items-center">
+                                                <div className="flex flex-wrap items-center gap-3 pt-1">
+                                                  <span className="text-[11px] font-bold text-gray-400 dark:text-gray-500 uppercase tracking-tighter">
+                                                    SIZES:
+                                                  </span>
                                                   <div className="flex flex-wrap gap-2">
-                                                    {order.product_sizes.map(
-                                                      (ps) => (
-                                                        <Badge
-                                                          key={ps.id}
-                                                          variant="secondary"
-                                                          className="text-[11px] font-bold px-2.5 py-1 bg-blue-50/50 dark:bg-blue-900/50 text-blue-700 dark:text-blue-300 border border-blue-100 dark:border-blue-800"
-                                                        >
-                                                          {ps.sizes?.value ||
-                                                            "Unknown"}
-                                                          :{" "}
-                                                          <span className="ml-1 text-black dark:text-white bg-background dark:bg-gray-700 px-1.5 rounded">
-                                                            {ps.quantity}
-                                                          </span>
-                                                        </Badge>
-                                                      ),
-                                                    )}
+                                                    {order.product_sizes.map((ps) => (
+                                                      <Badge
+                                                        key={ps.id}
+                                                        variant="secondary"
+                                                        className="text-[11px] font-bold px-3 py-1 bg-blue-50/50 dark:bg-blue-900/20 text-blue-700 dark:text-blue-300 border border-blue-100/50 dark:border-blue-800/50 rounded-full"
+                                                      >
+                                                        {ps.sizes?.value || "Unknown"} ({ps.quantity})
+                                                      </Badge>
+                                                    ))}
                                                   </div>
                                                 </div>
-                                              )}
+                                                <div className="flex items-end gap-1.5 self-end sm:self-auto">
+                                                  {order.invoice_logs &&
+                                                    order.invoice_logs.map((log) => (
+                                                      <Fragment key={log.id}>
+                                                        <div className="flex flex-col items-center gap-2 ">
+                                                          <Badge
+                                                            variant="outline"
+                                                            className="text-[10px] font-bold px-2 py-0.5 rounded-full"
+                                                          >
+                                                            {log.status}
+                                                          </Badge>
+                                                          <span className="text-[10px] text-gray-400">
+                                                            {new Date(
+                                                              log.created_at,
+                                                            ).toLocaleString("en-US", {
+                                                              month: "short",
+                                                              day: "numeric",
+                                                              hour: "2-digit",
+                                                              minute: "2-digit",
+                                                            })}
+                                                          </span>
+                                                        </div>
+                                                      </Fragment>
+                                                    ))}
+                                                </div>
+                                              </div>
+                                            )}
                                           </div>
                                         </div>
                                       </div>
                                     );
                                   })}
                                 </div>
-                              )}
+                              )
+                              }
                             </div>
                           </TableCell>
                         </TableRow>
@@ -1180,6 +1194,6 @@ export default function CustomersTab() {
           </div>
         )}
       </CardContent>
-    </Card>
+    </Card >
   );
 }

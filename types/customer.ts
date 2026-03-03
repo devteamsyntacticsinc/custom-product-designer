@@ -11,16 +11,16 @@ export interface CustomerWithOrders {
   email: string;
   contact_number: string;
   orders: {
-    id: string | number;
+    id: number;
     created_at: string;
     products?: {
-      id: string;
+      id: number;
       brands?: {
-        id: string;
+        id: number;
         name: string;
       };
       product_type?: {
-        id: string;
+        id: number;
         name: string;
         is_onlyType: boolean;
         image_products?: {
@@ -30,22 +30,39 @@ export interface CustomerWithOrders {
       };
     }[];
     colors?: {
-      id: string;
+      id: number;
       value: string;
     }[];
     product_sizes?: Array<{
-      id: string;
-      size_id: string;
+      id: number;
+      invoice_id: number;
+      size_id: number;
       quantity: number;
       sizes?: {
-        id: string;
+        id: number;
         value: string;
       };
     }>;
     product_images?: Array<{
-      id: string;
+      id: number;
+      invoice_id: number;
       url: string;
       place: string;
+    }>;
+    invoice_no: string;
+    document_reference_number: string | null;
+    document_types?: {
+      id: number;
+      ref_c2: string;
+      description: string;
+    } | null;
+    status: string;
+    product_id: number;
+    color_id: number;
+    invoice_logs?: Array<{
+      id: number;
+      status: string;
+      created_at: string;
     }>;
   }[];
   hasBrands: boolean;
@@ -53,25 +70,36 @@ export interface CustomerWithOrders {
 
 export interface CustomerWithOrdersForDashboard {
   customer: {
-    id: string;
+    id: number;
     name: string;
     email: string;
-    contact_number: string;
+    contact_number: number;
   } | null;
   orders: Array<{
-    id: string;
+    id: number;
     created_at: string;
-    invoice_no?: string;
-    document_reference_number?: string | null;
-    status?: string;
-    products?: {
-      id: string;
+    customers:
+    | {
+      id: number;
+      name: string;
+      email: string;
+      contact_number: number;
+    }
+    | {
+      id: number;
+      name: string;
+      email: string;
+      contact_number: number;
+    }[]
+    | null;
+    products?: Array<{
+      id: number;
       brands?: {
-        id: string;
+        id: number;
         name: string;
       };
       product_type?: {
-        id: string;
+        id: number;
         name: string;
         is_onlyType: boolean;
         image_products?: {
@@ -79,25 +107,37 @@ export interface CustomerWithOrdersForDashboard {
           is_hasBack: boolean;
         }[];
       };
-    }[];
-    colors?: {
-      id: string;
+    }>;
+    colors: {
+      id: number;
       value: string;
     }[];
-    product_sizes?: Array<{
-      id: string;
-      size_id: string;
+    product_sizes: Array<{
+      id: number;
+      invoice_id: number;
+      size_id: number;
       quantity: number;
       sizes?: {
-        id: string;
+        id: number;
         value: string;
       };
     }>;
-    product_images?: Array<{
-      id: string;
+    product_images: Array<{
+      id: number;
+      invoice_id: number;
       url: string;
       place: string;
     }>;
+    invoice_no: string;
+    document_reference_number: string | null;
+    document_types?: {
+      id: number;
+      ref_c2: string;
+      description: string;
+    } | null;
+    status: string;
+    product_id: number;
+    color_id: number;
   }>;
 }
 

@@ -1,28 +1,28 @@
 export interface OrderWithCustomer {
-  id: string;
+  id: number;
   created_at: string;
   customers:
     | {
-        id: string;
+        id: number;
         name: string;
         email: string;
-        contact_number: string;
+        contact_number: number;
       }
     | {
-        id: string;
+        id: number;
         name: string;
         email: string;
-        contact_number: string;
+        contact_number: number;
       }[]
     | null;
   products?: Array<{
-    id: string;
+    id: number;
     brands?: {
-      id: string;
+      id: number;
       name: string;
     };
     product_type?: {
-      id: string;
+      id: number;
       name: string;
       is_onlyType: boolean;
       image_products?: {
@@ -31,21 +31,23 @@ export interface OrderWithCustomer {
       }[];
     };
   }>;
-  colors?: {
-    id: string;
+  colors: {
+    id: number;
     value: string;
   }[];
-  product_sizes?: Array<{
-    id: string;
-    size_id: string;
+  product_sizes: Array<{
+    id: number;
+    invoice_id: number;
+    size_id: number;
     quantity: number;
     sizes?: {
-      id: string;
+      id: number;
       value: string;
     };
   }>;
-  product_images?: Array<{
-    id: string;
+  product_images: Array<{
+    id: number;
+    invoice_id: number;
     url: string;
     place: string;
   }>;
@@ -57,8 +59,8 @@ export interface OrderWithCustomer {
     description: string;
   } | null;
   status: string;
-  product_id: string;
-  color_id: string | null;
+  product_id: number;
+  color_id: number;
 }
 
 export interface CustomerActivity {
@@ -113,7 +115,7 @@ export interface OrderWithInvoice {
       email: string;
       contact_number: string;
     } | null;
-    document_types:{
+    document_types: {
       id: number;
       ref_c2: string;
       description: string;

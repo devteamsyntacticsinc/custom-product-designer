@@ -20,7 +20,8 @@ export class CustomerService {
                     id, 
                     name, 
                     email, 
-                    contact_number
+                    contact_number,
+                    invoices (id)
                 `,
         )
         .order("name");
@@ -42,6 +43,7 @@ export class CustomerService {
           ? "brands!inner(id, name)"
           : "brands(id, name)";
         let selectQuery = `
+          id,
           customer_id,
           products!inner(
             id,
@@ -131,11 +133,21 @@ export class CustomerService {
         return [];
       }
 
-      return (data || []).map((customer) => ({
-        ...customer,
-        orders: [],
-        hasBrands: filterData?.some((order) => order.products?.brands !== null),
-      })) as CustomerWithOrders[];
+      return (data || []).map((customer: any) => {
+        const matchingOrders = filterData
+          ? filterData.filter(
+            (o) => String(o.customer_id) === String(customer.id),
+          )
+          : (customer.invoices || []);
+
+        return {
+          ...customer,
+          orders: matchingOrders,
+          hasBrands: filterData?.some(
+            (order) => order.products?.brands !== null,
+          ),
+        };
+      }) as CustomerWithOrders[];
     } catch (error) {
       console.error("Error in getCustomers:", error);
       return [];
@@ -153,16 +165,23 @@ export class CustomerService {
                     product_id,
                     color_id,
                     invoice_no,
+                    document_reference_number,
+                    status,
                     document_types!inner (
                       id,
-                      ref_c2
+                      ref_c2,
+                      description
                     ),
-                    status,
                     customers (
                       id,
                       name,
                       email,
                       contact_number
+                    ),
+                    invoice_logs(
+                      id,
+                      status,
+                      created_at
                     )
                 `,
         )
@@ -214,7 +233,12 @@ export class CustomerService {
       return orders.map((order) => {
         const brandType = brandTypes?.find((bt) => bt?.id === order.product_id);
         const color = colors?.find((c) => c?.id === order.color_id);
-        const sizes = productSizes?.filter((ps) => ps?.invoice_id === order.id);
+        const sizes = productSizes
+          ?.filter((ps) => ps?.invoice_id === order.id)
+          .map((ps: any) => ({
+            ...ps,
+            sizes: Array.isArray(ps.sizes) ? ps.sizes[0] : ps.sizes,
+          }));
         const images = productImages?.filter(
           (pi) => pi?.invoice_id === order.id,
         );
@@ -224,21 +248,30 @@ export class CustomerService {
           created_at: order.created_at,
           products: brandType
             ? [
-                {
-                  id: brandType.id,
-                  brands: Array.isArray(brandType.brands)
-                    ? brandType.brands[0]
-                    : (brandType.brands ?? undefined),
-                  product_type: Array.isArray(brandType.product_type)
-                    ? brandType.product_type[0]
-                    : (brandType.product_type ?? undefined),
-                },
-              ]
+              {
+                id: brandType.id,
+                brands: Array.isArray(brandType.brands)
+                  ? brandType.brands[0]
+                  : (brandType.brands ?? undefined),
+                product_type: Array.isArray(brandType.product_type)
+                  ? brandType.product_type[0]
+                  : (brandType.product_type ?? undefined),
+              },
+            ]
             : undefined,
           colors: color ? [color] : undefined,
           product_sizes: sizes,
           product_images: images,
-        } as CustomerOrder;
+          invoice_no: order.invoice_no,
+          document_reference_number: order.document_reference_number,
+          status: order.status,
+          product_id: order.product_id,
+          color_id: order.color_id,
+          invoice_logs: order.invoice_logs,
+          document_types: Array.isArray(order.document_types)
+            ? order.document_types[0]
+            : order.document_types,
+        } as unknown as CustomerOrder;
       });
     } catch (error) {
       console.error("Error in getCustomerOrders:", error);
