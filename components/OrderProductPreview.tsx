@@ -38,7 +38,7 @@ interface DesignAreaProps {
   customClass: string;
   imageUrl?: string;
   onDownload: (url: string, filename: string) => void;
-  orderId: string;
+  orderId: number;
 }
 
 const DesignArea = React.memo(({

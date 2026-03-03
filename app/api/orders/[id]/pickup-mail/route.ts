@@ -1,72 +1,93 @@
-import { NextRequest, NextResponse } from 'next/server';
-import nodemailer from 'nodemailer';
-import { OrderWithCustomer } from '@/types/order';
-import { OrderService } from '@/lib/api/order';
+import { NextRequest, NextResponse } from "next/server";
+import nodemailer from "nodemailer";
+import { OrderWithCustomer } from "@/types/order";
+import { OrderService } from "@/lib/api/order";
 
+export async function POST(
+  req: NextRequest,
+  { params }: { params: Promise<{ id: string }> },
+) {
+  try {
+    const { id: rawId } = await params;
+    // Handle potential "order-" prefix and convert to number
+    const id = Number(rawId.replace("order-", ""));
 
-export async function POST(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
-    try {
-        const { id: rawId } = await params;
-        // Handle potential "order-" prefix and convert to number
-        const id = Number(rawId.replace('order-', ''));
-
-        if (isNaN(id)) {
-            return NextResponse.json({ error: 'Invalid order ID' }, { status: 400 });
-        }
-
-        // Fetch order
-        const order = await OrderService.getOrderById(id);
-
-        if (!order || !order.id) {
-            return NextResponse.json({ error: 'Order not found' }, { status: 404 });
-        }
-
-        // Send pickup email
-        const customer = Array.isArray(order.customers) ? order.customers[0] : order.customers;
-        if (!customer?.email) {
-            return NextResponse.json({ error: 'Customer email not found' }, { status: 400 });
-        }
-
-        await sendPickupEmail(order);
-
-        return NextResponse.json({ message: 'Pickup email sent successfully' });
-    } catch (error: any) {
-        console.error('Error sending pickup email:', error);
-        return NextResponse.json({ error: error.message || 'Failed to send pickup email' }, { status: 500 });
+    if (isNaN(id)) {
+      return NextResponse.json({ error: "Invalid order ID" }, { status: 400 });
     }
+
+    // Fetch order
+    const order = await OrderService.getOrderById(id);
+
+    if (!order || !order.id) {
+      return NextResponse.json({ error: "Order not found" }, { status: 404 });
+    }
+
+    // Update order status to "Ready for Pick-up"
+    await OrderService.updateStatusToReadyToPickup(order.id.toString());
+
+    // Send pickup email
+    const customer = Array.isArray(order.customers)
+      ? order.customers[0]
+      : order.customers;
+    if (!customer?.email) {
+      return NextResponse.json(
+        { error: "Customer email not found" },
+        { status: 400 },
+      );
+    }
+
+    await sendPickupEmail(order);
+
+    return NextResponse.json({ message: "Pickup email sent successfully" });
+  } catch (error: any) {
+    console.error("Error sending pickup email:", error);
+    return NextResponse.json(
+      { error: error.message || "Failed to send pickup email" },
+      { status: 500 },
+    );
+  }
 }
 
 async function sendPickupEmail(order: OrderWithCustomer) {
-    // Create reusable transporter
-    const transporter = nodemailer.createTransport({
-        host: process.env.SMTP_HOST,
-        port: parseInt(process.env.SMTP_PORT || '465'),
-        secure: process.env.SMTP_SECURE === 'true',
-        auth: {
-            user: process.env.SMTP_USER,
-            pass: process.env.SMTP_PASS,
-        },
-    });
+  // Create reusable transporter
+  const transporter = nodemailer.createTransport({
+    host: process.env.SMTP_HOST,
+    port: parseInt(process.env.SMTP_PORT || "465"),
+    secure: process.env.SMTP_SECURE === "true",
+    auth: {
+      user: process.env.SMTP_USER,
+      pass: process.env.SMTP_PASS,
+    },
+  });
 
-    const customer = Array.isArray(order.customers) ? order.customers[0] : order.customers;
-    const brandName = order.products?.[0]?.brands?.name || '';
-    const productTypeName = order.products?.[0]?.product_type?.name || 'Product';
-    const productColor = order.colors?.[0]?.value || '';
+  const customer = Array.isArray(order.customers)
+    ? order.customers[0]
+    : order.customers;
+  const brandName = order.products?.[0]?.brands?.name || "";
+  const productTypeName = order.products?.[0]?.product_type?.name || "Product";
+  const productColor = order.colors?.[0]?.value || "";
 
-    const sizeRows = order.product_sizes?.map(item => `
+  const sizeRows =
+    order.product_sizes
+      ?.map(
+        (item) => `
         <tr>
-            <td style="padding: 8px; border: 1px solid #ddd;">${item.sizes?.value || 'Unknown'}</td>
+            <td style="padding: 8px; border: 1px solid #ddd;">${item.sizes?.value || "Unknown"}</td>
             <td style="padding: 8px; border: 1px solid #ddd;">${item.quantity}</td>
         </tr>
-    `).join('') || '';
+    `,
+      )
+      .join("") || "";
 
-    const totalItems = order.product_sizes?.reduce((total, item) => total + item.quantity, 0) || 0;
+  const totalItems =
+    order.product_sizes?.reduce((total, item) => total + item.quantity, 0) || 0;
 
-    const mailOptions = {
-        from: `"${process.env.SMTP_USER}" <${process.env.SMTP_USER}>`,
-        to: customer?.email || '',
-        subject: `Your Custom Product Order #${order.id} is Ready for Pickup`,
-        html: `
+  const mailOptions = {
+    from: `"${process.env.SMTP_USER}" <${process.env.SMTP_USER}>`,
+    to: customer?.email || "",
+    subject: `Your Custom Product Order #${order.id} is Ready for Pickup`,
+    html: `
             <!DOCTYPE html>
             <html>
             <head>
@@ -77,7 +98,7 @@ async function sendPickupEmail(order: OrderWithCustomer) {
               <div style="max-width: 600px; margin: 0 auto; background-color: white; padding: 20px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
                 <h1 style="color: #333; border-bottom: 2px solid #333; padding-bottom: 10px;">Your Order is Ready for Pickup!</h1>
                 
-                <p style="color: #666; font-size: 16px;">Hi ${customer?.name || 'Valued Customer'}, great news! Your custom product order is now ready for pickup at our store.</p>
+                <p style="color: #666; font-size: 16px;">Hi ${customer?.name || "Valued Customer"}, great news! Your custom product order is now ready for pickup at our store.</p>
                 
                 <div style="margin-bottom: 20px;">
                   <h2 style="color: #555; font-size: 18px;">Order Information</h2>
@@ -131,8 +152,8 @@ async function sendPickupEmail(order: OrderWithCustomer) {
             </body>
             </html>
         `,
-    };
+  };
 
-    // Send email
-    await transporter.sendMail(mailOptions);
+  // Send email
+  await transporter.sendMail(mailOptions);
 }

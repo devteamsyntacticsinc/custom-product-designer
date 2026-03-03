@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import React, { useState, useEffect } from "react";
 import { useRouter, usePathname } from "next/navigation";
 import { useSession, signOut } from "next-auth/react";
 import { Button } from "@/components/ui/button";
@@ -24,6 +24,16 @@ import axios from "axios";
 import { useToast } from "@/contexts/ToastContext";
 import { PDFDownloadLink } from "@react-pdf/renderer";
 import OrderReceiptPDF from "@/app/components/receipts/OrderReceiptPDF";
+import {
+  Dialog,
+  DialogClose,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
 
 export default function OrdersPage() {
   const { data: session, status } = useSession();
@@ -87,6 +97,8 @@ export default function OrdersPage() {
 
       const data = res.data;
       addToast("success", data.message);
+      // Refetch orders after successful email send
+      fetchOrders();
     } catch (error: any) {
       console.error("Error sending pickup email:", error);
       const msg = error.response?.data?.error || "Failed to send pickup email";
@@ -295,6 +307,10 @@ export default function OrdersPage() {
               orders.map((order) => {
                 const customer = getCustomerInfo(order.customers);
                 const totalQuantity = getTotalQuantity(order);
+                const invoiceStatus = order.status as
+                  | "Pending"
+                  | "Ready for Pick-up"
+                  | "Claimed";
                 const customerName =
                   customer?.name
                     ?.trim()
@@ -313,11 +329,41 @@ export default function OrdersPage() {
                       {/* Product Preview */}
                       <div>
                         <div className="flex items-center content-center justify-between mb-2">
-                          <h3 className="text-base lg:text-lg font-semibold  dark:text-white mb-3 sm:mb-4">
-                            Product Design
-                          </h3>
+                          <div className="flex items-center gap-4">
+                            <h3 className="text-base lg:text-lg font-semibold  dark:text-white">
+                              Product Design
+                            </h3>
+                            <Badge variant="default">{invoiceStatus}</Badge>
+                          </div>
                           <div className="flex items-center gap-2">
-                            {cooldownIds.has(order.id) ? (
+                            {invoiceStatus === "Ready for Pick-up" && (
+                              <ConfirmClaimedDialog
+                                orderId={order.id}
+                                fetchOrders={fetchOrders}
+                              >
+                                <Button
+                                  variant="outline"
+                                  className="h-10 border-green-500 cursor-pointer"
+                                >
+                                  <Check
+                                    className="text-green-500"
+                                    strokeWidth={1.5}
+                                  />
+                                  Mark As Claimed
+                                </Button>
+                              </ConfirmClaimedDialog>
+                            )}
+                            {invoiceStatus === "Claimed" && (
+                              <Button
+                                variant="outline"
+                                className="h-10 border-green-500 bg-green-100 text-green-600 cursor-pointer"
+                                disabled
+                              >
+                                <Check className="" strokeWidth={1.5} />
+                                Claimed
+                              </Button>
+                            )}
+                            {cooldownIds.has(order.id.toString()) ? (
                               <Button
                                 variant="outline"
                                 size="sm"
@@ -339,7 +385,9 @@ export default function OrdersPage() {
                                 <Button
                                   variant="outline"
                                   size="sm"
-                                  onClick={() => handleDownload(order.id)}
+                                  onClick={() =>
+                                    handleDownload(order.id.toString())
+                                  }
                                   className="h-10"
                                 >
                                   <File className="h-4 w-4 sm:h-5 sm:w-5" />
@@ -350,15 +398,19 @@ export default function OrdersPage() {
                             <Button
                               variant="outline"
                               size="sm"
-                              onClick={() => handleSendPickupEmail(order.id)}
-                              disabled={sendingEmailIds.has(order.id)}
+                              onClick={() =>
+                                handleSendPickupEmail(order.id.toString())
+                              }
+                              disabled={sendingEmailIds.has(
+                                order.id.toString(),
+                              )}
                               className="h-10"
                             >
                               <Mail
-                                className={`h-4 w-4 sm:h-5 sm:w-5 ${sendingEmailIds.has(order.id) ? "animate-pulse" : ""}`}
+                                className={`h-4 w-4 sm:h-5 sm:w-5 ${sendingEmailIds.has(order.id.toString()) ? "animate-pulse" : ""}`}
                               />
                               <span>
-                                {sendingEmailIds.has(order.id)
+                                {sendingEmailIds.has(order.id.toString())
                                   ? "Sending..."
                                   : "Send Pickup Email"}
                               </span>
@@ -376,8 +428,7 @@ export default function OrdersPage() {
                               variant="secondary"
                               className="text-[10px] sm:text-xs"
                             >
-                              Reference No.{" "}
-                              {order.document_types?.ref_c2} -{" "}
+                              Reference No. {order.document_types?.ref_c2} -{" "}
                               {order.invoice_no}
                             </Badge>
                             <span className="text-xs sm:text-sm text-gray-500 dark:text-gray-400 font-medium">
@@ -467,5 +518,69 @@ export default function OrdersPage() {
         </main>
       </div>
     </div>
+  );
+}
+
+function ConfirmClaimedDialog({
+  children,
+  orderId,
+  fetchOrders,
+}: {
+  children: React.ReactNode;
+  orderId: number;
+  fetchOrders: () => Promise<void>;
+}) {
+  const { addToast } = useToast();
+  const [isOpen, setIsOpen] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
+  const handleClaimed = async () => {
+    try {
+      setIsLoading(true);
+      const response = await axios.post(`/api/orders/${orderId}/claim`);
+
+      // Check HTTP status
+      if (response.status !== 201) {
+        const errorData = response.data;
+        throw new Error(errorData?.error || "Failed to mark order as claimed");
+      }
+
+      await fetchOrders();
+      addToast("success", "Order marked as claimed successfully");
+    } catch (error) {
+      console.error("Error marking order as claimed:", error);
+      addToast("error", "Failed to mark order as claimed");
+    } finally {
+      setIsLoading(false);
+      setIsOpen(false);
+    }
+  };
+  return (
+    <Dialog open={isOpen} onOpenChange={setIsOpen}>
+      <DialogTrigger asChild>{children}</DialogTrigger>
+      <DialogContent>
+        <DialogHeader>
+          <DialogTitle>Mark Order as Claimed</DialogTitle>
+          <DialogDescription>
+            Are you sure you want to mark this order as claimed? This action
+            cannot be undone.
+          </DialogDescription>
+        </DialogHeader>
+        <DialogFooter>
+          <DialogClose asChild>
+            <Button variant="outline" disabled={isLoading}>
+              Cancel
+            </Button>
+          </DialogClose>
+          <Button
+            variant="outline"
+            className="bg-green-500 text-white"
+            onClick={handleClaimed}
+            disabled={isLoading}
+          >
+            {isLoading ? "Updating..." : "Mark As Claimed"}
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
   );
 }
