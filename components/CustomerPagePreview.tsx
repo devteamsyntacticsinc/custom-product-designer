@@ -1089,7 +1089,7 @@ export default function CustomersTab() {
                                                 variant="secondary"
                                                 className="bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 font-medium px-3 py-1 rounded-full border-none text-[11px]"
                                               >
-                                                Reference No. {order.document_types?.ref_c2 || "ORD"} - {order.invoice_no}
+                                                Reference No. {order.document_types?.ref_c2} - {order.invoice_no}
                                               </Badge>
                                               <span className="text-[11px] text-gray-500 dark:text-gray-400">
                                                 {new Date(order.created_at).toLocaleString("en-US", {

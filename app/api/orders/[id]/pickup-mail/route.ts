@@ -83,77 +83,132 @@ async function sendPickupEmail(order: OrderWithCustomer) {
   const totalItems =
     order.product_sizes?.reduce((total, item) => total + item.quantity, 0) || 0;
 
-  const mailOptions = {
-    from: `"${process.env.SMTP_USER}" <${process.env.SMTP_USER}>`,
-    to: customer?.email || "",
-    subject: `Your Custom Product Order #${order.id} is Ready for Pickup`,
-    html: `
-            <!DOCTYPE html>
-            <html>
-            <head>
-              <meta charset="utf-8">
-              <title>Order Ready for Pickup</title>
-            </head>
-            <body style="font-family: Arial, sans-serif; margin: 0; padding: 20px; background-color: #f4f4f4;">
-              <div style="max-width: 600px; margin: 0 auto; background-color: white; padding: 20px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
-                <h1 style="color: #333; border-bottom: 2px solid #333; padding-bottom: 10px;">Your Order is Ready for Pickup!</h1>
-                
-                <p style="color: #666; font-size: 16px;">Hi ${customer?.name || "Valued Customer"}, great news! Your custom product order is now ready for pickup at our store.</p>
-                
-                <div style="margin-bottom: 20px;">
-                  <h2 style="color: #555; font-size: 18px;">Order Information</h2>
-                  <p><strong>Order ID:</strong> ${order.id}</p>
-                  <p><strong>Order Date:</strong> ${new Date(order.created_at).toLocaleString()}</p>
+  // 1. Send Customer Email
+  if (customer?.email) {
+    const customerMailOptions = {
+      from: `"${process.env.SMTP_USER}" <${process.env.SMTP_USER}>`,
+      to: customer.email,
+      subject: `Your Custom Product Order #${order.document_types?.ref_c2}-${order.invoice_no} is Ready for Pickup`,
+      html: `
+              <!DOCTYPE html>
+              <html>
+              <head>
+                <meta charset="utf-8">
+                <title>Order Ready for Pickup</title>
+              </head>
+              <body style="font-family: Arial, sans-serif; margin: 0; padding: 20px; background-color: #f4f4f4;">
+                <div style="max-width: 600px; margin: 0 auto; background-color: white; padding: 20px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
+                  <h1 style="color: #333; border-bottom: 2px solid #333; padding-bottom: 10px;">Your Order is Ready for Pickup!</h1>
+                  
+                  <p style="color: #666; font-size: 16px;">Hi ${customer?.name || "Valued Customer"}, great news! Your custom product order is now ready for pickup at our store.</p>
+                  
+                  <div style="margin-bottom: 20px;">
+                    <h2 style="color: #555; font-size: 18px;">Order Information</h2>
+                    <p><strong>Reference No.:</strong> ${order.document_types?.ref_c2}-${order.invoice_no}</p>
+                    <p><strong>Order Date:</strong> ${new Date(order.created_at).toLocaleString()}</p>
+                  </div>
+  
+                  <div style="margin-bottom: 20px;">
+                    <h2 style="color: #555; font-size: 18px;">Product Details</h2>
+                    <p><strong>Product Type:</strong> ${productTypeName}</p>
+                    <p><strong>Brand:</strong> ${brandName}</p>
+                    <p><strong>Color:</strong> ${productColor}</p>
+                  </div>
+  
+                  <div style="margin-bottom: 20px;">
+                    <h2 style="color: #555; font-size: 18px;">Size and Quantity Overview</h2>
+                    <table style="width: 100%; border-collapse: collapse; margin-top: 10px;">
+                      <thead>
+                        <tr style="background-color: #f8f8f8;">
+                          <th style="padding: 8px; border: 1px solid #ddd; text-align: left;">Size</th>
+                          <th style="padding: 8px; border: 1px solid #ddd; text-align: left;">Quantity</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        ${sizeRows}
+                      </tbody>
+                    </table>
+                    <p style="margin-top: 10px;"><strong>Total Items:</strong> ${totalItems}</p>
+                  </div>
+  
+                  <div style="background: #f9f9f9; padding: 20px; border-radius: 8px; margin: 20px 0; border: 1px solid #eee;">
+                      <p style="margin: 0; color: #333; font-size: 15px; line-height: 1.5;">
+                          <strong>We can't wait to see you!</strong><br>
+                          Swing by Print Pro at your convenience to pick up your order — we’re excited to see you and share your custom creations!<br><br>
+                          Curious about what else we can make for you? Visit our website: <a href="${process.env.NEXTAUTH_URL}" style="color: #0077cc; text-decoration: none;">${process.env.NEXTAUTH_URL}</a> to explore more products, designs, and special offers.
+                      </p>
+                  </div>
+  
+                  <div style="background: #e8f4f8; padding: 20px; border-radius: 8px; margin: 20px 0;">
+                      <h3 style="margin-top: 0; color: #2c3e50; font-size: 18px;">Need Help?</h3>
+                      <p style="margin: 0;">If you have any questions about your order, please contact us:</p>
+                      <p style="margin: 10px 0 0 0;">
+                          <strong>Email:</strong> ${process.env.COMPANY_OWNER_EMAIL}
+                      </p>
+                  </div>
+  
+                  <div style="margin-top: 30px; padding-top: 20px; border-top: 1px solid #ddd; color: #666; font-size: 14px;">
+                    <p>Best regards,<br>The Print Pro Team</p>
+                  </div>
                 </div>
+              </body>
+              </html>
+          `,
+    };
+    await transporter.sendMail(customerMailOptions);
+  }
 
-                <div style="margin-bottom: 20px;">
-                  <h2 style="color: #555; font-size: 18px;">Product Details</h2>
-                  <p><strong>Product Type:</strong> ${productTypeName}</p>
-                  <p><strong>Brand:</strong> ${brandName}</p>
-                  <p><strong>Color:</strong> ${productColor}</p>
+  // 2. Send Owner Notification Email
+  if (process.env.COMPANY_OWNER_EMAIL) {
+    const ownerMailOptions = {
+      from: `"${process.env.SMTP_USER}" <${process.env.SMTP_USER}>`,
+      to: process.env.COMPANY_OWNER_EMAIL,
+      subject: `Admin Notification: Order #${order.document_types?.ref_c2}-${order.invoice_no} is Ready for Pickup`,
+      html: `
+              <!DOCTYPE html>
+              <html>
+              <head>
+                <meta charset="utf-8">
+                <title>Order Ready for Pickup Notification</title>
+              </head>
+              <body style="font-family: Arial, sans-serif; margin: 0; padding: 20px; background-color: #f4f4f4;">
+                <div style="max-width: 600px; margin: 0 auto; background-color: white; padding: 20px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
+                  <h1 style="color: #333; border-bottom: 2px solid #333; padding-bottom: 10px;">Order Ready for Pickup Notification</h1>
+                  
+                  <p style="color: #333; font-size: 16px;">This is an automated notification that an order has been marked as ready for pickup.</p>
+                  
+                  <div style="margin-bottom: 20px; padding: 15px; border: 1px solid #eee; border-radius: 8px;">
+                    <h2 style="color: #555; font-size: 18px; margin-top: 0;">Order Summary</h2>
+                    <p><strong>Customer Name:</strong> ${customer?.name || "N/A"}</p>
+                    <p><strong>Customer Email:</strong> ${customer?.email || "N/A"}</p>
+                    <p><strong>Reference No.:</strong> ${order.document_types?.ref_c2}-${order.invoice_no}</p>
+                    <p><strong>Order Date:</strong> ${new Date(order.created_at).toLocaleString()}</p>
+                  </div>
+  
+                  <div style="margin-bottom: 20px;">
+                    <h2 style="color: #555; font-size: 18px;">Product & Size Details</h2>
+                    <p><strong>Type:</strong> ${productTypeName} | <strong>Color:</strong> ${productColor}</p>
+                    <table style="width: 100%; border-collapse: collapse; margin-top: 10px;">
+                      <thead>
+                        <tr style="background-color: #f8f8f8;">
+                          <th style="padding: 8px; border: 1px solid #ddd; text-align: left;">Size</th>
+                          <th style="padding: 8px; border: 1px solid #ddd; text-align: left;">Quantity</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        ${sizeRows}
+                      </tbody>
+                    </table>
+                  </div>
+  
+                  <div style="margin-top: 30px; padding-top: 20px; border-top: 1px solid #ddd; color: #999; font-size: 12px; text-align: center;">
+                    <p>This is a system-generated report from Print Pro Designer.</p>
+                  </div>
                 </div>
-
-                <div style="margin-bottom: 20px;">
-                  <h2 style="color: #555; font-size: 18px;">Size and Quantity</h2>
-                  <table style="width: 100%; border-collapse: collapse; margin-top: 10px;">
-                    <thead>
-                      <tr style="background-color: #f8f8f8;">
-                        <th style="padding: 8px; border: 1px solid #ddd; text-align: left;">Size</th>
-                        <th style="padding: 8px; border: 1px solid #ddd; text-align: left;">Quantity</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      ${sizeRows}
-                    </tbody>
-                  </table>
-                  <p style="margin-top: 10px;"><strong>Total Items:</strong> ${totalItems}</p>
-                </div>
-
-                <div style="background: #f9f9f9; padding: 20px; border-radius: 8px; margin: 20px 0; border: 1px solid #eee;">
-                    <p style="margin: 0; color: #333; font-size: 15px; line-height: 1.5;">
-                        <strong>We can't wait to see you!</strong><br>
-                        Swing by Print Pro at your convenience to pick up your order — we’re excited to see you and share your custom creations!<br><br>
-                        Curious about what else we can make for you? Visit our website: <a href="${process.env.NEXTAUTH_URL}" style="color: #0077cc; text-decoration: none;">${process.env.NEXTAUTH_URL}</a> to explore more products, designs, and special offers.
-                    </p>
-                </div>
-
-                <div style="background: #e8f4f8; padding: 20px; border-radius: 8px; margin: 20px 0;">
-                    <h3 style="margin-top: 0; color: #2c3e50; font-size: 18px;">Need Help?</h3>
-                    <p style="margin: 0;">If you have any questions about your order, please contact us:</p>
-                    <p style="margin: 10px 0 0 0;">
-                        <strong>Email:</strong> ${process.env.COMPANY_OWNER_EMAIL}
-                    </p>
-                </div>
-
-                <div style="margin-top: 30px; padding-top: 20px; border-top: 1px solid #ddd; color: #666; font-size: 14px;">
-                  <p>Best regards,<br>Print Pro's Team</p>
-                </div>
-              </div>
-            </body>
-            </html>
-        `,
-  };
-
-  // Send email
-  await transporter.sendMail(mailOptions);
+              </body>
+              </html>
+          `,
+    };
+    await transporter.sendMail(ownerMailOptions);
+  }
 }
