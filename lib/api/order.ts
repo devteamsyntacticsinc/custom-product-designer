@@ -28,7 +28,7 @@ export class OrderService {
         const needsUpdate =
           existingCustomer.name !== contactInformation.fullName ||
           existingCustomer.contact_number !==
-          contactInformation.contactNumber ||
+            contactInformation.contactNumber ||
           existingCustomer.address !== contactInformation.address;
 
         if (needsUpdate) {
@@ -285,6 +285,45 @@ export class OrderService {
       return data;
     } catch (error) {
       console.error("Error updating invoice status:", error);
+      throw error;
+    }
+  }
+
+  static async updateStatusToClaimedWithDocumentRef(
+    invoiceId: string,
+    documentReferenceNumber: string,
+  ) {
+    try {
+      const { data, error } = await supabase
+        .from("invoices")
+        .update({
+          status: "Claimed",
+          document_reference_number: documentReferenceNumber,
+        })
+        .eq("id", invoiceId)
+        .select("id")
+        .single();
+
+      if (error) {
+        throw error;
+      }
+
+      // Insert into invoice_logs table with default 'Pending' status
+      const { error: logError } = await supabase.from("invoice_logs").insert({
+        invoice_id: data.id,
+        status: "Claimed",
+      });
+
+      if (logError) {
+        throw logError;
+      }
+
+      return data;
+    } catch (error) {
+      console.error(
+        "Error updating invoice status and document reference:",
+        error,
+      );
       throw error;
     }
   }
@@ -663,7 +702,9 @@ export class OrderService {
       }
 
       // Get color information
-      const colorIds = invoices.map((invoice) => invoice.color_id).filter(Boolean);
+      const colorIds = invoices
+        .map((invoice) => invoice.color_id)
+        .filter(Boolean);
       const { data: colors, error: colorsError } = await supabase
         .from("colors")
         .select("id, value")
@@ -712,7 +753,9 @@ export class OrderService {
         const customer = invoice.customers;
         const product = products?.find((p) => p.id === invoice.product_id);
         const color = colors?.find((c) => c.id === invoice.color_id);
-        const sizes = productSizes?.filter((ps) => ps.invoice_id === invoice.id);
+        const sizes = productSizes?.filter(
+          (ps) => ps.invoice_id === invoice.id,
+        );
         const images = productImages?.filter(
           (pi) => pi.invoice_id === invoice.id,
         );
@@ -725,16 +768,16 @@ export class OrderService {
 
         const transformedProduct = product
           ? [
-            {
-              id: product.id,
-              brands: Array.isArray(product.brands)
-                ? product.brands[0]
-                : product.brands || undefined,
-              product_type: Array.isArray(product.product_type)
-                ? product.product_type[0]
-                : product.product_type || undefined,
-            },
-          ]
+              {
+                id: product.id,
+                brands: Array.isArray(product.brands)
+                  ? product.brands[0]
+                  : product.brands || undefined,
+                product_type: Array.isArray(product.product_type)
+                  ? product.product_type[0]
+                  : product.product_type || undefined,
+              },
+            ]
           : [];
 
         // Handle document_types - could be object or array depending on Supabase version
@@ -759,11 +802,13 @@ export class OrderService {
           product_images: images || [],
           invoice_no: invoice.invoice_no,
           document_reference_number: invoice.document_reference_number || null,
-          document_types: docType ? {
-            id: docType.id,
-            ref_c2: docType.ref_c2,
-            description: docType.description || ''
-          } : null,
+          document_types: docType
+            ? {
+                id: docType.id,
+                ref_c2: docType.ref_c2,
+                description: docType.description || "",
+              }
+            : null,
           status: invoice.status,
           product_id: invoice.product_id,
           color_id: invoice.color_id,
@@ -966,16 +1011,16 @@ export class OrderService {
 
         const transformedProduct = product
           ? [
-            {
-              id: product.id,
-              brands: Array.isArray(product.brands)
-                ? product.brands[0]
-                : product.brands || undefined,
-              product_type: Array.isArray(product.product_type)
-                ? product.product_type[0]
-                : product.product_type || undefined,
-            },
-          ]
+              {
+                id: product.id,
+                brands: Array.isArray(product.brands)
+                  ? product.brands[0]
+                  : product.brands || undefined,
+                product_type: Array.isArray(product.product_type)
+                  ? product.product_type[0]
+                  : product.product_type || undefined,
+              },
+            ]
           : [];
 
         return {
@@ -992,7 +1037,6 @@ export class OrderService {
           product_id: invoice.product_id,
           color_id: invoice.color_id,
           invoice_logs: invoice.invoice_logs,
-          customers: customer,
         };
       });
 
@@ -1125,16 +1169,16 @@ export class OrderService {
 
       const transformedProduct = product
         ? [
-          {
-            id: product.id,
-            brands: Array.isArray(product.brands)
-              ? product.brands[0]
-              : product.brands || undefined,
-            product_type: Array.isArray(product.product_type)
-              ? product.product_type[0]
-              : product.product_type || undefined,
-          },
-        ]
+            {
+              id: product.id,
+              brands: Array.isArray(product.brands)
+                ? product.brands[0]
+                : product.brands || undefined,
+              product_type: Array.isArray(product.product_type)
+                ? product.product_type[0]
+                : product.product_type || undefined,
+            },
+          ]
         : [];
 
       return {
@@ -1149,7 +1193,7 @@ export class OrderService {
         document_reference_number: invoice.document_reference_number,
         status: invoice.status,
         product_id: invoice.product_id,
-        color_id: invoice.color_id
+        color_id: invoice.color_id,
       };
     } catch (error) {
       console.error("Error fetching order by ID:", error);

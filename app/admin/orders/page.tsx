@@ -6,6 +6,8 @@ import { useSession, signOut } from "next-auth/react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import { OrderWithCustomer } from "@/types/order";
 import {
   Menu,
@@ -311,6 +313,7 @@ export default function OrdersPage() {
                   | "Pending"
                   | "Ready for Pick-up"
                   | "Claimed";
+
                 const customerName =
                   customer?.name
                     ?.trim()
@@ -333,7 +336,7 @@ export default function OrdersPage() {
                             <h3 className="text-base lg:text-lg font-semibold  dark:text-white">
                               Product Design
                             </h3>
-                            <Badge variant="default">{invoiceStatus}</Badge>
+                            <Badge variant="default">{invoiceStatus} </Badge>
                           </div>
                           <div className="flex items-center gap-2">
                             {invoiceStatus === "Ready for Pick-up" && (
@@ -533,10 +536,37 @@ function ConfirmClaimedDialog({
   const { addToast } = useToast();
   const [isOpen, setIsOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+  const [documentReferenceNumber, setDocumentReferenceNumber] = useState("");
+  const [error, setError] = useState("");
+
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = e.target.value;
+    setDocumentReferenceNumber(value);
+    setError("");
+  };
+
+  const isButtonDisabled = !documentReferenceNumber.trim() || isLoading;
+
   const handleClaimed = async () => {
+    const trimmedRef = documentReferenceNumber.trim();
+
+    if (!trimmedRef) {
+      setError("Document reference number is required");
+      return;
+    }
+
+    if (trimmedRef.length > 50) {
+      setError("Document reference number must be 50 characters or less");
+      return;
+    }
+
     try {
       setIsLoading(true);
-      const response = await axios.post(`/api/orders/${orderId}/claim`);
+      setError("");
+
+      const response = await axios.post(`/api/orders/${orderId}/claim`, {
+        document_reference_number: trimmedRef,
+      });
 
       // Check HTTP status
       if (response.status !== 201) {
@@ -546,14 +576,22 @@ function ConfirmClaimedDialog({
 
       await fetchOrders();
       addToast("success", "Order marked as claimed successfully");
-    } catch (error) {
+      setDocumentReferenceNumber("");
+      setIsOpen(false);
+    } catch (error: any) {
       console.error("Error marking order as claimed:", error);
-      addToast("error", "Failed to mark order as claimed");
+      const errorMessage =
+        error.response?.data?.error || "Failed to mark order as claimed";
+      setError(errorMessage);
+      addToast("error", errorMessage);
     } finally {
       setIsLoading(false);
+      setDocumentReferenceNumber("");
+      setError("");
       setIsOpen(false);
     }
   };
+
   return (
     <Dialog open={isOpen} onOpenChange={setIsOpen}>
       <DialogTrigger asChild>{children}</DialogTrigger>
@@ -565,6 +603,26 @@ function ConfirmClaimedDialog({
             cannot be undone.
           </DialogDescription>
         </DialogHeader>
+
+        <div className="space-y-4 py-4">
+          <div className="space-y-2">
+            <Label htmlFor="document_reference_number">
+              Document Reference Number <span className="text-red-500">*</span>
+            </Label>
+            <Input
+              id="document_reference_number"
+              value={documentReferenceNumber}
+              onChange={handleInputChange}
+              placeholder="Enter document reference number"
+              disabled={isLoading}
+              className={error ? "border-red-500" : ""}
+              maxLength={50}
+            />
+            {error && <p className="text-sm text-red-500">{error}</p>}
+            <p className="text-xs text-gray-500">Maximum 50 characters</p>
+          </div>
+        </div>
+
         <DialogFooter>
           <DialogClose asChild>
             <Button variant="outline" disabled={isLoading}>
@@ -573,9 +631,9 @@ function ConfirmClaimedDialog({
           </DialogClose>
           <Button
             variant="outline"
-            className="bg-green-500 text-white"
+            className="bg-green-500 text-white hover:bg-green-600"
             onClick={handleClaimed}
-            disabled={isLoading}
+            disabled={isButtonDisabled}
           >
             {isLoading ? "Updating..." : "Mark As Claimed"}
           </Button>
