@@ -87,6 +87,8 @@ export default function OrdersPage() {
 
       const data = res.data;
       addToast("success", data.message);
+      // Refetch orders after successful email send
+      fetchOrders();
     } catch (error: any) {
       console.error("Error sending pickup email:", error);
       const msg = error.response?.data?.error || "Failed to send pickup email";
@@ -295,6 +297,7 @@ export default function OrdersPage() {
               orders.map((order) => {
                 const customer = getCustomerInfo(order.customers);
                 const totalQuantity = getTotalQuantity(order);
+                const invoiceStatus = order.status;
                 const customerName =
                   customer?.name
                     ?.trim()
@@ -313,11 +316,14 @@ export default function OrdersPage() {
                       {/* Product Preview */}
                       <div>
                         <div className="flex items-center content-center justify-between mb-2">
-                          <h3 className="text-base lg:text-lg font-semibold  dark:text-white mb-3 sm:mb-4">
-                            Product Design
-                          </h3>
+                          <div className="flex items-center gap-4">
+                            <h3 className="text-base lg:text-lg font-semibold  dark:text-white">
+                              Product Design
+                            </h3>
+                            <Badge variant="default">{invoiceStatus}</Badge>
+                          </div>
                           <div className="flex items-center gap-2">
-                            {cooldownIds.has(order.id) ? (
+                            {cooldownIds.has(order.id.toString()) ? (
                               <Button
                                 variant="outline"
                                 size="sm"
@@ -339,7 +345,9 @@ export default function OrdersPage() {
                                 <Button
                                   variant="outline"
                                   size="sm"
-                                  onClick={() => handleDownload(order.id)}
+                                  onClick={() =>
+                                    handleDownload(order.id.toString())
+                                  }
                                   className="h-10"
                                 >
                                   <File className="h-4 w-4 sm:h-5 sm:w-5" />
@@ -350,15 +358,19 @@ export default function OrdersPage() {
                             <Button
                               variant="outline"
                               size="sm"
-                              onClick={() => handleSendPickupEmail(order.id)}
-                              disabled={sendingEmailIds.has(order.id)}
+                              onClick={() =>
+                                handleSendPickupEmail(order.id.toString())
+                              }
+                              disabled={sendingEmailIds.has(
+                                order.id.toString(),
+                              )}
                               className="h-10"
                             >
                               <Mail
-                                className={`h-4 w-4 sm:h-5 sm:w-5 ${sendingEmailIds.has(order.id) ? "animate-pulse" : ""}`}
+                                className={`h-4 w-4 sm:h-5 sm:w-5 ${sendingEmailIds.has(order.id.toString()) ? "animate-pulse" : ""}`}
                               />
                               <span>
-                                {sendingEmailIds.has(order.id)
+                                {sendingEmailIds.has(order.id.toString())
                                   ? "Sending..."
                                   : "Send Pickup Email"}
                               </span>
@@ -376,8 +388,7 @@ export default function OrdersPage() {
                               variant="secondary"
                               className="text-[10px] sm:text-xs"
                             >
-                              Reference No.{" "}
-                              {order.document_types?.ref_c2} -{" "}
+                              Reference No. {order.document_types?.ref_c2} -{" "}
                               {order.invoice_no}
                             </Badge>
                             <span className="text-xs sm:text-sm text-gray-500 dark:text-gray-400 font-medium">
