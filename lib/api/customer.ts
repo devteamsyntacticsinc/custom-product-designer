@@ -79,7 +79,7 @@ export class CustomerService {
         // Apply filter conditions
         if (filters.product_type) {
           orderQuery = orderQuery.eq(
-            "product_type.name",
+            "products.product_type.name",
             filters.product_type,
           );
         }
@@ -134,9 +134,7 @@ export class CustomerService {
       return (data || []).map((customer) => ({
         ...customer,
         orders: [],
-        hasBrands: filterData?.some(
-          (order) => order.products?.brands !== null,
-        ),
+        hasBrands: filterData?.some((order) => order.products?.brands !== null),
       })) as CustomerWithOrders[];
     } catch (error) {
       console.error("Error in getCustomers:", error);
@@ -144,9 +142,7 @@ export class CustomerService {
     }
   }
 
-  static async getCustomerOrders(
-    customerId: string,
-  ): Promise<CustomerOrder[]> {
+  static async getCustomerOrders(customerId: string): Promise<CustomerOrder[]> {
     try {
       const { data: orders, error: ordersError } = await supabase
         .from("invoices")
@@ -232,10 +228,10 @@ export class CustomerService {
                   id: brandType.id,
                   brands: Array.isArray(brandType.brands)
                     ? brandType.brands[0]
-                    : brandType.brands ?? undefined,
+                    : (brandType.brands ?? undefined),
                   product_type: Array.isArray(brandType.product_type)
                     ? brandType.product_type[0]
-                    : brandType.product_type ?? undefined,
+                    : (brandType.product_type ?? undefined),
                 },
               ]
             : undefined,
