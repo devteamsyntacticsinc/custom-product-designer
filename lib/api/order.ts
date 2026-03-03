@@ -257,6 +257,38 @@ export class OrderService {
     }
   }
 
+  static async updateStatusToClaimed(invoiceId: string) {
+    try {
+      const { data, error } = await supabase
+        .from("invoices")
+        .update({
+          status: "Claimed",
+        })
+        .eq("id", invoiceId)
+        .select("id")
+        .single();
+
+      if (error) {
+        throw error;
+      }
+
+      // Insert into invoice_logs table with default 'Pending' status
+      const { error: logError } = await supabase.from("invoice_logs").insert({
+        invoice_id: data.id,
+        status: "Claimed",
+      });
+
+      if (logError) {
+        throw logError;
+      }
+
+      return data;
+    } catch (error) {
+      console.error("Error updating invoice status:", error);
+      throw error;
+    }
+  }
+
   static async updateInvoiceWithProductDetails(
     invoiceId: string,
     productId: string,
@@ -945,10 +977,16 @@ export class OrderService {
         return {
           id: invoice.id,
           created_at: invoice.created_at,
+          customers: customer,
           products: transformedProduct,
           colors: color ? [color] : [],
           product_sizes: formattedSizes || [],
           product_images: images || [],
+          invoice_no: invoice.invoice_no,
+          document_reference_number: invoice.document_reference_number,
+          status: invoice.status,
+          product_id: invoice.product_id,
+          color_id: invoice.color_id,
         };
       });
 
