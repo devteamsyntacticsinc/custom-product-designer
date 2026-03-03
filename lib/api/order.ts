@@ -28,7 +28,7 @@ export class OrderService {
         const needsUpdate =
           existingCustomer.name !== contactInformation.fullName ||
           existingCustomer.contact_number !==
-            contactInformation.contactNumber ||
+          contactInformation.contactNumber ||
           existingCustomer.address !== contactInformation.address;
 
         if (needsUpdate) {
@@ -768,16 +768,16 @@ export class OrderService {
 
         const transformedProduct = product
           ? [
-              {
-                id: product.id,
-                brands: Array.isArray(product.brands)
-                  ? product.brands[0]
-                  : product.brands || undefined,
-                product_type: Array.isArray(product.product_type)
-                  ? product.product_type[0]
-                  : product.product_type || undefined,
-              },
-            ]
+            {
+              id: product.id,
+              brands: Array.isArray(product.brands)
+                ? product.brands[0]
+                : product.brands || undefined,
+              product_type: Array.isArray(product.product_type)
+                ? product.product_type[0]
+                : product.product_type || undefined,
+            },
+          ]
           : [];
 
         // Handle document_types - could be object or array depending on Supabase version
@@ -804,10 +804,10 @@ export class OrderService {
           document_reference_number: invoice.document_reference_number || null,
           document_types: docType
             ? {
-                id: docType.id,
-                ref_c2: docType.ref_c2,
-                description: docType.description || "",
-              }
+              id: docType.id,
+              ref_c2: docType.ref_c2,
+              description: docType.description || "",
+            }
             : null,
           status: invoice.status,
           product_id: invoice.product_id,
@@ -900,6 +900,11 @@ export class OrderService {
           color_id,
           invoice_no,
           document_reference_number,
+          document_types (
+            id,
+            ref_c2,
+            description
+          ),
           status,
           invoice_logs(
             id,
@@ -1011,16 +1016,16 @@ export class OrderService {
 
         const transformedProduct = product
           ? [
-              {
-                id: product.id,
-                brands: Array.isArray(product.brands)
-                  ? product.brands[0]
-                  : product.brands || undefined,
-                product_type: Array.isArray(product.product_type)
-                  ? product.product_type[0]
-                  : product.product_type || undefined,
-              },
-            ]
+            {
+              id: product.id,
+              brands: Array.isArray(product.brands)
+                ? product.brands[0]
+                : product.brands || undefined,
+              product_type: Array.isArray(product.product_type)
+                ? product.product_type[0]
+                : product.product_type || undefined,
+            },
+          ]
           : [];
 
         return {
@@ -1033,6 +1038,9 @@ export class OrderService {
           product_images: images || [],
           invoice_no: invoice.invoice_no,
           document_reference_number: invoice.document_reference_number,
+          document_types: Array.isArray(invoice.document_types)
+            ? invoice.document_types[0]
+            : invoice.document_types || null,
           status: invoice.status,
           product_id: invoice.product_id,
           color_id: invoice.color_id,
@@ -1169,16 +1177,16 @@ export class OrderService {
 
       const transformedProduct = product
         ? [
-            {
-              id: product.id,
-              brands: Array.isArray(product.brands)
-                ? product.brands[0]
-                : product.brands || undefined,
-              product_type: Array.isArray(product.product_type)
-                ? product.product_type[0]
-                : product.product_type || undefined,
-            },
-          ]
+          {
+            id: product.id,
+            brands: Array.isArray(product.brands)
+              ? product.brands[0]
+              : product.brands || undefined,
+            product_type: Array.isArray(product.product_type)
+              ? product.product_type[0]
+              : product.product_type || undefined,
+          },
+        ]
         : [];
 
       return {
@@ -1191,6 +1199,9 @@ export class OrderService {
         product_images: productImages || [],
         invoice_no: invoice.invoice_no,
         document_reference_number: invoice.document_reference_number,
+        document_types: Array.isArray(invoice.document_types)
+          ? invoice.document_types[0]
+          : invoice.document_types || null,
         status: invoice.status,
         product_id: invoice.product_id,
         color_id: invoice.color_id,

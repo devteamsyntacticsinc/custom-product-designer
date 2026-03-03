@@ -302,11 +302,11 @@ export default function AdminDashboard() {
         <AdminSidebar
           user={null}
           sidebarOpen={false}
-          setSidebarOpen={() => {}}
-          onLogout={() => {}}
-          onNavigate={() => {}}
+          setSidebarOpen={() => { }}
+          onLogout={() => { }}
+          onNavigate={() => { }}
           isCollapsed={false}
-          onToggleCollapse={() => {}}
+          onToggleCollapse={() => { }}
           currentPath="/admin"
         />
         <div className="flex-1 lg:ml-64">
@@ -519,7 +519,6 @@ export default function AdminDashboard() {
                       No product type data available
                     </div>
                   )}
-                  z
                 </CardContent>
               </Card>
 
@@ -748,7 +747,7 @@ export default function AdminDashboard() {
                             if (
                               page === 1 ||
                               page ===
-                                dashboardData.recentActivity.totalPages ||
+                              dashboardData.recentActivity.totalPages ||
                               (page >= currentPage - 1 &&
                                 page <= currentPage + 1)
                             ) {
@@ -786,7 +785,7 @@ export default function AdminDashboard() {
                               className={
                                 currentPage ===
                                   dashboardData.recentActivity.totalPages ||
-                                pageLoading
+                                  pageLoading
                                   ? "pointer-events-none opacity-50"
                                   : "cursor-pointer"
                               }
