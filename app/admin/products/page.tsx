@@ -193,9 +193,9 @@ function ProductTypesTabContent() {
       onValueChange={handleTabChange}
       className="space-y-6"
     >
-      <TabsList className="w-full flex h-9 p-1 bg-gray-100 dark:bg-gray-800 rounded-lg lg:grid lg:grid-cols-4 lg:h-10">
+      <TabsList className="w-full flex h-9 p-1 bg-gray-100 dark:bg-gray-800 rounded-lg lg:grid lg:grid-cols-3 lg:h-10">
         {/* First 3 tabs: Always visible */}
-        <TabsTrigger
+        {/* <TabsTrigger
           value="product-types"
           disabled={isNavigating || isPending}
           className="flex-1 text-[10px] sm:text-xs lg:text-sm px-1 sm:px-2 data-[state=active]:bg-background data-[state=active]:shadow-sm dark:data-[state=active]:bg-gray-700"
@@ -204,7 +204,7 @@ function ProductTypesTabContent() {
             <Loader2 className="h-3 w-3 sm:h-4 sm:w-4 animate-spin mr-2" />
           )}
           Product Types
-        </TabsTrigger>
+        </TabsTrigger> */}
         <TabsTrigger
           value="brands"
           disabled={isNavigating || isPending}
@@ -213,7 +213,7 @@ function ProductTypesTabContent() {
           {isNavigating && activeTab === "brands" && (
             <Loader2 className="h-3 w-3 sm:h-4 sm:w-4 animate-spin mr-2" />
           )}
-          Brands
+          Products
         </TabsTrigger>
         <TabsTrigger
           value="colors"
