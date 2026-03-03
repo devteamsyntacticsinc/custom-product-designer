@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import React, { useState, useEffect } from "react";
 import { useRouter, usePathname } from "next/navigation";
 import { useSession, signOut } from "next-auth/react";
 import { Button } from "@/components/ui/button";
@@ -24,6 +24,16 @@ import axios from "axios";
 import { useToast } from "@/contexts/ToastContext";
 import { PDFDownloadLink } from "@react-pdf/renderer";
 import OrderReceiptPDF from "@/app/components/receipts/OrderReceiptPDF";
+import {
+  Dialog,
+  DialogClose,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
 
 export default function OrdersPage() {
   const { data: session, status } = useSession();
@@ -297,7 +307,10 @@ export default function OrdersPage() {
               orders.map((order) => {
                 const customer = getCustomerInfo(order.customers);
                 const totalQuantity = getTotalQuantity(order);
-                const invoiceStatus = order.status;
+                const invoiceStatus = order.status as
+                  | "Pending"
+                  | "Ready for Pick-up"
+                  | "Claimed";
                 const customerName =
                   customer?.name
                     ?.trim()
@@ -323,6 +336,20 @@ export default function OrdersPage() {
                             <Badge variant="default">{invoiceStatus}</Badge>
                           </div>
                           <div className="flex items-center gap-2">
+                            {invoiceStatus === "Ready for Pick-up" && (
+                              <ConfirmClaimedDialog>
+                                <Button
+                                  variant="outline"
+                                  className="h-10 border-green-500 cursor-pointer"
+                                >
+                                  <Check
+                                    className="text-green-500"
+                                    strokeWidth={1.5}
+                                  />
+                                  Mark As Claimed
+                                </Button>
+                              </ConfirmClaimedDialog>
+                            )}
                             {cooldownIds.has(order.id.toString()) ? (
                               <Button
                                 variant="outline"
@@ -478,5 +505,30 @@ export default function OrdersPage() {
         </main>
       </div>
     </div>
+  );
+}
+
+function ConfirmClaimedDialog({ children }: { children: React.ReactNode }) {
+  return (
+    <Dialog>
+      <DialogTrigger asChild>{children}</DialogTrigger>
+      <DialogContent>
+        <DialogHeader>
+          <DialogTitle>Mark Order as Claimed</DialogTitle>
+          <DialogDescription>
+            Are you sure you want to mark this order as claimed? This action
+            cannot be undone.
+          </DialogDescription>
+        </DialogHeader>
+        <DialogFooter>
+          <DialogClose asChild>
+            <Button variant="outline">Cancel</Button>
+          </DialogClose>
+          <Button variant="outline" className="bg-green-500 text-white">
+            Mark As Claimed
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
   );
 }
