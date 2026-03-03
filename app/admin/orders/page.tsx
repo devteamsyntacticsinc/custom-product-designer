@@ -337,7 +337,10 @@ export default function OrdersPage() {
                           </div>
                           <div className="flex items-center gap-2">
                             {invoiceStatus === "Ready for Pick-up" && (
-                              <ConfirmClaimedDialog>
+                              <ConfirmClaimedDialog
+                                orderId={order.id}
+                                fetchOrders={fetchOrders}
+                              >
                                 <Button
                                   variant="outline"
                                   className="h-10 border-green-500 cursor-pointer"
@@ -349,6 +352,16 @@ export default function OrdersPage() {
                                   Mark As Claimed
                                 </Button>
                               </ConfirmClaimedDialog>
+                            )}
+                            {invoiceStatus === "Claimed" && (
+                              <Button
+                                variant="outline"
+                                className="h-10 border-green-500 bg-green-100 text-green-600 cursor-pointer"
+                                disabled
+                              >
+                                <Check className="" strokeWidth={1.5} />
+                                Claimed
+                              </Button>
                             )}
                             {cooldownIds.has(order.id.toString()) ? (
                               <Button
@@ -508,9 +521,41 @@ export default function OrdersPage() {
   );
 }
 
-function ConfirmClaimedDialog({ children }: { children: React.ReactNode }) {
+function ConfirmClaimedDialog({
+  children,
+  orderId,
+  fetchOrders,
+}: {
+  children: React.ReactNode;
+  orderId: number;
+  fetchOrders: () => Promise<void>;
+}) {
+  const { addToast } = useToast();
+  const [isOpen, setIsOpen] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
+  const handleClaimed = async () => {
+    try {
+      setIsLoading(true);
+      const response = await axios.post(`/api/orders/${orderId}/claim`);
+
+      // Check HTTP status
+      if (response.status !== 201) {
+        const errorData = response.data;
+        throw new Error(errorData?.error || "Failed to mark order as claimed");
+      }
+
+      await fetchOrders();
+      addToast("success", "Order marked as claimed successfully");
+    } catch (error) {
+      console.error("Error marking order as claimed:", error);
+      addToast("error", "Failed to mark order as claimed");
+    } finally {
+      setIsLoading(false);
+      setIsOpen(false);
+    }
+  };
   return (
-    <Dialog>
+    <Dialog open={isOpen} onOpenChange={setIsOpen}>
       <DialogTrigger asChild>{children}</DialogTrigger>
       <DialogContent>
         <DialogHeader>
@@ -522,10 +567,17 @@ function ConfirmClaimedDialog({ children }: { children: React.ReactNode }) {
         </DialogHeader>
         <DialogFooter>
           <DialogClose asChild>
-            <Button variant="outline">Cancel</Button>
+            <Button variant="outline" disabled={isLoading}>
+              Cancel
+            </Button>
           </DialogClose>
-          <Button variant="outline" className="bg-green-500 text-white">
-            Mark As Claimed
+          <Button
+            variant="outline"
+            className="bg-green-500 text-white"
+            onClick={handleClaimed}
+            disabled={isLoading}
+          >
+            {isLoading ? "Updating..." : "Mark As Claimed"}
           </Button>
         </DialogFooter>
       </DialogContent>
