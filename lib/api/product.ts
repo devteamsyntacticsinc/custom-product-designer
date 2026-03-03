@@ -943,14 +943,14 @@ export class ProductService {
             .getPublicUrl(fileName);
 
           imageInserts.push({
-            productT_id: productTypeId,
+            product_type_id: productTypeId,
             filepath: urlData.publicUrl,
             is_hasBack: asset.is_hasBack,
           });
         } else if (asset && asset.filepath) {
           // Use existing filepath
           imageInserts.push({
-            productT_id: productTypeId,
+            product_type_id: productTypeId,
             filepath: asset.filepath,
             is_hasBack: asset.is_hasBack,
           });

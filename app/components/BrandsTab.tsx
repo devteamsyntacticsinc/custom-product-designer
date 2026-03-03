@@ -32,7 +32,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
-import { Edit, Trash2, Plus } from "lucide-react";
+import { Edit, Trash2, Plus, RefreshCw } from "lucide-react";
 import { Brand, ProductType } from "@/types/product";
 import {
   Dialog,
@@ -46,6 +46,7 @@ import {
 } from "@/components/ui/dialog";
 import { Checkbox } from "@/components/ui/checkbox";
 import { useToast } from "@/contexts/ToastContext";
+import ProductTypesTab from "./ProductTypesTab";
 
 interface BrandExtended extends Brand {
   products: {
@@ -180,7 +181,9 @@ export default function BrandsTab() {
   }, []);
 
   return (
-    <Card className="overflow-hidden">
+    <>
+    <ProductTypesTab/>
+    <Card className="overflow-hidden mt-5">
       <CardHeader className="flex flex-col sm:flex-row items-start sm:items-center justify-between space-y-4 sm:space-y-0 py-4 sm:py-6">
         <div>
           <CardTitle className="text-lg lg:text-2xl">Brands</CardTitle>
@@ -239,16 +242,28 @@ export default function BrandsTab() {
               ) : error ? (
                 <TableRow>
                   <TableCell
-                    colSpan={4}
+                    colSpan={5}
                     className="text-sm text-destructive p-4"
                   >
-                    {error}
+                    <div className="flex flex-col items-center space-y-3">
+                      
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={fetchData}
+                        disabled={isFetchingBrands}
+                        className="flex items-center gap-2"
+                      >
+                        <RefreshCw className={`h-4 w-4 ${isFetchingBrands ? 'animate-spin' : ''}`} />
+                        Refresh Data
+                      </Button>
+                    </div>
                   </TableCell>
                 </TableRow>
               ) : brands.length === 0 ? (
                 <TableRow>
                   <TableCell
-                    colSpan={4}
+                    colSpan={5}
                     className="text-center py-8 text-gray-500"
                   >
                     No brands found
@@ -330,6 +345,7 @@ export default function BrandsTab() {
         </div>
       </CardContent>
     </Card>
+    </>
   );
 }
 
