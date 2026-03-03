@@ -29,16 +29,13 @@ import {
 import { CustomerWithOrders } from "@/types/customer";
 import { Badge } from "@/components/ui/badge";
 import OrderProductPreview from "./OrderProductPreview";
-import CustomerPageSkeleton from "./CustomerPageSkeleton";
 import OrderHistorySkeleton from "./OrderHistorySkeleton";
 import FiltersSkeleton from "./loading/FiltersSkeleton";
 import CustomerTableSkeleton from "./loading/CustomerTableSkeleton";
-import { CustomerService } from "@/lib/api/customer";
 import { Button } from "./ui/button";
 import { Combobox } from "@/components/ui/combobox";
 import { Label } from "./ui/label";
 import axios from "axios";
-import { cn } from "@/lib/utils";
 import { CalendarRange } from "@/components/ui/calendar-range";
 import { DateRange } from "react-day-picker";
 import { PDFDownloadLink } from "@react-pdf/renderer";
@@ -323,7 +320,6 @@ export default function CustomersTab() {
   );
   const [isGeneratingPdf, setIsGeneratingPdf] = useState(false);
   const [cooldownIds, setCooldownIds] = useState<Set<string>>(new Set());
-  const [isGeneratingCsv, setIsGeneratingCsv] = useState(false);
   const [csvCooldownIds, setCsvCooldownIds] = useState<Set<string>>(new Set());
   const { addToast } = useToast();
   const [filterValues, setFilterValues] = useState<FilterValues>({
@@ -341,24 +337,6 @@ export default function CustomersTab() {
     color: [] as { id: number; value: string }[],
     date_range: [] as string[],
   });
-
-  // Memoized callbacks to prevent unnecessary re-renders
-  const handleFilterChange = useCallback(
-    (key: keyof FilterValues, value: any) => {
-      setFilterValues((prev) => ({ ...prev, [key]: value }));
-    },
-    [],
-  );
-
-  const handleReset = useCallback(() => {
-    setFilterValues({
-      product_type: null,
-      brand: null,
-      size: null,
-      color: null,
-      date_range: undefined,
-    });
-  }, []);
 
   const isResetDisabled = useMemo(() => {
     return (
@@ -791,6 +769,7 @@ export default function CustomersTab() {
                 className=""
                 variant="outline"
                 onClick={fetchOrdersForPdf}
+                disabled={customers.length === 0}
               >
                 <File className="mr-2 h-4 w-4" /> Prepare PDF & CSV
               </Button>
@@ -941,13 +920,7 @@ export default function CustomersTab() {
             <Button
               className="ml-auto mt-auto"
               variant="outline"
-              disabled={
-                filterValues.product_type === null &&
-                filterValues.brand === null &&
-                filterValues.size === null &&
-                filterValues.color === null &&
-                filterValues.date_range === undefined
-              }
+              disabled={isResetDisabled}
               onClick={() =>
                 setFilterValues({
                   product_type: null,
@@ -1106,11 +1079,13 @@ export default function CustomersTab() {
                                                   contact_number:
                                                     customer.contact_number,
                                                 },
-                                                product_id: order.products?.[0]?.id || '',
-                                                color_id: order.colors?.[0]?.id || null,
-                                                invoice_no: '',
+                                                product_id:
+                                                  order.products?.[0]?.id || "",
+                                                color_id:
+                                                  order.colors?.[0]?.id || null,
+                                                invoice_no: "",
                                                 document_reference_number: null,
-                                                status: 'pending',
+                                                status: "pending",
                                               }}
                                             />
                                           </div>
