@@ -185,7 +185,7 @@ function ProductTypesTabContent() {
       setTimeout(() => setIsNavigating(false), 300);
     });
   };
-  const activeTab = searchParams.get("tab") || "product-types";
+  const activeTab = searchParams.get("tab") || "brands";
   const isMoreActive = ["sizes"].includes(activeTab);
   return (
     <Tabs
