@@ -59,6 +59,11 @@ export interface CustomerWithOrders {
     status: string;
     product_id: number;
     color_id: number;
+    invoice_logs?: Array<{
+      id: number;
+      status: string;
+      created_at: string;
+    }>;
   }[];
   hasBrands: boolean;
 }
@@ -74,19 +79,19 @@ export interface CustomerWithOrdersForDashboard {
     id: number;
     created_at: string;
     customers:
-      | {
-          id: number;
-          name: string;
-          email: string;
-          contact_number: number;
-        }
-      | {
-          id: number;
-          name: string;
-          email: string;
-          contact_number: number;
-        }[]
-      | null;
+    | {
+      id: number;
+      name: string;
+      email: string;
+      contact_number: number;
+    }
+    | {
+      id: number;
+      name: string;
+      email: string;
+      contact_number: number;
+    }[]
+    | null;
     products?: Array<{
       id: number;
       brands?: {
