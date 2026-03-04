@@ -274,11 +274,6 @@ function ProductTypesTabContent() {
         </div>
       </TabsList>
 
-      {/* Product Types Tab */}
-      <TabsContent value="product-types">
-        <ProductTypesTab />
-      </TabsContent>
-
       {/* Brands Tab */}
       <TabsContent value="brands">
         <BrandsTab />

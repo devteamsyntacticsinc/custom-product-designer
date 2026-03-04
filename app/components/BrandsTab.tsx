@@ -435,6 +435,11 @@ function BrandSheet({
               className="text-xs lg:text-sm h-8 lg:h-10"
             />
           </div>
+          {name.length === 0 && (
+            <p className="text-destructive text-sm italic">
+              *Brand Name is required before saving.
+            </p>
+          )}
 
           <div className="space-y-2 mb-6">
             <Label htmlFor="product-type">Product Types</Label>
