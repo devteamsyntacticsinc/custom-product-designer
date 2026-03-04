@@ -18,6 +18,10 @@ export class ReportService {
                         id,
                         name,
                         email
+                    ),
+                    products!inner (
+                        id,
+                        product_type_id
                     )
                 `,
       );
@@ -28,8 +32,11 @@ export class ReportService {
       if (endDate) {
         query = query.lte("created_at", new Date(endDate).toISOString());
       }
+      if (productType && productType !== 0) {
+        query = query.eq("products.product_type_id", productType);
+      }
 
-      const { data, error } = await query.overrideTypes<TopCustomers[]>();
+      const { data, error } = await query;
 
       if (error) throw error;
 
@@ -38,16 +45,9 @@ export class ReportService {
         { name: string; email: string; count: number }
       > = {};
 
-      data?.forEach((order) => {
+      data?.forEach((order: any) => {
         const customer = order.customers;
         const custResult = Array.isArray(customer) ? customer[0] : customer;
-
-        // Filter by product type if specified
-        if (productType) {
-          // We need to join with products to get product type info
-          // For now, skip filtering if productType is specified
-          // TODO: Add proper join with products table
-        }
 
         if (custResult && custResult.id) {
           if (!stats[custResult.id]) {
@@ -81,7 +81,11 @@ export class ReportService {
     try {
       let query = supabase.from("invoices").select(`
                     created_at,
-                    product_id
+                    products (
+                        product_type (
+                            name
+                        )
+                    )
                 `);
 
       if (startDate)
@@ -95,11 +99,14 @@ export class ReportService {
       const timeSeries: Record<string, Record<string, number>> = {};
       const productTypes = new Set<string>();
 
-      data?.forEach((order) => {
+      data?.forEach((order: any) => {
         const date = new Date(order.created_at).toISOString().split("T")[0];
-        // For now, use a generic product name since we need to join with products
-        // TODO: Add proper join with products table to get product type info
-        const typeName = "Product";
+
+        const product = order.products;
+        const prodResult = Array.isArray(product) ? product[0] : product;
+        const productType = prodResult?.product_type;
+        const typeResult = Array.isArray(productType) ? productType[0] : productType;
+        const typeName = typeResult?.name || "Product";
 
         productTypes.add(typeName);
         if (!timeSeries[date]) timeSeries[date] = {};
@@ -130,7 +137,14 @@ export class ReportService {
     try {
       let query = supabase.from("invoices").select(`
                 created_at,
-                product_id
+                products (
+                    brands (
+                        name
+                    ),
+                    product_type (
+                        name
+                    )
+                )
             `);
 
       if (startDate)
@@ -146,9 +160,17 @@ export class ReportService {
 
       data?.forEach((order: any) => {
         const date = new Date(order.created_at).toISOString().split("T")[0];
-        // For now, use a generic brand name since we need to join with products
-        // TODO: Add proper join with products table to get brand info
-        const brandName = "Brand";
+
+        const product = order.products;
+        const prodResult = Array.isArray(product) ? product[0] : product;
+
+        const brand = prodResult?.brands;
+        const brandResult = Array.isArray(brand) ? brand[0] : brand;
+
+        // Skip if there is no brand name
+        if (!brandResult?.name) return;
+
+        const brandName = brandResult.name;
 
         brandsSet.add(brandName);
 
