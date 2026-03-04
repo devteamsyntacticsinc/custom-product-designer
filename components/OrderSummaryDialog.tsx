@@ -7,6 +7,7 @@ import { Label } from "@/components/ui/label";
 import { X } from "lucide-react";
 import { Size } from "@/types/product";
 import { useToast } from "@/contexts/ToastContext";
+import axios, { AxiosError } from "axios";
 
 interface OrderSummaryDialogProps {
   isOpen: boolean;
@@ -50,11 +51,24 @@ export default function OrderSummaryDialog({
     setMounted(true);
     const fetchSizes = async () => {
       try {
-        const response = await fetch("/api/sizes");
-        const data = await response.json();
+        const response = await axios.get("/api/sizes");
+        if (!response.data) {
+          throw new Error("Failed to fetch sizes");
+        }
+        const data = response.data;
         setSizes(Array.isArray(data) ? data : []);
       } catch (error) {
-        console.error("Failed to fetch sizes:", error);
+        const axiosError = error as AxiosError<{
+          error?: string;
+          message?: string;
+        }>;
+
+        const message =
+          axiosError.response?.data?.error ||
+          axiosError.response?.data?.message ||
+          axiosError.message ||
+          "Failed to fetch sizes";
+        console.error("Failed to fetch sizes:", message);
       }
     };
     fetchSizes();

@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Menu, X } from "lucide-react";
 import { Combobox } from "@/components/ui/combobox";
@@ -12,6 +12,7 @@ import { useAssets } from "@/contexts/AssetsContext";
 import ContactInformation from "./ContactInformation";
 import { CardTitle } from "@/components/ui/card";
 import ProductCustomizerSkeleton from "./ProductCustomizerSkeleton";
+import axios, { AxiosError } from "axios";
 
 export default function ProductCustomizer() {
   const { assets, setAssets, selectedProductType, setSelectedProductType } =
@@ -76,12 +77,12 @@ export default function ProductCustomizer() {
       const formData = new FormData();
 
       // Map sizeSelection to include size values for email display
-      const sizeSelectionWithValues = sizeSelection.map(item => {
-        const size = sizes.find(s => s.id === item.size);
+      const sizeSelectionWithValues = sizeSelection.map((item) => {
+        const size = sizes.find((s) => s.id === item.size);
         return {
           size: item.size, // Keep ID for database
           sizeValue: size?.value || `Size ${item.size}`, // Add value for email
-          quantity: item.quantity
+          quantity: item.quantity,
         };
       });
 
@@ -109,23 +110,34 @@ export default function ProductCustomizer() {
         }
       });
 
-      const response = await fetch("/api/orders", {
-        method: "POST",
-        body: formData, // Don't set Content-Type header, let browser set it with boundary
+      const response = await axios.post("/api/orders", formData, {
+        headers: {
+          "Content-Type": "multipart/form-data",
+        },
       });
 
-      if (!response.ok) {
+      if (!response.data) {
         throw new Error("Failed to submit order");
       }
 
-      const result = await response.json();
+      const result = response.data;
       console.log("Order submitted successfully:", result);
 
       // Reset form after successful submission
       handleReset();
       setCurrentStep("customize");
     } catch (error) {
-      console.error("Error submitting order:", error);
+      const axiosError = error as AxiosError<{
+        error?: string;
+        message?: string;
+      }>;
+
+      const message =
+        axiosError.response?.data?.error ||
+        axiosError.response?.data?.message ||
+        axiosError.message ||
+        "Failed to save size";
+      console.error("Error submitting order:", message);
       throw error; // Re-throw to let toast handle it
     }
   };
@@ -148,11 +160,24 @@ export default function ProductCustomizer() {
     const fetchProductTypes = async () => {
       try {
         setLoadingProductTypes(true);
-        const res = await fetch("/api/product-types");
-        const data = await res.json();
+        const res = await axios.get("/api/product-types");
+        if (!res.data) {
+          throw new Error("Failed to fetch product types");
+        }
+        const data = res.data;
         setProductTypes(Array.isArray(data) ? data : []);
       } catch (error) {
-        console.error("Failed to fetch product types:", error);
+        const axiosError = error as AxiosError<{
+          error?: string;
+          message?: string;
+        }>;
+
+        const message =
+          axiosError.response?.data?.error ||
+          axiosError.response?.data?.message ||
+          axiosError.message ||
+          "Failed to fetch product types";
+        console.error("Failed to fetch product types:", message);
       } finally {
         setLoadingProductTypes(false);
       }
@@ -163,11 +188,24 @@ export default function ProductCustomizer() {
   useEffect(() => {
     const fetchSizes = async () => {
       try {
-        const res = await fetch("/api/sizes");
-        const data = await res.json();
+        const res = await axios.get("/api/sizes");
+        if (!res.data) {
+          throw new Error("Failed to fetch sizes");
+        }
+        const data = res.data;
         setSizes(Array.isArray(data) ? data : []);
       } catch (error) {
-        console.error("Failed to fetch sizes:", error);
+        const axiosError = error as AxiosError<{
+          error?: string;
+          message?: string;
+        }>;
+
+        const message =
+          axiosError.response?.data?.error ||
+          axiosError.response?.data?.message ||
+          axiosError.message ||
+          "Failed to fetch sizes";
+        console.error("Failed to fetch sizes:", message);
       }
     };
     fetchSizes();
@@ -179,11 +217,24 @@ export default function ProductCustomizer() {
     const fetchBrandsData = async () => {
       try {
         setLoadingBrands(true);
-        const brandRes = await fetch(`/api/brands?typeId=${productType}`);
-        const data = await brandRes.json();
+        const brandRes = await axios.get(`/api/brands?typeId=${productType}`);
+        if (!brandRes.data) {
+          throw new Error("Failed to fetch brands");
+        }
+        const data = brandRes.data;
         setBrands(Array.isArray(data) ? data : []);
       } catch (error) {
-        console.error("Failed to fetch brands:", error);
+        const axiosError = error as AxiosError<{
+          error?: string;
+          message?: string;
+        }>;
+
+        const message =
+          axiosError.response?.data?.error ||
+          axiosError.response?.data?.message ||
+          axiosError.message ||
+          "Failed to fetch brands";
+        console.error("Failed to fetch brands:", message);
       } finally {
         setLoadingBrands(false);
       }
@@ -205,8 +256,11 @@ export default function ProductCustomizer() {
         setLoadingBrandColors(true);
 
         // Fetch all color-brand relationships
-        const colorProductsRes = await fetch("/api/color-products");
-        const colorProducts = await colorProductsRes.json();
+        const colorProductsRes = await axios.get("/api/color-products");
+        if (!colorProductsRes.data) {
+          throw new Error("Failed to fetch color-products");
+        }
+        const colorProducts = colorProductsRes.data;
 
         // Filter colors for the selected brand
         const brandColorIds = colorProducts
@@ -218,15 +272,28 @@ export default function ProductCustomizer() {
         console.log("brandColorIds", brandColorIds);
 
         // Fetch all colors and filter by brand-specific IDs
-        const colorsRes = await fetch("/api/colors");
-        const allColors = await colorsRes.json();
+        const colorsRes = await axios.get("/api/colors");
+        if (!colorsRes.data) {
+          throw new Error("Failed to fetch colors");
+        }
+        const allColors = colorsRes.data;
         const filteredColors = allColors.filter((color: Color) =>
           brandColorIds.includes(color.id),
         );
 
         setColors(filteredColors);
       } catch (error) {
-        console.error("Failed to fetch brand colors:", error);
+        const axiosError = error as AxiosError<{
+          error?: string;
+          message?: string;
+        }>;
+
+        const message =
+          axiosError.response?.data?.error ||
+          axiosError.response?.data?.message ||
+          axiosError.message ||
+          "Failed to fetch brand colors";
+        console.error("Failed to fetch brand colors:", message);
         setColors([]);
       } finally {
         setLoadingBrandColors(false);
