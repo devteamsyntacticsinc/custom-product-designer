@@ -646,11 +646,11 @@ export default function CustomersTab() {
         prev.map((c) =>
           c.id === customerId
             ? {
-              ...c,
-              orders: filteredOrders,
-              isLoadingOrders: false,
-              ordersLoaded: true,
-            }
+                ...c,
+                orders: filteredOrders,
+                isLoadingOrders: false,
+                ordersLoaded: true,
+              }
             : c,
         ),
       );
@@ -900,20 +900,20 @@ export default function CustomersTab() {
                 />
                 {(filterValues.date_range?.from ||
                   filterValues.date_range?.to) && (
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      className="h-8 px-2"
-                      onClick={() =>
-                        setFilterValues((prev) => ({
-                          ...prev,
-                          date_range: undefined,
-                        }))
-                      }
-                    >
-                      <X className="h-3 w-3" />
-                    </Button>
-                  )}
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="h-8 px-2"
+                    onClick={() =>
+                      setFilterValues((prev) => ({
+                        ...prev,
+                        date_range: undefined,
+                      }))
+                    }
+                  >
+                    <X className="h-3 w-3" />
+                  </Button>
+                )}
               </div>
             </div>
 
@@ -1077,6 +1077,8 @@ export default function CustomersTab() {
                                                 invoice_no: "",
                                                 document_reference_number: null,
                                                 status: "pending",
+                                                invoice_logs:
+                                                  order.invoice_logs || [],
                                               }}
                                             />
                                           </div>
@@ -1089,10 +1091,14 @@ export default function CustomersTab() {
                                                 variant="secondary"
                                                 className="bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 font-medium px-3 py-1 rounded-full border-none text-[11px]"
                                               >
-                                                Reference No. {order.document_types?.ref_c2} - {order.invoice_no}
+                                                Reference No.{" "}
+                                                {order.document_types?.ref_c2} -{" "}
+                                                {order.invoice_no}
                                               </Badge>
                                               <span className="text-[11px] text-gray-500 dark:text-gray-400">
-                                                {new Date(order.created_at).toLocaleString("en-US", {
+                                                {new Date(
+                                                  order.created_at,
+                                                ).toLocaleString("en-US", {
                                                   month: "short",
                                                   day: "numeric",
                                                   year: "numeric",
@@ -1112,76 +1118,93 @@ export default function CustomersTab() {
                                             {/* Row 2: Product & Brand Info */}
                                             <div className="flex flex-wrap items-center gap-x-2 gap-y-1 text-sm text-gray-700 dark:text-gray-300">
                                               <span className="font-bold text-gray-900 dark:text-white">
-                                                {brandType?.product_type?.name || "Product"}
+                                                {brandType?.product_type
+                                                  ?.name || "Product"}
                                               </span>
                                               <span className="text-gray-300 dark:text-gray-600">
                                                 •
                                               </span>
                                               <span className="text-gray-500 dark:text-gray-400">
-                                                {brandType?.brands?.name || "N/A"}
+                                                {brandType?.brands?.name ||
+                                                  "N/A"}
                                               </span>
                                               <span className="text-gray-300 dark:text-gray-600">
                                                 •
                                               </span>
                                               <span className="text-gray-500 dark:text-gray-400">
-                                                {order.colors?.[0]?.value || "N/A"}
+                                                {order.colors?.[0]?.value ||
+                                                  "N/A"}
                                               </span>
                                             </div>
 
                                             {/* Row 3: Sizes & Quantities */}
-                                            {order.product_sizes && order.product_sizes.length > 0 && (
-                                              <div className="flex justify-between align-center items-center">
-                                                <div className="flex flex-wrap items-center gap-3 pt-1">
-                                                  <span className="text-[11px] font-bold text-gray-400 dark:text-gray-500 uppercase tracking-tighter">
-                                                    SIZES:
-                                                  </span>
-                                                  <div className="flex flex-wrap gap-2">
-                                                    {order.product_sizes.map((ps) => (
-                                                      <Badge
-                                                        key={ps.id}
-                                                        variant="secondary"
-                                                        className="text-[11px] font-bold px-3 py-1 bg-blue-50/50 dark:bg-blue-900/20 text-blue-700 dark:text-blue-300 border border-blue-100/50 dark:border-blue-800/50 rounded-full"
-                                                      >
-                                                        {ps.sizes?.value || "Unknown"} ({ps.quantity})
-                                                      </Badge>
-                                                    ))}
+                                            {order.product_sizes &&
+                                              order.product_sizes.length >
+                                                0 && (
+                                                <div className="flex justify-between align-center items-center">
+                                                  <div className="flex flex-wrap items-center gap-3 pt-1">
+                                                    <span className="text-[11px] font-bold text-gray-400 dark:text-gray-500 uppercase tracking-tighter">
+                                                      SIZES:
+                                                    </span>
+                                                    <div className="flex flex-wrap gap-2">
+                                                      {order.product_sizes.map(
+                                                        (ps) => (
+                                                          <Badge
+                                                            key={ps.id}
+                                                            variant="secondary"
+                                                            className="text-[11px] font-bold px-3 py-1 bg-blue-50/50 dark:bg-blue-900/20 text-blue-700 dark:text-blue-300 border border-blue-100/50 dark:border-blue-800/50 rounded-full"
+                                                          >
+                                                            {ps.sizes?.value ||
+                                                              "Unknown"}{" "}
+                                                            ({ps.quantity})
+                                                          </Badge>
+                                                        ),
+                                                      )}
+                                                    </div>
+                                                  </div>
+                                                  <div className="flex items-end gap-1.5 self-end sm:self-auto">
+                                                    {order.invoice_logs &&
+                                                      order.invoice_logs.map(
+                                                        (log) => (
+                                                          <Fragment
+                                                            key={log.id}
+                                                          >
+                                                            <div className="flex flex-col items-center gap-2 ">
+                                                              <Badge
+                                                                variant="outline"
+                                                                className="text-[10px] font-bold px-2 py-0.5 rounded-full"
+                                                              >
+                                                                {log.status}
+                                                              </Badge>
+                                                              <span className="text-[10px] text-gray-400">
+                                                                {new Date(
+                                                                  log.created_at,
+                                                                ).toLocaleString(
+                                                                  "en-US",
+                                                                  {
+                                                                    month:
+                                                                      "short",
+                                                                    day: "numeric",
+                                                                    hour: "2-digit",
+                                                                    minute:
+                                                                      "2-digit",
+                                                                  },
+                                                                )}
+                                                              </span>
+                                                            </div>
+                                                          </Fragment>
+                                                        ),
+                                                      )}
                                                   </div>
                                                 </div>
-                                                <div className="flex items-end gap-1.5 self-end sm:self-auto">
-                                                  {order.invoice_logs &&
-                                                    order.invoice_logs.map((log) => (
-                                                      <Fragment key={log.id}>
-                                                        <div className="flex flex-col items-center gap-2 ">
-                                                          <Badge
-                                                            variant="outline"
-                                                            className="text-[10px] font-bold px-2 py-0.5 rounded-full"
-                                                          >
-                                                            {log.status}
-                                                          </Badge>
-                                                          <span className="text-[10px] text-gray-400">
-                                                            {new Date(
-                                                              log.created_at,
-                                                            ).toLocaleString("en-US", {
-                                                              month: "short",
-                                                              day: "numeric",
-                                                              hour: "2-digit",
-                                                              minute: "2-digit",
-                                                            })}
-                                                          </span>
-                                                        </div>
-                                                      </Fragment>
-                                                    ))}
-                                                </div>
-                                              </div>
-                                            )}
+                                              )}
                                           </div>
                                         </div>
                                       </div>
                                     );
                                   })}
                                 </div>
-                              )
-                              }
+                              )}
                             </div>
                           </TableCell>
                         </TableRow>
@@ -1194,6 +1217,6 @@ export default function CustomersTab() {
           </div>
         )}
       </CardContent>
-    </Card >
+    </Card>
   );
 }

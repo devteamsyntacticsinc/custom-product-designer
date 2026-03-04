@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback, useRef } from "react";
+import { useState, useEffect, useCallback, useRef, Fragment } from "react";
 import { useRouter, usePathname } from "next/navigation";
 import { useSession, signOut } from "next-auth/react";
 import { Button } from "@/components/ui/button";
@@ -81,7 +81,12 @@ export default function AdminDashboard() {
       data: ChartDataItem[];
       types: string[];
     };
-    topCustomers: Array<{ id: string; name: string; email: string; count: number }>;
+    topCustomers: Array<{
+      id: string;
+      name: string;
+      email: string;
+      count: number;
+    }>;
     mostOrderedBrand: {
       data: ChartDataItem[];
       types: string[];
@@ -128,7 +133,14 @@ export default function AdminDashboard() {
 
   // Fetch dashboard data
   const fetchDashboardData = useCallback(
-    async (page: number = 1, ptfrom?: Date, ptto?: Date, obfrom?: Date, obto?: Date, productType?: string) => {
+    async (
+      page: number = 1,
+      ptfrom?: Date,
+      ptto?: Date,
+      obfrom?: Date,
+      obto?: Date,
+      productType?: string,
+    ) => {
       try {
         const params = new URLSearchParams();
         if (ptfrom) params.set("ptfrom", ptfrom.toISOString());
@@ -188,13 +200,27 @@ export default function AdminDashboard() {
   // Effect to refetch when selected product type for customers changes
   useEffect(() => {
     if (hasFetchedRef.current) {
-      fetchDashboardData(currentPage, ptDateRange?.from, ptDateRange?.to, obDateRange?.from, obDateRange?.to, selectedProductTypeForCustomers);
+      fetchDashboardData(
+        currentPage,
+        ptDateRange?.from,
+        ptDateRange?.to,
+        obDateRange?.from,
+        obDateRange?.to,
+        selectedProductTypeForCustomers,
+      );
     }
   }, [selectedProductTypeForCustomers]);
 
   useEffect(() => {
     if (obDateRange?.from) {
-      fetchDashboardData(currentPage, ptDateRange?.from, ptDateRange?.to, obDateRange.from, obDateRange.to, selectedProductTypeForCustomers);
+      fetchDashboardData(
+        currentPage,
+        ptDateRange?.from,
+        ptDateRange?.to,
+        obDateRange.from,
+        obDateRange.to,
+        selectedProductTypeForCustomers,
+      );
     } else if (hasFetchedRef.current) {
       fetchDashboardData(currentPage);
     }
@@ -218,7 +244,14 @@ export default function AdminDashboard() {
 
     // Only fetch on initial load when we haven't fetched yet
     if (!hasFetchedRef.current) {
-      fetchDashboardData(currentPage, ptDateRange?.from, ptDateRange?.to, obDateRange?.from, obDateRange?.to, selectedProductTypeForCustomers);
+      fetchDashboardData(
+        currentPage,
+        ptDateRange?.from,
+        ptDateRange?.to,
+        obDateRange?.from,
+        obDateRange?.to,
+        selectedProductTypeForCustomers,
+      );
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [session, status, router]); // Remove currentPage and fetchDashboardData to prevent re-runs - we use ref instead
@@ -234,11 +267,11 @@ export default function AdminDashboard() {
         <AdminSidebar
           user={null}
           sidebarOpen={false}
-          setSidebarOpen={() => { }}
-          onLogout={() => { }}
-          onNavigate={() => { }}
+          setSidebarOpen={() => {}}
+          onLogout={() => {}}
+          onNavigate={() => {}}
           isCollapsed={false}
-          onToggleCollapse={() => { }}
+          onToggleCollapse={() => {}}
           currentPath="/admin"
         />
         <div className="flex-1 lg:ml-64">
@@ -434,8 +467,13 @@ export default function AdminDashboard() {
                     </div>
                   ) : dashboardData?.ordersByProductTypeTimeSeries ? (
                     <ChartAreaInteractive
-                      data={dashboardData?.ordersByProductTypeTimeSeries?.data || []}
-                      config={(dashboardData?.ordersByProductTypeTimeSeries?.types || []).reduce(
+                      data={
+                        dashboardData?.ordersByProductTypeTimeSeries?.data || []
+                      }
+                      config={(
+                        dashboardData?.ordersByProductTypeTimeSeries?.types ||
+                        []
+                      ).reduce(
                         (acc: any, type: string, index: number) => ({
                           ...acc,
                           [type]: {
@@ -445,7 +483,10 @@ export default function AdminDashboard() {
                         }),
                         {},
                       )}
-                      types={dashboardData?.ordersByProductTypeTimeSeries?.types || []}
+                      types={
+                        dashboardData?.ordersByProductTypeTimeSeries?.types ||
+                        []
+                      }
                     />
                   ) : (
                     <div className="h-[300px] w-full flex items-center justify-center text-muted-foreground">
@@ -482,10 +523,12 @@ export default function AdminDashboard() {
                           setSelectedProductTypeForCustomers(value);
                         }}
                         options={[
-                          ...(dashboardData?.productTypes || []).map((type) => ({
-                            value: type.id.toString(),
-                            label: type.name,
-                          })),
+                          ...(dashboardData?.productTypes || []).map(
+                            (type) => ({
+                              value: type.id.toString(),
+                              label: type.name,
+                            }),
+                          ),
                         ]}
                         className="w-[200px]"
                         disabled={loadingProductTypes}
@@ -561,7 +604,8 @@ export default function AdminDashboard() {
                     <div className="h-[300px] w-full">
                       <Skeleton className="h-full w-full rounded-md" />
                     </div>
-                  ) : (dashboardData?.mostOrderedBrand?.data?.length ?? 0) > 0 ? (
+                  ) : (dashboardData?.mostOrderedBrand?.data?.length ?? 0) >
+                    0 ? (
                     <ChartPieLabel
                       data={dashboardData?.mostOrderedBrand?.data || []}
                       types={dashboardData?.mostOrderedBrand?.types || []}
@@ -675,13 +719,16 @@ export default function AdminDashboard() {
                           </PaginationItem>
 
                           {Array.from(
-                            { length: dashboardData?.recentActivity?.totalPages || 0 },
+                            {
+                              length:
+                                dashboardData?.recentActivity?.totalPages || 0,
+                            },
                             (_, i) => i + 1,
                           ).map((page) => {
                             if (
                               page === 1 ||
                               page ===
-                              dashboardData?.recentActivity?.totalPages ||
+                                dashboardData?.recentActivity?.totalPages ||
                               (page >= currentPage - 1 &&
                                 page <= currentPage + 1)
                             ) {
@@ -719,7 +766,7 @@ export default function AdminDashboard() {
                               className={
                                 currentPage ===
                                   dashboardData?.recentActivity?.totalPages ||
-                                  pageLoading
+                                pageLoading
                                   ? "pointer-events-none opacity-50"
                                   : "cursor-pointer"
                               }
@@ -931,27 +978,52 @@ function OrderDetails({ order }: { order: OrderWithCustomer }) {
           </div>
 
           {/* Customer Info */}
-          <div className="w-full sm:w-auto sm:text-right space-y-2 border-t sm:border-t-0 pt-4 sm:pt-0 dark:border-gray-800">
-            {customer ? (
-              <div className="flex flex-col sm:items-end gap-1">
-                <div className="flex items-center sm:justify-end gap-2 text-sm font-bold ">
-                  <UserIcon className="h-4 w-4 text-muted-foreground" />
-                  {customer.name}
+          <div className="flex flex-col gap-8">
+            <div className="w-full sm:w-auto sm:text-right space-y-2 border-t sm:border-t-0 pt-4 sm:pt-0">
+              {customer ? (
+                <div className="flex flex-col sm:items-end gap-1 dark:text-gray-400">
+                  <div className="flex items-center sm:justify-end gap-2 text-sm font-bold  dark:text-white">
+                    <UserIcon className="h-4 w-4 text-gray-400" />
+                    {customer.name}
+                  </div>
+                  <div className="flex items-center sm:justify-end gap-2 text-xs text-gray-500 dark:text-gray-400">
+                    <Mail className="h-3.5 w-3.5 text-gray-400" />
+                    {customer.email}
+                  </div>
+                  <div className="flex items-center sm:justify-end gap-2 text-xs text-gray-500 dark:text-gray-400">
+                    <Phone className="h-3.5 w-3.5 text-gray-400" />
+                    {customer.contact_number}
+                  </div>
                 </div>
-                <div className="flex items-center sm:justify-end gap-2 text-xs text-muted-foreground">
-                  <Mail className="h-3.5 w-3.5 text-muted-foreground" />
-                  {customer.email}
+              ) : (
+                <div className="text-xs text-gray-500 italic text-left sm:text-right">
+                  Customer info unavailable
                 </div>
-                <div className="flex items-center sm:justify-end gap-2 text-xs text-muted-foreground">
-                  <Phone className="h-3.5 w-3.5 text-muted-foreground" />
-                  {customer.contact_number}
-                </div>
-              </div>
-            ) : (
-              <div className="text-xs text-muted-foreground italic text-left sm:text-right">
-                Customer info unavailable
-              </div>
-            )}
+              )}
+            </div>
+            <div className="flex items-end gap-1.5 self-end ">
+              {order.invoice_logs &&
+                order.invoice_logs.map((log) => (
+                  <Fragment key={log.id}>
+                    <div className="flex flex-col items-center gap-2 ">
+                      <Badge
+                        variant="outline"
+                        className="text-[10px] font-bold px-2 py-0.5 rounded-full"
+                      >
+                        {log.status}
+                      </Badge>
+                      <span className="text-[10px] text-gray-400">
+                        {new Date(log.created_at).toLocaleString("en-US", {
+                          month: "short",
+                          day: "numeric",
+                          hour: "2-digit",
+                          minute: "2-digit",
+                        })}
+                      </span>
+                    </div>
+                  </Fragment>
+                ))}
+            </div>
           </div>
         </div>
       </div>
@@ -1091,51 +1163,78 @@ function CustomerOrderCard({
               status: order.status || "pending",
               product_id: order.products?.[0]?.id || 0,
               color_id: order.colors?.[0]?.id || 0,
+              invoice_logs: order.invoice_logs || [],
             }}
           />
         </div>
 
         {/* Order Details */}
-        <div className="space-y-2">
-          <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-gray-600">
-            {order.products?.[0]?.product_type?.name && (
-              <span className="font-semibold ">
-                {order.products[0].product_type.name}
-              </span>
-            )}
-            {order.products?.[0]?.brands?.name && (
-              <span className="flex items-center gap-1">
-                <span>•</span>
-                {order.products[0].brands.name}
-              </span>
-            )}
-            {order.colors?.[0]?.value && (
-              <span className="flex items-center gap-1">
-                <span>•</span>
-                {order.colors[0].value}
-              </span>
+        <div className="flex justify-between">
+          <div className="space-y-2">
+            <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-gray-600">
+              {order.products?.[0]?.product_type?.name && (
+                <span className="font-semibold ">
+                  {order.products[0].product_type.name}
+                </span>
+              )}
+              {order.products?.[0]?.brands?.name && (
+                <span className="flex items-center gap-1">
+                  <span>•</span>
+                  {order.products[0].brands.name}
+                </span>
+              )}
+              {order.colors?.[0]?.value && (
+                <span className="flex items-center gap-1">
+                  <span>•</span>
+                  {order.colors[0].value}
+                </span>
+              )}
+            </div>
+
+            {/* Sizes */}
+            {order.product_sizes && order.product_sizes.length > 0 && (
+              <div className="flex flex-wrap items-center gap-2">
+                <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
+                  Sizes:
+                </span>
+                <div className="flex flex-wrap gap-1">
+                  {order.product_sizes.map((size) => (
+                    <Badge
+                      key={size.id}
+                      variant="outline"
+                      className="text-xs px-2 py-0 h-5"
+                    >
+                      {size.sizes?.value || "Unknown"} ({size.quantity})
+                    </Badge>
+                  ))}
+                </div>
+              </div>
             )}
           </div>
 
-          {/* Sizes */}
-          {order.product_sizes && order.product_sizes.length > 0 && (
-            <div className="flex flex-wrap items-center gap-2">
-              <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
-                Sizes:
-              </span>
-              <div className="flex flex-wrap gap-1">
-                {order.product_sizes.map((size) => (
-                  <Badge
-                    key={size.id}
-                    variant="outline"
-                    className="text-xs px-2 py-0 h-5"
-                  >
-                    {size.sizes?.value || "Unknown"} ({size.quantity})
-                  </Badge>
-                ))}
-              </div>
-            </div>
-          )}
+          <div className="flex items-end gap-1.5 self-end ">
+            {order.invoice_logs &&
+              order.invoice_logs.map((log) => (
+                <Fragment key={log.id}>
+                  <div className="flex flex-col items-center gap-2 ">
+                    <Badge
+                      variant="outline"
+                      className="text-[10px] font-bold px-2 py-0.5 rounded-full"
+                    >
+                      {log.status}
+                    </Badge>
+                    <span className="text-[10px] text-gray-400">
+                      {new Date(log.created_at).toLocaleString("en-US", {
+                        month: "short",
+                        day: "numeric",
+                        hour: "2-digit",
+                        minute: "2-digit",
+                      })}
+                    </span>
+                  </div>
+                </Fragment>
+              ))}
+          </div>
         </div>
       </div>
     </Card>

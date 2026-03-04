@@ -28,7 +28,7 @@ export class OrderService {
         const needsUpdate =
           existingCustomer.name !== contactInformation.fullName ||
           existingCustomer.contact_number !==
-          contactInformation.contactNumber ||
+            contactInformation.contactNumber ||
           existingCustomer.address !== contactInformation.address;
 
         if (needsUpdate) {
@@ -751,6 +751,7 @@ export class OrderService {
       // Combine all data
       const combinedOrders = invoices.map((invoice) => {
         const customer = invoice.customers;
+        const invoiceLogs = invoice.invoice_logs;
         const product = products?.find((p) => p.id === invoice.product_id);
         const color = colors?.find((c) => c.id === invoice.color_id);
         const sizes = productSizes?.filter(
@@ -768,16 +769,16 @@ export class OrderService {
 
         const transformedProduct = product
           ? [
-            {
-              id: product.id,
-              brands: Array.isArray(product.brands)
-                ? product.brands[0]
-                : product.brands || undefined,
-              product_type: Array.isArray(product.product_type)
-                ? product.product_type[0]
-                : product.product_type || undefined,
-            },
-          ]
+              {
+                id: product.id,
+                brands: Array.isArray(product.brands)
+                  ? product.brands[0]
+                  : product.brands || undefined,
+                product_type: Array.isArray(product.product_type)
+                  ? product.product_type[0]
+                  : product.product_type || undefined,
+              },
+            ]
           : [];
 
         // Handle document_types - could be object or array depending on Supabase version
@@ -796,6 +797,7 @@ export class OrderService {
           id: invoice.id,
           created_at: invoice.created_at,
           customers: customer || null,
+          invoice_logs: invoiceLogs || null,
           products: transformedProduct,
           colors: color ? [color] : [],
           product_sizes: formattedSizes || [],
@@ -804,10 +806,10 @@ export class OrderService {
           document_reference_number: invoice.document_reference_number || null,
           document_types: docType
             ? {
-              id: docType.id,
-              ref_c2: docType.ref_c2,
-              description: docType.description || "",
-            }
+                id: docType.id,
+                ref_c2: docType.ref_c2,
+                description: docType.description || "",
+              }
             : null,
           status: invoice.status,
           product_id: invoice.product_id,
@@ -1016,16 +1018,16 @@ export class OrderService {
 
         const transformedProduct = product
           ? [
-            {
-              id: product.id,
-              brands: Array.isArray(product.brands)
-                ? product.brands[0]
-                : product.brands || undefined,
-              product_type: Array.isArray(product.product_type)
-                ? product.product_type[0]
-                : product.product_type || undefined,
-            },
-          ]
+              {
+                id: product.id,
+                brands: Array.isArray(product.brands)
+                  ? product.brands[0]
+                  : product.brands || undefined,
+                product_type: Array.isArray(product.product_type)
+                  ? product.product_type[0]
+                  : product.product_type || undefined,
+              },
+            ]
           : [];
 
         return {
@@ -1177,16 +1179,16 @@ export class OrderService {
 
       const transformedProduct = product
         ? [
-          {
-            id: product.id,
-            brands: Array.isArray(product.brands)
-              ? product.brands[0]
-              : product.brands || undefined,
-            product_type: Array.isArray(product.product_type)
-              ? product.product_type[0]
-              : product.product_type || undefined,
-          },
-        ]
+            {
+              id: product.id,
+              brands: Array.isArray(product.brands)
+                ? product.brands[0]
+                : product.brands || undefined,
+              product_type: Array.isArray(product.product_type)
+                ? product.product_type[0]
+                : product.product_type || undefined,
+            },
+          ]
         : [];
 
       return {
@@ -1205,6 +1207,7 @@ export class OrderService {
         status: invoice.status,
         product_id: invoice.product_id,
         color_id: invoice.color_id,
+        invoice_logs: invoice.invoice_logs,
       };
     } catch (error) {
       console.error("Error fetching order by ID:", error);
