@@ -179,15 +179,25 @@ export class ProductService {
         if (error) {
           throw error;
         }
+
         return data.map((product) => {
           const brand = Array.isArray(product.brands)
             ? product.brands[0]
             : product.brands;
 
+          if (product.brand_id === null) {
+            return {
+              id: 0,
+              name: "",
+              is_Active: false,
+              type_id: product.product_type_id,
+            };
+          }
+
           return {
             id: product.brand_id,
-            name: brand!.name,
-            is_Active: brand!.is_Active,
+            name: brand.name,
+            is_Active: brand.is_Active,
             type_id: product.product_type_id,
           };
         });
@@ -1426,10 +1436,7 @@ export class ProductService {
         .in("id", productIds);
 
       if (productError) throw productError;
-      if (
-        !existingProducts ||
-        existingProducts.length !== productIds.length
-      ) {
+      if (!existingProducts || existingProducts.length !== productIds.length) {
         throw new Error("One or more products not found");
       }
 
@@ -1587,12 +1594,13 @@ export class ProductService {
       }
 
       // Check if the product has null brand_id that is equal to product_type_id
-      const { data: hasNullBrandProduct, error: checkNullError } = await supabase
-        .from("products")
-        .select("id")
-        .is("brand_id", null)
-        .eq("product_type_id", type_id)
-        .maybeSingle();
+      const { data: hasNullBrandProduct, error: checkNullError } =
+        await supabase
+          .from("products")
+          .select("id")
+          .is("brand_id", null)
+          .eq("product_type_id", type_id)
+          .maybeSingle();
 
       if (checkNullError) {
         console.log(checkNullError);
@@ -1605,7 +1613,9 @@ export class ProductService {
           .update({ brand_id })
           .eq("id", hasNullBrandProduct.id);
       } else {
-        query = supabase.from("products").insert([{ brand_id, product_type_id: type_id }]);
+        query = supabase
+          .from("products")
+          .insert([{ brand_id, product_type_id: type_id }]);
       }
 
       const { data, error } = await query.select().single();
@@ -1914,10 +1924,7 @@ export class ProductService {
         .in("id", productIds);
 
       if (productError) throw productError;
-      if (
-        !existingProducts ||
-        existingProducts.length !== productIds.length
-      ) {
+      if (!existingProducts || existingProducts.length !== productIds.length) {
         throw new Error("One or more products not found");
       }
 
