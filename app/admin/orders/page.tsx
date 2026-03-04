@@ -404,9 +404,10 @@ export default function OrdersPage() {
                               onClick={() =>
                                 handleSendPickupEmail(order.id.toString())
                               }
-                              disabled={sendingEmailIds.has(
-                                order.id.toString(),
-                              )}
+                              disabled={
+                                sendingEmailIds.has(order.id.toString()) ||
+                                invoiceStatus === "Claimed"
+                              }
                               className="h-10"
                             >
                               <Mail
@@ -541,22 +542,49 @@ function ConfirmClaimedDialog({
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const value = e.target.value;
-    setDocumentReferenceNumber(value);
-    setError("");
+
+    // Only allow alphanumeric characters (A-Z, 0-9)
+    const alphanumericValue = value.replace(/[^A-Z0-9]/gi, "");
+
+    // Update state with filtered value
+    setDocumentReferenceNumber(alphanumericValue);
+
+    // Validate and set error
+    const validationError = validateReferenceNumber(alphanumericValue);
+    setError(validationError);
   };
 
-  const isButtonDisabled = !documentReferenceNumber.trim() || isLoading;
+  const validateReferenceNumber = (value: string): string => {
+    const trimmedValue = value.trim();
+
+    if (!trimmedValue) {
+      return "Document reference number is required";
+    }
+
+    if (trimmedValue.length > 50) {
+      return "Document reference number must be 50 characters or less";
+    }
+
+    // Check for alphanumeric only (A-Z, 0-9)
+    const alphanumericRegex = /^[A-Z0-9]+$/i;
+    if (!alphanumericRegex.test(trimmedValue)) {
+      return "Document reference number must contain only letters (A-Z) and numbers (0-9)";
+    }
+
+    return "";
+  };
+
+  const isButtonDisabled =
+    !documentReferenceNumber.trim() ||
+    isLoading ||
+    !!validateReferenceNumber(documentReferenceNumber);
 
   const handleClaimed = async () => {
     const trimmedRef = documentReferenceNumber.trim();
+    const validationError = validateReferenceNumber(documentReferenceNumber);
 
-    if (!trimmedRef) {
-      setError("Document reference number is required");
-      return;
-    }
-
-    if (trimmedRef.length > 50) {
-      setError("Document reference number must be 50 characters or less");
+    if (validationError) {
+      setError(validationError);
       return;
     }
 
@@ -615,11 +643,14 @@ function ConfirmClaimedDialog({
               onChange={handleInputChange}
               placeholder="Enter document reference number"
               disabled={isLoading}
-              className={error ? "border-red-500" : ""}
+              className={error ? "border-red-500 focus:border-red-500" : ""}
               maxLength={50}
             />
-            {error && <p className="text-sm text-red-500">{error}</p>}
-            <p className="text-xs text-gray-500">Maximum 50 characters</p>
+            {error && <p className="text-sm text-red-500 mt-1">{error}</p>}
+            <p className="text-xs text-gray-500">
+              Only letters (A-Z) and numbers (0-9) allowed. Maximum 50
+              characters.
+            </p>
           </div>
         </div>
 
