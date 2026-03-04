@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, Fragment } from "react";
 import { useRouter, usePathname } from "next/navigation";
 import { useSession, signOut } from "next-auth/react";
 import { Button } from "@/components/ui/button";
@@ -404,9 +404,10 @@ export default function OrdersPage() {
                               onClick={() =>
                                 handleSendPickupEmail(order.id.toString())
                               }
-                              disabled={sendingEmailIds.has(
-                                order.id.toString(),
-                              )}
+                              disabled={
+                                sendingEmailIds.has(order.id.toString()) ||
+                                invoiceStatus === "Claimed"
+                              }
                               className="h-10"
                             >
                               <Mail
@@ -489,27 +490,55 @@ export default function OrdersPage() {
                         </div>
 
                         {/* Customer Info */}
-                        <div className="w-full sm:w-auto sm:text-right space-y-2 border-t sm:border-t-0 pt-4 sm:pt-0">
-                          {customer ? (
-                            <div className="flex flex-col sm:items-end gap-1 dark:text-gray-400">
-                              <div className="flex items-center sm:justify-end gap-2 text-sm font-bold  dark:text-white">
-                                <UserIcon className="h-4 w-4 text-gray-400" />
-                                {customer.name}
+                        <div className="flex flex-col gap-8">
+                          <div className="w-full sm:w-auto sm:text-right space-y-2 border-t sm:border-t-0 pt-4 sm:pt-0">
+                            {customer ? (
+                              <div className="flex flex-col sm:items-end gap-1 dark:text-gray-400">
+                                <div className="flex items-center sm:justify-end gap-2 text-sm font-bold  dark:text-white">
+                                  <UserIcon className="h-4 w-4 text-gray-400" />
+                                  {customer.name}
+                                </div>
+                                <div className="flex items-center sm:justify-end gap-2 text-xs text-gray-500 dark:text-gray-400">
+                                  <Mail className="h-3.5 w-3.5 text-gray-400" />
+                                  {customer.email}
+                                </div>
+                                <div className="flex items-center sm:justify-end gap-2 text-xs text-gray-500 dark:text-gray-400">
+                                  <Phone className="h-3.5 w-3.5 text-gray-400" />
+                                  {customer.contact_number}
+                                </div>
                               </div>
-                              <div className="flex items-center sm:justify-end gap-2 text-xs text-gray-500 dark:text-gray-400">
-                                <Mail className="h-3.5 w-3.5 text-gray-400" />
-                                {customer.email}
+                            ) : (
+                              <div className="text-xs text-gray-500 italic text-left sm:text-right">
+                                Customer info unavailable
                               </div>
-                              <div className="flex items-center sm:justify-end gap-2 text-xs text-gray-500 dark:text-gray-400">
-                                <Phone className="h-3.5 w-3.5 text-gray-400" />
-                                {customer.contact_number}
-                              </div>
-                            </div>
-                          ) : (
-                            <div className="text-xs text-gray-500 italic text-left sm:text-right">
-                              Customer info unavailable
-                            </div>
-                          )}
+                            )}
+                          </div>
+                          <div className="flex items-end gap-1.5 self-end ">
+                            {order.invoice_logs &&
+                              order.invoice_logs.map((log) => (
+                                <Fragment key={log.id}>
+                                  <div className="flex flex-col items-center gap-2 ">
+                                    <Badge
+                                      variant="outline"
+                                      className="text-[10px] font-bold px-2 py-0.5 rounded-full"
+                                    >
+                                      {log.status}
+                                    </Badge>
+                                    <span className="text-[10px] text-gray-400">
+                                      {new Date(log.created_at).toLocaleString(
+                                        "en-US",
+                                        {
+                                          month: "short",
+                                          day: "numeric",
+                                          hour: "2-digit",
+                                          minute: "2-digit",
+                                        },
+                                      )}
+                                    </span>
+                                  </div>
+                                </Fragment>
+                              ))}
+                          </div>
                         </div>
                       </div>
                     </div>
@@ -541,22 +570,49 @@ function ConfirmClaimedDialog({
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const value = e.target.value;
-    setDocumentReferenceNumber(value);
-    setError("");
+
+    // Only allow alphanumeric characters (A-Z, 0-9)
+    const alphanumericValue = value.replace(/[^A-Z0-9]/gi, "");
+
+    // Update state with filtered value
+    setDocumentReferenceNumber(alphanumericValue);
+
+    // Validate and set error
+    const validationError = validateReferenceNumber(alphanumericValue);
+    setError(validationError);
   };
 
-  const isButtonDisabled = !documentReferenceNumber.trim() || isLoading;
+  const validateReferenceNumber = (value: string): string => {
+    const trimmedValue = value.trim();
+
+    if (!trimmedValue) {
+      return "Document reference number is required";
+    }
+
+    if (trimmedValue.length > 50) {
+      return "Document reference number must be 50 characters or less";
+    }
+
+    // Check for alphanumeric only (A-Z, 0-9)
+    const alphanumericRegex = /^[A-Z0-9]+$/i;
+    if (!alphanumericRegex.test(trimmedValue)) {
+      return "Document reference number must contain only letters (A-Z) and numbers (0-9)";
+    }
+
+    return "";
+  };
+
+  const isButtonDisabled =
+    !documentReferenceNumber.trim() ||
+    isLoading ||
+    !!validateReferenceNumber(documentReferenceNumber);
 
   const handleClaimed = async () => {
     const trimmedRef = documentReferenceNumber.trim();
+    const validationError = validateReferenceNumber(documentReferenceNumber);
 
-    if (!trimmedRef) {
-      setError("Document reference number is required");
-      return;
-    }
-
-    if (trimmedRef.length > 50) {
-      setError("Document reference number must be 50 characters or less");
+    if (validationError) {
+      setError(validationError);
       return;
     }
 
@@ -615,11 +671,14 @@ function ConfirmClaimedDialog({
               onChange={handleInputChange}
               placeholder="Enter document reference number"
               disabled={isLoading}
-              className={error ? "border-red-500" : ""}
+              className={error ? "border-red-500 focus:border-red-500" : ""}
               maxLength={50}
             />
-            {error && <p className="text-sm text-red-500">{error}</p>}
-            <p className="text-xs text-gray-500">Maximum 50 characters</p>
+            {error && <p className="text-sm text-red-500 mt-1">{error}</p>}
+            <p className="text-xs text-gray-500">
+              Only letters (A-Z) and numbers (0-9) allowed. Maximum 50
+              characters.
+            </p>
           </div>
         </div>
 

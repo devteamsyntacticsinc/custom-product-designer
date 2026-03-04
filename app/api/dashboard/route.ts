@@ -8,13 +8,13 @@ export async function GET(request: Request) {
     const { searchParams } = new URL(request.url);
     const page = parseInt(searchParams.get("page") || "1");
     const limit = parseInt(searchParams.get("limit") || "10");
-    const ptfrom = searchParams.get("ptfrom") ?? undefined;
-    const ptto = searchParams.get("ptto") ?? undefined;
-    const productType = searchParams.get("productType")
+    const ptfrom = searchParams.get("ptfrom") || undefined;
+    const ptto = searchParams.get("ptto") || undefined;
+    const productType = searchParams.get("productType") && searchParams.get("productType") !== "all"
       ? Number(searchParams.get("productType"))
       : undefined;
-    const obfrom = searchParams.get("obfrom") ?? undefined;
-    const obto = searchParams.get("obto") ?? undefined;
+    const obfrom = searchParams.get("obfrom") || undefined;
+    const obto = searchParams.get("obto") || undefined;
 
     const [
       statsResult,
@@ -50,7 +50,7 @@ export async function GET(request: Request) {
     const mostOrderedBrand =
       mostOrderedBrandResult.status === "fulfilled"
         ? mostOrderedBrandResult.value
-        : [];
+        : { data: [], types: [] };
     const productTypes =
       productTypesResult.status === "fulfilled" ? productTypesResult.value : [];
 
@@ -62,13 +62,13 @@ export async function GET(request: Request) {
           stats.success && stats.data
             ? stats.data.stats
             : {
-                totalOrders: 0,
-                totalUsers: 0,
-                activeProducts: 0,
-                totalBrands: 0,
-                totalColors: 0,
-                totalTypes: 0,
-              },
+              totalOrders: 0,
+              totalUsers: 0,
+              activeProducts: 0,
+              totalBrands: 0,
+              totalColors: 0,
+              totalTypes: 0,
+            },
         recentActivity: activity,
         topCustomers,
         ordersByProductTypeTimeSeries,
@@ -98,7 +98,7 @@ export async function GET(request: Request) {
         },
         topCustomers: [],
         ordersByProductTypeTimeSeries: { data: [], types: [] },
-        mostOrderedBrand: [],
+        mostOrderedBrand: { data: [], types: [] },
         productTypes: [],
       },
     });
