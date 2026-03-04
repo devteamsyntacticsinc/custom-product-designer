@@ -1,7 +1,7 @@
 "use client";
 
 import * as React from "react";
-import { ChevronDown } from "lucide-react";
+import { Check, ChevronDown } from "lucide-react";
 
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
@@ -102,7 +102,10 @@ export function Combobox({
                     setOpen(false);
                   }}
                 >
-                  {option.label}
+                  {option.label}{" "}
+                  {option.value === value && (
+                    <Check strokeWidth={1.6} className="size-5 ml-auto" />
+                  )}
                 </CommandItem>
               ))}
             </CommandGroup>
