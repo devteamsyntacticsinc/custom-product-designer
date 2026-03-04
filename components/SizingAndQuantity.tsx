@@ -6,6 +6,7 @@ import { useEffect, useState, useCallback } from "react";
 import { Size, SizingAndQuantityProps } from "@/types/product";
 import { InfoIcon } from "lucide-react";
 import { cn } from "@/lib/utils";
+import axios from "axios";
 
 const SIZE_ORDER = {
   "Extra Small": 1,
@@ -34,16 +35,22 @@ export default function SizingAndQuantity({
       setIsLoading(true);
 
       // Always fetch all sizes
-      const response = await fetch("/api/sizes");
-      const sizes = await response.json();
+      const response = await axios.get("/api/sizes");
+      if (!response.data) {
+        throw new Error("Failed to fetch sizes");
+      }
+      const sizes = response.data;
 
       // Fetch filtered sizes only if both productTypeId and brandId are provided
       let availableSizes: Size[] = [];
       if (productTypeId || brandId) {
-        const responseByProductId = await fetch(
+        const responseByProductId = await axios.get(
           `/api/sizes-by-type?typeId=${productTypeId || ""}&brandId=${brandId || ""}`,
         );
-        availableSizes = await responseByProductId.json();
+        if (!responseByProductId.data) {
+          throw new Error("Failed to fetch sizes by product type and brand");
+        }
+        availableSizes = responseByProductId.data;
       }
 
       if (sizes) {
