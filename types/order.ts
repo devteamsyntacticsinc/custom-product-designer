@@ -59,6 +59,11 @@ export interface OrderWithCustomer {
     description: string;
   } | null;
   status: string;
+  invoice_logs: Array<{
+    id: number;
+    status: string;
+    created_at: string;
+  }>;
   product_id: number;
   color_id: number;
 }

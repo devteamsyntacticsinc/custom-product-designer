@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, Fragment } from "react";
 import { useRouter, usePathname } from "next/navigation";
 import { useSession, signOut } from "next-auth/react";
 import { Button } from "@/components/ui/button";
@@ -490,27 +490,55 @@ export default function OrdersPage() {
                         </div>
 
                         {/* Customer Info */}
-                        <div className="w-full sm:w-auto sm:text-right space-y-2 border-t sm:border-t-0 pt-4 sm:pt-0">
-                          {customer ? (
-                            <div className="flex flex-col sm:items-end gap-1 dark:text-gray-400">
-                              <div className="flex items-center sm:justify-end gap-2 text-sm font-bold  dark:text-white">
-                                <UserIcon className="h-4 w-4 text-gray-400" />
-                                {customer.name}
+                        <div className="flex flex-col gap-8">
+                          <div className="w-full sm:w-auto sm:text-right space-y-2 border-t sm:border-t-0 pt-4 sm:pt-0">
+                            {customer ? (
+                              <div className="flex flex-col sm:items-end gap-1 dark:text-gray-400">
+                                <div className="flex items-center sm:justify-end gap-2 text-sm font-bold  dark:text-white">
+                                  <UserIcon className="h-4 w-4 text-gray-400" />
+                                  {customer.name}
+                                </div>
+                                <div className="flex items-center sm:justify-end gap-2 text-xs text-gray-500 dark:text-gray-400">
+                                  <Mail className="h-3.5 w-3.5 text-gray-400" />
+                                  {customer.email}
+                                </div>
+                                <div className="flex items-center sm:justify-end gap-2 text-xs text-gray-500 dark:text-gray-400">
+                                  <Phone className="h-3.5 w-3.5 text-gray-400" />
+                                  {customer.contact_number}
+                                </div>
                               </div>
-                              <div className="flex items-center sm:justify-end gap-2 text-xs text-gray-500 dark:text-gray-400">
-                                <Mail className="h-3.5 w-3.5 text-gray-400" />
-                                {customer.email}
+                            ) : (
+                              <div className="text-xs text-gray-500 italic text-left sm:text-right">
+                                Customer info unavailable
                               </div>
-                              <div className="flex items-center sm:justify-end gap-2 text-xs text-gray-500 dark:text-gray-400">
-                                <Phone className="h-3.5 w-3.5 text-gray-400" />
-                                {customer.contact_number}
-                              </div>
-                            </div>
-                          ) : (
-                            <div className="text-xs text-gray-500 italic text-left sm:text-right">
-                              Customer info unavailable
-                            </div>
-                          )}
+                            )}
+                          </div>
+                          <div className="flex items-end gap-1.5 self-end ">
+                            {order.invoice_logs &&
+                              order.invoice_logs.map((log) => (
+                                <Fragment key={log.id}>
+                                  <div className="flex flex-col items-center gap-2 ">
+                                    <Badge
+                                      variant="outline"
+                                      className="text-[10px] font-bold px-2 py-0.5 rounded-full"
+                                    >
+                                      {log.status}
+                                    </Badge>
+                                    <span className="text-[10px] text-gray-400">
+                                      {new Date(log.created_at).toLocaleString(
+                                        "en-US",
+                                        {
+                                          month: "short",
+                                          day: "numeric",
+                                          hour: "2-digit",
+                                          minute: "2-digit",
+                                        },
+                                      )}
+                                    </span>
+                                  </div>
+                                </Fragment>
+                              ))}
+                          </div>
                         </div>
                       </div>
                     </div>

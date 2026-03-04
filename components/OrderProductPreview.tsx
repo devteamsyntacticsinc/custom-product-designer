@@ -108,7 +108,6 @@ export default function OrderProductPreview({
   // Memoize expensive computations
   const {
     productImages,
-    productTypeImages,
     isOnlyType,
     imageIsFront,
     imageIsBack,
