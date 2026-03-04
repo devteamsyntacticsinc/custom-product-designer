@@ -42,6 +42,7 @@ export default function ContactInformation({
   setContactData,
 }: ContactInformationProps) {
   const [showOrderSummary, setShowOrderSummary] = useState(false);
+  const [errors, setErrors] = useState<Partial<ContactData>>({});
 
   const handleInputChange =
     (field: keyof ContactData) => (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -49,10 +50,48 @@ export default function ContactInformation({
         ...prev,
         [field]: e.target.value,
       }));
+      // Clear error when user starts typing
+      if (errors[field]) {
+        setErrors((prev) => ({
+          ...prev,
+          [field]: "",
+        }));
+      }
     };
 
+  const validateForm = (): boolean => {
+    const newErrors: Partial<ContactData> = {};
+
+    if (!contactData.fullName.trim()) {
+      newErrors.fullName = "Full name is required";
+    }
+
+    if (!contactData.email.trim()) {
+      newErrors.email = "Email is required";
+    } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(contactData.email)) {
+      newErrors.email = "Please enter a valid email address";
+    }
+
+    if (!contactData.contactNumber.trim()) {
+      newErrors.contactNumber = "Contact number is required";
+    } else if (
+      !/^\d+$/.test(contactData.contactNumber.replace(/[\s\-\(\)]/g, ""))
+    ) {
+      newErrors.contactNumber = "Contact number must contain only digits";
+    }
+
+    if (!contactData.address.trim()) {
+      newErrors.address = "Address is required";
+    }
+
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
+  };
+
   const handleSubmit = () => {
-    setShowOrderSummary(true);
+    if (validateForm()) {
+      setShowOrderSummary(true);
+    }
   };
 
   const handleOrderSummarySubmit = async () => {
@@ -87,8 +126,11 @@ export default function ContactInformation({
             value={contactData.fullName}
             onChange={handleInputChange("fullName")}
             placeholder="Enter your full name"
-            className="w-full"
+            className={`w-full ${errors.fullName ? "border-red-500" : ""}`}
           />
+          {errors.fullName && (
+            <p className="text-red-500 text-sm mt-1">{errors.fullName}</p>
+          )}
         </div>
 
         {/* Email */}
@@ -105,8 +147,11 @@ export default function ContactInformation({
             value={contactData.email}
             onChange={handleInputChange("email")}
             placeholder="Enter your email"
-            className="w-full"
+            className={`w-full ${errors.email ? "border-red-500" : ""}`}
           />
+          {errors.email && (
+            <p className="text-red-500 text-sm mt-1">{errors.email}</p>
+          )}
         </div>
 
         {/* Contact Number */}
@@ -123,8 +168,11 @@ export default function ContactInformation({
             value={contactData.contactNumber}
             onChange={handleInputChange("contactNumber")}
             placeholder="Enter your contact number"
-            className="w-full"
+            className={`w-full ${errors.contactNumber ? "border-red-500" : ""}`}
           />
+          {errors.contactNumber && (
+            <p className="text-red-500 text-sm mt-1">{errors.contactNumber}</p>
+          )}
         </div>
 
         {/* Address */}
@@ -141,8 +189,11 @@ export default function ContactInformation({
             value={contactData.address}
             onChange={handleInputChange("address")}
             placeholder="Enter your address"
-            className="w-full"
+            className={`w-full ${errors.address ? "border-red-500" : ""}`}
           />
+          {errors.address && (
+            <p className="text-red-500 text-sm mt-1">{errors.address}</p>
+          )}
         </div>
       </div>
 
@@ -151,10 +202,7 @@ export default function ContactInformation({
         <Button variant="outline" className="flex-1" onClick={onBack}>
           Back
         </Button>
-        <Button
-          className="flex-1"
-          onClick={handleSubmit}
-        >
+        <Button className="flex-1" onClick={handleSubmit}>
           Submit
         </Button>
       </div>

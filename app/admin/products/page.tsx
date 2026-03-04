@@ -186,7 +186,7 @@ function ProductTypesTabContent() {
     });
   };
   const activeTab = searchParams.get("tab") || "brands";
-  const isMoreActive = ["sizes"].includes(activeTab);
+  // const isMoreActive = ["sizes"].includes(activeTab);
   return (
     <Tabs
       value={activeTab}
@@ -195,16 +195,6 @@ function ProductTypesTabContent() {
     >
       <TabsList className="w-full flex h-9 p-1 bg-gray-100 dark:bg-gray-800 rounded-lg lg:grid lg:grid-cols-3 lg:h-10">
         {/* First 3 tabs: Always visible */}
-        {/* <TabsTrigger
-          value="product-types"
-          disabled={isNavigating || isPending}
-          className="flex-1 text-[10px] sm:text-xs lg:text-sm px-1 sm:px-2 data-[state=active]:bg-background data-[state=active]:shadow-sm dark:data-[state=active]:bg-gray-700"
-        >
-          {isNavigating && activeTab === "product-types" && (
-            <Loader2 className="h-3 w-3 sm:h-4 sm:w-4 animate-spin mr-2" />
-          )}
-          Product Types
-        </TabsTrigger> */}
         <TabsTrigger
           value="brands"
           disabled={isNavigating || isPending}
@@ -230,16 +220,16 @@ function ProductTypesTabContent() {
         <TabsTrigger
           value="sizes"
           disabled={isNavigating || isPending}
-          className="hidden lg:flex flex-1 text-sm px-2 data-[state=active]:bg-background data-[state=active]:shadow-sm dark:data-[state=active]:bg-gray-700"
+          className="flex-1 text-[10px] sm:text-xs lg:text-sm px-1 sm:px-2 data-[state=active]:bg-background data-[state=active]:shadow-sm dark:data-[state=active]:bg-gray-700"
         >
           {isNavigating && activeTab === "sizes" && (
-            <Loader2 className="h-4 w-4 animate-spin" />
+            <Loader2 className="h-3 w-3 sm:h-4 sm:w-4 animate-spin mr-2" />
           )}
           Sizes
         </TabsTrigger>
 
         {/* Mobile "More" Dropdown */}
-        <div className="lg:hidden flex items-center px-1">
+        {/* <div className="lg:hidden flex items-center px-1">
           <Popover>
             <PopoverTrigger asChild>
               <Button
@@ -267,17 +257,12 @@ function ProductTypesTabContent() {
                 ) : (
                   "Sizes"
                 )}
-              </TabsTrigger>
-              {/* Add more overflow tabs here in future */}
-            </PopoverContent>
+              </TabsTrigger> */}
+        {/* Add more overflow tabs here in future */}
+        {/* </PopoverContent> 
           </Popover>
-        </div>
+        </div> */}
       </TabsList>
-
-      {/* Product Types Tab */}
-      <TabsContent value="product-types">
-        <ProductTypesTab />
-      </TabsContent>
 
       {/* Brands Tab */}
       <TabsContent value="brands">

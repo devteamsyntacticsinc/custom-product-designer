@@ -281,6 +281,26 @@ function SizeSheet({
   const [name, setName] = useState("");
   const [open, onOpenChange] = useState(false);
   const [active, setActive] = useState(true);
+  const [errors, setErrors] = useState<{ name?: string }>({});
+
+  const handleInputChange = (value: string) => {
+    setName(value);
+    // Clear error when user starts typing
+    if (errors.name) {
+      setErrors((prev) => ({ ...prev, name: "" }));
+    }
+  };
+
+  const validateForm = (): boolean => {
+    const newErrors: { name?: string } = {};
+
+    if (!name.trim()) {
+      newErrors.name = "Size name is required";
+    }
+
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
+  };
 
   const handleOpenChange = (nextOpen: boolean) => {
     onOpenChange(nextOpen);
@@ -288,13 +308,18 @@ function SizeSheet({
     if (nextOpen) {
       setName(initialData?.value ?? "");
       setActive(initialData?.is_Active ?? true);
+      setErrors({}); // Reset errors when opening
     } else {
       setName("");
       setActive(true);
+      setErrors({}); // Reset errors when closing
     }
   };
 
   const handleSubmit = async () => {
+    if (!validateForm()) {
+      return; // Stop submission if validation fails
+    }
     try {
       await onSubmit({
         id: initialData?.id ?? 0,
@@ -332,10 +357,13 @@ function SizeSheet({
             <Input
               id="size-name"
               value={name}
-              onChange={(e) => setName(e.target.value)}
+              onChange={(e) => handleInputChange(e.target.value)}
               placeholder="Enter size name"
-              className="text-xs lg:text-sm h-8 lg:h-10"
+              className={`text-xs lg:text-sm h-8 lg:h-10 ${errors.name ? "border-red-500" : ""}`}
             />
+            {errors.name && (
+              <p className="text-red-500 text-sm mt-1">{errors.name}</p>
+            )}
           </div>
 
           <div className="flex items-center space-x-2">
@@ -353,7 +381,7 @@ function SizeSheet({
         <SheetFooter>
           <Button
             onClick={handleSubmit}
-            disabled={isLoading}
+            disabled={isLoading || !!errors.name || !name.trim()}
             className="text-xs lg:text-sm h-8 lg:h-10"
           >
             {isLoading

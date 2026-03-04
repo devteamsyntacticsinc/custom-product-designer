@@ -1,13 +1,7 @@
-import {
-  Document,
-  Page,
-  Text,
-  View,
-  Image,
-  Font
-} from "@react-pdf/renderer";
+import { Document, Page, Text, View, Image, Font } from "@react-pdf/renderer";
 import { OrderWithCustomer } from "@/types/order";
 import { receiptStyles as styles } from "./styles";
+import axios from "axios";
 
 // Register fonts (optional - you can use default fonts)
 Font.register({
@@ -120,12 +114,12 @@ export const normalizeImageUrlForPdf = async (
   imageUrl: string,
 ): Promise<string> => {
   // Fetch the image
-  const response = await fetch(imageUrl);
-  if (!response.ok) {
+  const response = await axios.get(imageUrl, { responseType: "blob" });
+  if (!response.data) {
     throw new Error("Failed to fetch image.");
   }
 
-  const blob = await response.blob();
+  const blob = response.data;
 
   // Convert blob to base64
   const base64 = await blobToBase64(blob);
@@ -187,8 +181,7 @@ export default function OrderReceiptPDF({ order }: OrderReceiptPDFProps) {
           <View style={styles.row}>
             <Text style={styles.label}>Order ID:</Text>
             <Text style={styles.value}>
-              Reference No. {order.document_types?.ref_c2} -{" "}
-              {order.invoice_no}
+              Reference No. {order.document_types?.ref_c2} - {order.invoice_no}
             </Text>
           </View>
           <View style={styles.row}>
@@ -349,9 +342,7 @@ export default function OrderReceiptPDF({ order }: OrderReceiptPDFProps) {
           {!isOnlyType && order.products?.[0]?.brands?.name && (
             <View style={styles.row}>
               <Text style={styles.label}>Brand:</Text>
-              <Text style={styles.value}>
-                {order.products[0].brands.name}
-              </Text>
+              <Text style={styles.value}>{order.products[0].brands.name}</Text>
             </View>
           )}
 
