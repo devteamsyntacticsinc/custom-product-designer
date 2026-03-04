@@ -38,7 +38,7 @@ import {
   DrawerTitle,
   DrawerDescription,
 } from "@/components/ui/drawer";
-import axios, { AxiosError } from "axios";
+import axios from "axios";
 import { OrderWithCustomer } from "@/types/order";
 import OrderProductPreview from "@/components/OrderProductPreview";
 import { Badge } from "@/components/ui/badge";
@@ -127,169 +127,46 @@ export default function AdminDashboard() {
   const [loadingProductTypes, setLoadingProductTypes] = useState(true);
 
   // Fetch dashboard data
-  const fetchDashboardData = useCallback(async (page: number = 1) => {
-    try {
-      const response = await axios.get(
-        `/api/dashboard?page=${page}&limit=${itemsPerPage}`,
-      );
-
-      if (!response.data) {
-        throw new Error("Failed to fetch sizes");
-      }
-      const data = response.data;
-
-      setDashboardData(data.data);
-      hasFetchedRef.current = true;
-    } catch (error) {
-      const axiosError = error as AxiosError<{
-        error?: string;
-        message?: string;
-      }>;
-
-      const message =
-        axiosError.response?.data?.error ||
-        axiosError.response?.data?.message ||
-        axiosError.message ||
-        "Failed to fetch dashboard data";
-
-      console.error(message);
-    } finally {
-      setLoading(false);
-      setRefreshing(false);
-      setPageLoading(false);
-    }
-  }, []);
-
-  const fetchOrdersByProductTypeTimeSeries = useCallback(
-    async (ptfrom?: Date, ptto?: Date) => {
+  const fetchDashboardData = useCallback(
+    async (page: number = 1, ptfrom?: Date, ptto?: Date, obfrom?: Date, obto?: Date, productType?: string) => {
       try {
-        setOrdersByProductTypeTimeSeriesLoading(true);
         const params = new URLSearchParams();
         if (ptfrom) params.set("ptfrom", ptfrom.toISOString());
         if (ptto) params.set("ptto", ptto.toISOString());
-        const response = await axios.get(`/api/dashboard?${params.toString()}`);
-
-        if (!response.data) {
-          throw new Error("Failed to fetch sizes");
-        }
-        const data = response.data;
-
-        setOrdersByProductTypeTimeSeriesData(
-          data.data.ordersByProductTypeTimeSeries,
-        );
-      } catch (error) {
-        const axiosError = error as AxiosError<{
-          error?: string;
-          message?: string;
-        }>;
-
-        const message =
-          axiosError.response?.data?.error ||
-          axiosError.response?.data?.message ||
-          axiosError.message ||
-          "Failed to fetch orders by product type time series";
-
-        console.error(message);
-      } finally {
-        setOrdersByProductTypeTimeSeriesLoading(false);
-      }
-    },
-    [],
-  );
-
-  const fetchTopCustomers = useCallback(async (productType: string) => {
-    try {
-      setTopCustomersLoading(true);
-      const params = new URLSearchParams();
-      if (productType && productType !== "all")
-        params.set("productType", productType);
-      const response = await axios.get(`/api/dashboard?${params.toString()}`);
-      if (!response.data) {
-        throw new Error("Failed to fetch sizes");
-      }
-
-      const data = response.data;
-
-      setTopCustomersList(data.data.topCustomers);
-    } catch (error) {
-      const axiosError = error as AxiosError<{
-        error?: string;
-        message?: string;
-      }>;
-
-      const message =
-        axiosError.response?.data?.error ||
-        axiosError.response?.data?.message ||
-        axiosError.message ||
-        "Failed to fetch orders by product type time series";
-
-      console.error(message);
-    } finally {
-      setTopCustomersLoading(false);
-    }
-  }, []);
-
-  const fetchProductTypes = useCallback(async () => {
-    try {
-      setLoadingProductTypes(true);
-      const response = await axios.get(`/api/dashboard`);
-
-      if (!response.data) {
-        throw new Error("Failed to fetch sizes");
-      }
-      const data = response.data;
-
-      if (data.success) {
-        setProductTypesData(data.data.productTypes);
-      }
-    } catch (error) {
-      const axiosError = error as AxiosError<{
-        error?: string;
-        message?: string;
-      }>;
-
-      const message =
-        axiosError.response?.data?.error ||
-        axiosError.response?.data?.message ||
-        axiosError.message ||
-        "Failed to fetch orders by product type time series";
-
-      console.error(message);
-    } finally {
-      setLoadingProductTypes(false);
-    }
-  }, []);
-
-  const fetchMostOrderedBrand = useCallback(
-    async (obfrom?: Date, obto?: Date) => {
-      try {
-        setMostOrderedBrandLoading(true);
-        const params = new URLSearchParams();
         if (obfrom) params.set("obfrom", obfrom.toISOString());
         if (obto) params.set("obto", obto.toISOString());
-        const response = await axios.get(`/api/dashboard?${params.toString()}`);
+        if (productType) params.set("productType", productType);
+        const response = await fetch(
+          `/api/dashboard?page=${page}&limit=${itemsPerPage}&${params.toString()}`,
+        );
+        const data = await response.json();
+        if (data.success) {
+          const result = data.data;
+          setDashboardData(result);
+          hasFetchedRef.current = true;
 
-        if (!response.data) {
-          throw new Error("Failed to fetch sizes");
+          if (result.ordersByProductTypeTimeSeries?.data?.length >= 0) {
+            setOrdersByProductTypeTimeSeriesLoading(false);
+          }
+
+          if (result.topCustomers?.length >= 0) {
+            setTopCustomersLoading(false);
+          }
+
+          if (result.mostOrderedBrand?.data?.length >= 0) {
+            setMostOrderedBrandLoading(false);
+          }
+
+          if (result.productTypes?.length >= 0) {
+            setLoadingProductTypes(false);
+          }
         }
-        const data = response.data;
-
-        setMostOrderedBrand(data.data.mostOrderedBrand);
       } catch (error) {
-        const axiosError = error as AxiosError<{
-          error?: string;
-          message?: string;
-        }>;
-
-        const message =
-          axiosError.response?.data?.error ||
-          axiosError.response?.data?.message ||
-          axiosError.message ||
-          "Failed to fetch most ordered brand";
-
-        console.error(message);
+        console.error("Error fetching dashboard data:", error);
       } finally {
-        setMostOrderedBrandLoading(false);
+        setLoading(false);
+        setRefreshing(false);
+        setPageLoading(false);
       }
     },
     [],
@@ -357,11 +234,11 @@ export default function AdminDashboard() {
         <AdminSidebar
           user={null}
           sidebarOpen={false}
-          setSidebarOpen={() => {}}
-          onLogout={() => {}}
-          onNavigate={() => {}}
+          setSidebarOpen={() => { }}
+          onLogout={() => { }}
+          onNavigate={() => { }}
           isCollapsed={false}
-          onToggleCollapse={() => {}}
+          onToggleCollapse={() => { }}
           currentPath="/admin"
         />
         <div className="flex-1 lg:ml-64">
@@ -804,7 +681,7 @@ export default function AdminDashboard() {
                             if (
                               page === 1 ||
                               page ===
-                                dashboardData.recentActivity.totalPages ||
+                              dashboardData?.recentActivity?.totalPages ||
                               (page >= currentPage - 1 &&
                                 page <= currentPage + 1)
                             ) {
@@ -841,8 +718,8 @@ export default function AdminDashboard() {
                               onClick={() => handlePageChange(currentPage + 1)}
                               className={
                                 currentPage ===
-                                  dashboardData.recentActivity.totalPages ||
-                                pageLoading
+                                  dashboardData?.recentActivity?.totalPages ||
+                                  pageLoading
                                   ? "pointer-events-none opacity-50"
                                   : "cursor-pointer"
                               }
