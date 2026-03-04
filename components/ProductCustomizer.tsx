@@ -76,12 +76,12 @@ export default function ProductCustomizer() {
       const formData = new FormData();
 
       // Map sizeSelection to include size values for email display
-      const sizeSelectionWithValues = sizeSelection.map(item => {
-        const size = sizes.find(s => s.id === item.size);
+      const sizeSelectionWithValues = sizeSelection.map((item) => {
+        const size = sizes.find((s) => s.id === item.size);
         return {
           size: item.size, // Keep ID for database
           sizeValue: size?.value || `Size ${item.size}`, // Add value for email
-          quantity: item.quantity
+          quantity: item.quantity,
         };
       });
 
@@ -494,11 +494,21 @@ export default function ProductCustomizer() {
 
         {/* Action Buttons */}
         <div className="flex gap-3 mt-auto pt-6">
-          <Button variant="outline" className="flex-1" onClick={handleReset}>
+          <Button
+            variant="outline"
+            className="flex-1 z-10 cursor-pointer!"
+            onClick={handleReset}
+            disabled={
+              loadingProductTypes ||
+              loadingBrands ||
+              loadingBrandColors ||
+              !productType
+            }
+          >
             Reset
           </Button>
           <Button
-            className="flex-1"
+            className="flex-1 z-10 cursor-pointer!"
             onClick={handleNext}
             disabled={
               loadingProductTypes ||
