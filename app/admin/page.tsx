@@ -38,7 +38,7 @@ import {
   DrawerTitle,
   DrawerDescription,
 } from "@/components/ui/drawer";
-import axios from "axios";
+import axios, { AxiosError } from "axios";
 import { OrderWithCustomer } from "@/types/order";
 import OrderProductPreview from "@/components/OrderProductPreview";
 import { Badge } from "@/components/ui/badge";
@@ -132,27 +132,38 @@ export default function AdminDashboard() {
   const [loadingProductTypes, setLoadingProductTypes] = useState(true);
 
   // Fetch dashboard data
-  const fetchDashboardData = useCallback(
-    async (page: number = 1) => {
-      try {
-        const response = await fetch(
-          `/api/dashboard?page=${page}&limit=${itemsPerPage}`,
-        );
-        const data = await response.json();
-        if (data.success) {
-          setDashboardData(data.data);
-          hasFetchedRef.current = true; // Mark as fetched
-        }
-      } catch (error) {
-        console.error("Error fetching dashboard data:", error);
-      } finally {
-        setLoading(false);
-        setRefreshing(false);
-        setPageLoading(false);
+  const fetchDashboardData = useCallback(async (page: number = 1) => {
+    try {
+      const response = await axios.get(
+        `/api/dashboard?page=${page}&limit=${itemsPerPage}`,
+      );
+
+      if (!response.data) {
+        throw new Error("Failed to fetch sizes");
       }
-    },
-    [], // Remove itemsPerPage since it's a constant
-  );
+      const data = response.data;
+
+      setDashboardData(data.data);
+      hasFetchedRef.current = true;
+    } catch (error) {
+      const axiosError = error as AxiosError<{
+        error?: string;
+        message?: string;
+      }>;
+
+      const message =
+        axiosError.response?.data?.error ||
+        axiosError.response?.data?.message ||
+        axiosError.message ||
+        "Failed to fetch dashboard data";
+
+      console.error(message);
+    } finally {
+      setLoading(false);
+      setRefreshing(false);
+      setPageLoading(false);
+    }
+  }, []);
 
   const fetchOrdersByProductTypeTimeSeries = useCallback(
     async (ptfrom?: Date, ptto?: Date) => {
@@ -161,15 +172,29 @@ export default function AdminDashboard() {
         const params = new URLSearchParams();
         if (ptfrom) params.set("ptfrom", ptfrom.toISOString());
         if (ptto) params.set("ptto", ptto.toISOString());
-        const response = await fetch(`/api/dashboard?${params.toString()}`);
-        const data = await response.json();
-        if (data.success) {
-          setOrdersByProductTypeTimeSeriesData(
-            data.data.ordersByProductTypeTimeSeries,
-          );
+        const response = await axios.get(`/api/dashboard?${params.toString()}`);
+
+        if (!response.data) {
+          throw new Error("Failed to fetch sizes");
         }
+        const data = response.data;
+
+        setOrdersByProductTypeTimeSeriesData(
+          data.data.ordersByProductTypeTimeSeries,
+        );
       } catch (error) {
-        console.error("Error fetching product types:", error);
+        const axiosError = error as AxiosError<{
+          error?: string;
+          message?: string;
+        }>;
+
+        const message =
+          axiosError.response?.data?.error ||
+          axiosError.response?.data?.message ||
+          axiosError.message ||
+          "Failed to fetch orders by product type time series";
+
+        console.error(message);
       } finally {
         setOrdersByProductTypeTimeSeriesLoading(false);
       }
@@ -183,13 +208,27 @@ export default function AdminDashboard() {
       const params = new URLSearchParams();
       if (productType && productType !== "all")
         params.set("productType", productType);
-      const response = await fetch(`/api/dashboard?${params.toString()}`);
-      const data = await response.json();
-      if (data.success) {
-        setTopCustomersList(data.data.topCustomers);
+      const response = await axios.get(`/api/dashboard?${params.toString()}`);
+      if (!response.data) {
+        throw new Error("Failed to fetch sizes");
       }
+
+      const data = response.data;
+
+      setTopCustomersList(data.data.topCustomers);
     } catch (error) {
-      console.error("Error fetching top customers:", error);
+      const axiosError = error as AxiosError<{
+        error?: string;
+        message?: string;
+      }>;
+
+      const message =
+        axiosError.response?.data?.error ||
+        axiosError.response?.data?.message ||
+        axiosError.message ||
+        "Failed to fetch orders by product type time series";
+
+      console.error(message);
     } finally {
       setTopCustomersLoading(false);
     }
@@ -198,13 +237,29 @@ export default function AdminDashboard() {
   const fetchProductTypes = useCallback(async () => {
     try {
       setLoadingProductTypes(true);
-      const response = await fetch(`/api/dashboard`);
-      const data = await response.json();
+      const response = await axios.get(`/api/dashboard`);
+
+      if (!response.data) {
+        throw new Error("Failed to fetch sizes");
+      }
+      const data = response.data;
+
       if (data.success) {
         setProductTypesData(data.data.productTypes);
       }
     } catch (error) {
-      console.error("Error fetching product types:", error);
+      const axiosError = error as AxiosError<{
+        error?: string;
+        message?: string;
+      }>;
+
+      const message =
+        axiosError.response?.data?.error ||
+        axiosError.response?.data?.message ||
+        axiosError.message ||
+        "Failed to fetch orders by product type time series";
+
+      console.error(message);
     } finally {
       setLoadingProductTypes(false);
     }
@@ -217,13 +272,27 @@ export default function AdminDashboard() {
         const params = new URLSearchParams();
         if (obfrom) params.set("obfrom", obfrom.toISOString());
         if (obto) params.set("obto", obto.toISOString());
-        const response = await fetch(`/api/dashboard?${params.toString()}`);
-        const data = await response.json();
-        if (data.success) {
-          setMostOrderedBrand(data.data.mostOrderedBrand);
+        const response = await axios.get(`/api/dashboard?${params.toString()}`);
+
+        if (!response.data) {
+          throw new Error("Failed to fetch sizes");
         }
+        const data = response.data;
+
+        setMostOrderedBrand(data.data.mostOrderedBrand);
       } catch (error) {
-        console.error("Error fetching most ordered brand:", error);
+        const axiosError = error as AxiosError<{
+          error?: string;
+          message?: string;
+        }>;
+
+        const message =
+          axiosError.response?.data?.error ||
+          axiosError.response?.data?.message ||
+          axiosError.message ||
+          "Failed to fetch most ordered brand";
+
+        console.error(message);
       } finally {
         setMostOrderedBrandLoading(false);
       }
@@ -302,11 +371,11 @@ export default function AdminDashboard() {
         <AdminSidebar
           user={null}
           sidebarOpen={false}
-          setSidebarOpen={() => { }}
-          onLogout={() => { }}
-          onNavigate={() => { }}
+          setSidebarOpen={() => {}}
+          onLogout={() => {}}
+          onNavigate={() => {}}
           isCollapsed={false}
-          onToggleCollapse={() => { }}
+          onToggleCollapse={() => {}}
           currentPath="/admin"
         />
         <div className="flex-1 lg:ml-64">
@@ -747,7 +816,7 @@ export default function AdminDashboard() {
                             if (
                               page === 1 ||
                               page ===
-                              dashboardData.recentActivity.totalPages ||
+                                dashboardData.recentActivity.totalPages ||
                               (page >= currentPage - 1 &&
                                 page <= currentPage + 1)
                             ) {
@@ -785,7 +854,7 @@ export default function AdminDashboard() {
                               className={
                                 currentPage ===
                                   dashboardData.recentActivity.totalPages ||
-                                  pageLoading
+                                pageLoading
                                   ? "pointer-events-none opacity-50"
                                   : "cursor-pointer"
                               }
