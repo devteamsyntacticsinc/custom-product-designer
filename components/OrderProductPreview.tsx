@@ -11,20 +11,23 @@ import {
   CardTitle,
 } from "./ui/card";
 import Link from "next/link";
+import axios from "axios";
 
 // Custom component for external URLs that bypasses Next.js Image requirements for some cases
-const ExternalImage = React.memo(({
-  src,
-  alt,
-  className,
-}: {
-  src: string;
-  alt: string;
-  className: string;
-}) => (
-  // eslint-disable-next-line @next/next/no-img-element
-  <img src={src} alt={alt} className={className} loading="lazy" />
-));
+const ExternalImage = React.memo(
+  ({
+    src,
+    alt,
+    className,
+  }: {
+    src: string;
+    alt: string;
+    className: string;
+  }) => (
+    // eslint-disable-next-line @next/next/no-img-element
+    <img src={src} alt={alt} className={className} loading="lazy" />
+  ),
+);
 
 ExternalImage.displayName = "ExternalImage";
 
@@ -41,54 +44,61 @@ interface DesignAreaProps {
   orderId: number;
 }
 
-const DesignArea = React.memo(({
-  placement,
-  label,
-  customClass,
-  imageUrl,
-  onDownload,
-  orderId,
-}: DesignAreaProps) => {
-  const handleClick = useCallback(() => {
-    if (imageUrl) {
-      onDownload(imageUrl, `${orderId}_${placement.replace(/\s+/g, "_")}.png`);
-    }
-  }, [imageUrl, onDownload, orderId, placement]);
+const DesignArea = React.memo(
+  ({
+    placement,
+    label,
+    customClass,
+    imageUrl,
+    onDownload,
+    orderId,
+  }: DesignAreaProps) => {
+    const handleClick = useCallback(() => {
+      if (imageUrl) {
+        onDownload(
+          imageUrl,
+          `${orderId}_${placement.replace(/\s+/g, "_")}.png`,
+        );
+      }
+    }, [imageUrl, onDownload, orderId, placement]);
 
-  return (
-    <div
-      className={`absolute ${customClass} border-2 border-dashed border-gray-400 rounded flex items-center justify-center transform -translate-x-1/2 -translate-y-1/2 overflow-hidden bg-white/50 z-10 transition-all duration-200 ${
-        imageUrl ? "cursor-pointer hover:border-primary hover:bg-background group" : ""
-      }`}
-      onClick={handleClick}
-      title={imageUrl ? `Click to download ${label}` : ""}
-      role={imageUrl ? "button" : undefined}
-      tabIndex={imageUrl ? 0 : undefined}
-      onKeyDown={(e) => {
-        if (imageUrl && (e.key === "Enter" || e.key === " ")) {
-          handleClick();
-        }
-      }}
-    >
-      {imageUrl ? (
-        <>
-          <ExternalImage
-            src={imageUrl}
-            alt={label}
-            className="w-full h-full object-contain"
-          />
-          <div className="absolute inset-0 bg-black/20 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity">
-            <Download className="text-white w-4 h-4" />
-          </div>
-        </>
-      ) : (
-        <span className="text-gray-400 text-[8px] sm:text-xs md:text-sm text-center px-1 select-none">
-          {label}
-        </span>
-      )}
-    </div>
-  );
-});
+    return (
+      <div
+        className={`absolute ${customClass} border-2 border-dashed border-gray-400 rounded flex items-center justify-center transform -translate-x-1/2 -translate-y-1/2 overflow-hidden bg-white/50 z-10 transition-all duration-200 ${
+          imageUrl
+            ? "cursor-pointer hover:border-primary hover:bg-background group"
+            : ""
+        }`}
+        onClick={handleClick}
+        title={imageUrl ? `Click to download ${label}` : ""}
+        role={imageUrl ? "button" : undefined}
+        tabIndex={imageUrl ? 0 : undefined}
+        onKeyDown={(e) => {
+          if (imageUrl && (e.key === "Enter" || e.key === " ")) {
+            handleClick();
+          }
+        }}
+      >
+        {imageUrl ? (
+          <>
+            <ExternalImage
+              src={imageUrl}
+              alt={label}
+              className="w-full h-full object-contain"
+            />
+            <div className="absolute inset-0 bg-black/20 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity">
+              <Download className="text-white w-4 h-4" />
+            </div>
+          </>
+        ) : (
+          <span className="text-gray-400 text-[8px] sm:text-xs md:text-sm text-center px-1 select-none">
+            {label}
+          </span>
+        )}
+      </div>
+    );
+  },
+);
 
 DesignArea.displayName = "DesignArea";
 
@@ -114,7 +124,9 @@ export default function OrderProductPreview({
     const imageIsFront = productTypeImages.find(
       (img) => img.is_hasBack === false,
     );
-    const imageIsBack = productTypeImages.find((img) => img.is_hasBack === true);
+    const imageIsBack = productTypeImages.find(
+      (img) => img.is_hasBack === true,
+    );
 
     // Create a record of images by placement using exact database values
     const imagesByPlacement: Record<string, string> = {};
@@ -148,20 +160,23 @@ export default function OrderProductPreview({
 
   const handleDownload = useCallback(async (url: string, filename: string) => {
     if (!url) return;
-    
+
     try {
       // Add timeout to prevent hanging
       const controller = new AbortController();
       const timeoutId = setTimeout(() => controller.abort(), 10000);
-      
-      const response = await fetch(url, { signal: controller.signal });
+
+      const response = await axios.get(url, {
+        signal: controller.signal,
+        responseType: "blob",
+      });
       clearTimeout(timeoutId);
-      
-      if (!response.ok) {
+
+      if (!response.data) {
         throw new Error(`HTTP error! status: ${response.status}`);
       }
-      
-      const blob = await response.blob();
+
+      const blob = response.data;
       const blobUrl = window.URL.createObjectURL(blob);
       const link = document.createElement("a");
       link.href = blobUrl;
@@ -170,7 +185,7 @@ export default function OrderProductPreview({
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);
-      
+
       // Clean up the blob URL after a short delay
       setTimeout(() => window.URL.revokeObjectURL(blobUrl), 100);
     } catch (error) {
@@ -242,7 +257,10 @@ export default function OrderProductPreview({
               height={700}
               className="object-contain"
               onError={(e) => {
-                console.error("Failed to load front image:", imageIsFront.filepath);
+                console.error(
+                  "Failed to load front image:",
+                  imageIsFront.filepath,
+                );
                 e.currentTarget.style.display = "none";
               }}
               loading="lazy"
@@ -268,7 +286,10 @@ export default function OrderProductPreview({
               height={350}
               className="object-contain"
               onError={(e) => {
-                console.error("Failed to load front image:", imageIsFront.filepath);
+                console.error(
+                  "Failed to load front image:",
+                  imageIsFront.filepath,
+                );
                 e.currentTarget.style.display = "none";
               }}
               loading="lazy"
@@ -303,7 +324,10 @@ export default function OrderProductPreview({
               height={350}
               className="object-contain"
               onError={(e) => {
-                console.error("Failed to load back image:", imageIsBack.filepath);
+                console.error(
+                  "Failed to load back image:",
+                  imageIsBack.filepath,
+                );
                 e.currentTarget.style.display = "none";
               }}
               loading="lazy"

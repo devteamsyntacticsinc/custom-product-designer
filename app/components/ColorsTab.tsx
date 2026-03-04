@@ -281,6 +281,26 @@ function ColorSheet({
   const [name, setName] = useState("");
   const [open, onOpenChange] = useState(false);
   const [active, setActive] = useState(true);
+  const [errors, setErrors] = useState<{ name?: string }>({});
+
+  const handleInputChange = (value: string) => {
+    setName(value);
+    // Clear error when user starts typing
+    if (errors.name) {
+      setErrors((prev) => ({ ...prev, name: "" }));
+    }
+  };
+
+  const validateForm = (): boolean => {
+    const newErrors: { name?: string } = {};
+
+    if (!name.trim()) {
+      newErrors.name = "Color name is required";
+    }
+
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
+  };
 
   const handleOpenChange = (nextOpen: boolean) => {
     onOpenChange(nextOpen);
@@ -288,13 +308,18 @@ function ColorSheet({
     if (nextOpen) {
       setName(initialData?.value ?? "");
       setActive(initialData?.is_Active ?? true);
+      setErrors({}); // Reset errors when opening
     } else {
       setName("");
       setActive(true);
+      setErrors({}); // Reset errors when closing
     }
   };
 
   const handleSubmit = async () => {
+    if (!validateForm()) {
+      return; // Stop submission if validation fails
+    }
     try {
       await onSubmit({
         id: initialData?.id ?? 0,
@@ -332,10 +357,13 @@ function ColorSheet({
             <Input
               id="color-name"
               value={name}
-              onChange={(e) => setName(e.target.value)}
+              onChange={(e) => handleInputChange(e.target.value)}
               placeholder="Enter color name"
-              className="text-xs lg:text-sm h-8 lg:h-10"
+              className={`text-xs lg:text-sm h-8 lg:h-10 ${errors.name ? "border-red-500" : ""}`}
             />
+            {errors.name && (
+              <p className="text-red-500 text-sm mt-1">{errors.name}</p>
+            )}
           </div>
 
           <div className="flex items-center space-x-2">
@@ -353,7 +381,7 @@ function ColorSheet({
         <SheetFooter>
           <Button
             onClick={handleSubmit}
-            disabled={isLoading}
+            disabled={isLoading || !!errors.name || !name.trim()}
             className="text-xs lg:text-sm h-8 lg:h-10"
           >
             {isLoading
@@ -391,13 +419,10 @@ function DeleteDialog({
 
     setIsLoading(true);
     try {
-      const res = await fetch(`/api/colors?id=${color.id}`, {
-        method: "DELETE",
-      });
+      const res = await axios.delete(`/api/colors?id=${color.id}`);
 
-      if (!res.ok) {
-        const errorData = await res.json();
-        throw new Error(errorData?.error || "Failed to delete color");
+      if (!res.data) {
+        throw new Error("Failed to delete color");
       }
       await fetchColors();
       addToast("success", "Color deleted successfully");

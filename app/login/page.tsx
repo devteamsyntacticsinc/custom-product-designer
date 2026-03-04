@@ -14,6 +14,7 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { Eye, EyeOff } from "lucide-react";
+import axios from "axios";
 
 export default function LoginPage() {
   const [email, setEmail] = useState("");
@@ -39,8 +40,8 @@ export default function LoginPage() {
         setError("Invalid email or password");
       } else if (result?.ok) {
         // Get session to check user role
-        const response = await fetch("/api/auth/session");
-        const session = await response.json();
+        const response = await axios.get("/api/auth/session");
+        const session = response.data;
 
         if (session?.user?.role === "admin") {
           router.push("/admin");
