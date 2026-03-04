@@ -59,7 +59,7 @@ export interface OrderWithCustomer {
     description: string;
   } | null;
   status: string;
-  invoice_logs: Array<{
+  invoice_logs?: Array<{
     id: number;
     status: string;
     created_at: string;
