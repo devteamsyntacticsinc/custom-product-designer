@@ -17,12 +17,14 @@ interface CalendarRangeProps {
   date: DateRange | undefined;
   onSelect: (date: DateRange | undefined) => void;
   className?: string;
+  disabled?: boolean;
 }
 
 export function CalendarRange({
   date,
   onSelect,
   className,
+  disabled,
 }: CalendarRangeProps) {
   return (
     <div className={cn("grid gap-2", className)}>
@@ -31,6 +33,7 @@ export function CalendarRange({
           <Button
             id="date"
             variant={"outline"}
+            disabled={disabled}
             className={cn(
               "w-fit justify-start text-left font-normal h-9 text-xs border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-950 hover:bg-gray-50 dark:hover:bg-gray-900 transition-colors shadow-sm",
               !date?.from && "text-muted-foreground",

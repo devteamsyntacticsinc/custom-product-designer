@@ -67,21 +67,6 @@ export default function AdminDashboard() {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [isCollapsed, setIsCollapsed] = useState(false);
   const currentPath = usePathname();
-  const [
-    ordersByProductTypeTimeSeriesData,
-    setOrdersByProductTypeTimeSeriesData,
-  ] = useState<{ data: ChartDataItem[]; types: string[] }>({
-    data: [],
-    types: [],
-  });
-  const [productTypesData, setProductTypesData] = useState<ProductType[]>([]);
-  const [topCustomersList, setTopCustomersList] = useState<
-    Array<{ id: string; name: string; email: string; count: number }>
-  >([]);
-  const [mostOrderedBrand, setMostOrderedBrand] = useState<{
-    data: ChartDataItem[];
-    types: string[];
-  }>({ data: [], types: [] });
   const [dashboardData, setDashboardData] = useState<{
     stats: {
       totalOrders: number;
@@ -92,6 +77,16 @@ export default function AdminDashboard() {
       totalColors: number;
       totalTypes: number;
     };
+    ordersByProductTypeTimeSeries: {
+      data: ChartDataItem[];
+      types: string[];
+    };
+    topCustomers: Array<{ id: string; name: string; email: string; count: number }>;
+    mostOrderedBrand: {
+      data: ChartDataItem[];
+      types: string[];
+    };
+    productTypes: ProductType[];
     recentActivity: {
       activities: Array<{
         id: string;
@@ -113,9 +108,9 @@ export default function AdminDashboard() {
   const [
     ordersByProductTypeTimeSeriesLoading,
     setOrdersByProductTypeTimeSeriesLoading,
-  ] = useState(false);
-  const [topCustomersLoading, setTopCustomersLoading] = useState(false);
-  const [mostOrderedBrandLoading, setMostOrderedBrandLoading] = useState(false);
+  ] = useState(true);
+  const [topCustomersLoading, setTopCustomersLoading] = useState(true);
+  const [mostOrderedBrandLoading, setMostOrderedBrandLoading] = useState(true);
   const [ptDateRange, setPtDateRange] = useState<DateRange | undefined>({
     from: undefined,
     to: undefined,
@@ -299,37 +294,32 @@ export default function AdminDashboard() {
     },
     [],
   );
-
   const handleRefresh = () => {
     setRefreshing(true);
     fetchDashboardData(currentPage);
-    fetchOrdersByProductTypeTimeSeries(ptDateRange?.from, ptDateRange?.to);
-    fetchTopCustomers(selectedProductTypeForCustomers);
-    fetchMostOrderedBrand(obDateRange?.from, obDateRange?.to);
-    fetchProductTypes();
   };
 
   // Effect to refetch when product type date range changes
   useEffect(() => {
     if (ptDateRange?.from) {
-      fetchOrdersByProductTypeTimeSeries(ptDateRange.from, ptDateRange.to);
+      fetchDashboardData(currentPage, ptDateRange.from, ptDateRange.to);
     } else if (hasFetchedRef.current) {
-      fetchOrdersByProductTypeTimeSeries();
+      fetchDashboardData(currentPage);
     }
   }, [ptDateRange]);
 
   // Effect to refetch when selected product type for customers changes
   useEffect(() => {
     if (hasFetchedRef.current) {
-      fetchTopCustomers(selectedProductTypeForCustomers);
+      fetchDashboardData(currentPage, ptDateRange?.from, ptDateRange?.to, obDateRange?.from, obDateRange?.to, selectedProductTypeForCustomers);
     }
   }, [selectedProductTypeForCustomers]);
 
   useEffect(() => {
     if (obDateRange?.from) {
-      fetchMostOrderedBrand(obDateRange.from, obDateRange.to);
+      fetchDashboardData(currentPage, ptDateRange?.from, ptDateRange?.to, obDateRange.from, obDateRange.to, selectedProductTypeForCustomers);
     } else if (hasFetchedRef.current) {
-      fetchMostOrderedBrand();
+      fetchDashboardData(currentPage);
     }
   }, [obDateRange]);
 
@@ -351,11 +341,7 @@ export default function AdminDashboard() {
 
     // Only fetch on initial load when we haven't fetched yet
     if (!hasFetchedRef.current) {
-      fetchDashboardData(currentPage);
-      fetchOrdersByProductTypeTimeSeries(ptDateRange?.from, ptDateRange?.to);
-      fetchTopCustomers(selectedProductTypeForCustomers);
-      fetchMostOrderedBrand(obDateRange?.from, obDateRange?.to);
-      fetchProductTypes();
+      fetchDashboardData(currentPage, ptDateRange?.from, ptDateRange?.to, obDateRange?.from, obDateRange?.to, selectedProductTypeForCustomers);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [session, status, router]); // Remove currentPage and fetchDashboardData to prevent re-runs - we use ref instead
@@ -482,7 +468,7 @@ export default function AdminDashboard() {
               </div>
               <div>
                 <div className="text-2xl font-bold">
-                  {dashboardData?.stats.totalOrders || 0}
+                  {dashboardData?.stats?.totalOrders || 0}
                 </div>
                 <p className="text-xs text-muted-foreground">
                   +12% from last month
@@ -499,7 +485,7 @@ export default function AdminDashboard() {
               </div>
               <div>
                 <div className="text-2xl font-bold">
-                  {dashboardData?.stats.totalUsers || 0}
+                  {dashboardData?.stats?.totalUsers || 0}
                 </div>
                 <p className="text-xs text-muted-foreground">
                   +8% from last month
@@ -516,7 +502,7 @@ export default function AdminDashboard() {
               </div>
               <div>
                 <div className="text-2xl font-bold">
-                  {dashboardData?.stats.activeProducts || 0}
+                  {dashboardData?.stats?.activeProducts || 0}
                 </div>
                 <p className="text-xs text-muted-foreground">
                   +5 new this week
@@ -546,6 +532,7 @@ export default function AdminDashboard() {
                       <CalendarRange
                         date={ptDateRange}
                         onSelect={setPtDateRange}
+                        disabled={ordersByProductTypeTimeSeriesLoading}
                       />
                     </div>
 
@@ -568,10 +555,10 @@ export default function AdminDashboard() {
                     <div className="h-[300px] w-full">
                       <Skeleton className="h-full w-full rounded-md" />
                     </div>
-                  ) : ordersByProductTypeTimeSeriesData.data.length > 0 ? (
+                  ) : dashboardData?.ordersByProductTypeTimeSeries ? (
                     <ChartAreaInteractive
-                      data={ordersByProductTypeTimeSeriesData.data}
-                      config={ordersByProductTypeTimeSeriesData.types.reduce(
+                      data={dashboardData?.ordersByProductTypeTimeSeries?.data || []}
+                      config={(dashboardData?.ordersByProductTypeTimeSeries?.types || []).reduce(
                         (acc: any, type: string, index: number) => ({
                           ...acc,
                           [type]: {
@@ -581,7 +568,7 @@ export default function AdminDashboard() {
                         }),
                         {},
                       )}
-                      types={ordersByProductTypeTimeSeriesData.types}
+                      types={dashboardData?.ordersByProductTypeTimeSeries?.types || []}
                     />
                   ) : (
                     <div className="h-[300px] w-full flex items-center justify-center text-muted-foreground">
@@ -618,7 +605,7 @@ export default function AdminDashboard() {
                           setSelectedProductTypeForCustomers(value);
                         }}
                         options={[
-                          ...productTypesData.map((type) => ({
+                          ...(dashboardData?.productTypes || []).map((type) => ({
                             value: type.id.toString(),
                             label: type.name,
                           })),
@@ -635,9 +622,9 @@ export default function AdminDashboard() {
                     <div className="h-[300px] w-full">
                       <Skeleton className="h-full w-full rounded-md" />
                     </div>
-                  ) : (topCustomersList?.length ?? 0) > 0 ? (
+                  ) : (dashboardData?.topCustomers?.length ?? 0) > 0 ? (
                     <ChartBarInteractive
-                      data={topCustomersList}
+                      data={dashboardData?.topCustomers || []}
                       config={{
                         count: {
                           label: "Orders",
@@ -674,6 +661,7 @@ export default function AdminDashboard() {
                       <CalendarRange
                         date={obDateRange}
                         onSelect={setObDateRange}
+                        disabled={mostOrderedBrandLoading}
                       />
                     </div>
 
@@ -696,10 +684,10 @@ export default function AdminDashboard() {
                     <div className="h-[300px] w-full">
                       <Skeleton className="h-full w-full rounded-md" />
                     </div>
-                  ) : (mostOrderedBrand?.data?.length ?? 0) > 0 ? (
+                  ) : (dashboardData?.mostOrderedBrand?.data?.length ?? 0) > 0 ? (
                     <ChartPieLabel
-                      data={mostOrderedBrand.data}
-                      types={mostOrderedBrand.types}
+                      data={dashboardData?.mostOrderedBrand?.data || []}
+                      types={dashboardData?.mostOrderedBrand?.types || []}
                     />
                   ) : (
                     <div className="h-[200px] w-full flex items-center justify-center text-muted-foreground">
@@ -724,7 +712,7 @@ export default function AdminDashboard() {
                 <div className="space-y-4">
                   {pageLoading ? (
                     <ActivitySkeleton />
-                  ) : dashboardData?.recentActivity.activities.length ? (
+                  ) : dashboardData?.recentActivity?.activities?.length ? (
                     dashboardData.recentActivity.activities.map((activity) => {
                       const getActivityColor = (type: string) => {
                         switch (type) {
@@ -793,7 +781,7 @@ export default function AdminDashboard() {
                 </div>
 
                 {/* Pagination */}
-                {dashboardData?.recentActivity.totalPages &&
+                {dashboardData?.recentActivity?.totalPages &&
                   dashboardData.recentActivity.totalPages > 1 && (
                     <div className="mt-6 flex justify-center">
                       <Pagination>
@@ -810,7 +798,7 @@ export default function AdminDashboard() {
                           </PaginationItem>
 
                           {Array.from(
-                            { length: dashboardData.recentActivity.totalPages },
+                            { length: dashboardData?.recentActivity?.totalPages || 0 },
                             (_, i) => i + 1,
                           ).map((page) => {
                             if (
