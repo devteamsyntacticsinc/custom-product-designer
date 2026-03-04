@@ -1,12 +1,18 @@
 "use client";
 
-import React from "react";
-import { createPortal } from "react-dom";
+import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
-import { X } from "lucide-react";
 import { Size } from "@/types/product";
 import { useToast } from "@/contexts/ToastContext";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "./ui/dialog";
 
 interface OrderSummaryDialogProps {
   isOpen: boolean;
@@ -40,13 +46,13 @@ export default function OrderSummaryDialog({
   assets,
   contactInformation,
 }: OrderSummaryDialogProps) {
-  const [isLoading, setIsLoading] = React.useState(false);
-  const [mounted, setMounted] = React.useState(false);
+  const [isLoading, setIsLoading] = useState(false);
+  const [mounted, setMounted] = useState(false);
   const { addToast } = useToast();
 
-  const [sizes, setSizes] = React.useState<Size[]>([]);
+  const [sizes, setSizes] = useState<Size[]>([]);
 
-  React.useEffect(() => {
+  useEffect(() => {
     setMounted(true);
     const fetchSizes = async () => {
       try {
@@ -103,22 +109,21 @@ export default function OrderSummaryDialog({
     return sizeSelection.reduce((total, item) => total + item.quantity, 0);
   };
 
-  return createPortal(
-    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-100 p-4">
-      <div className="bg-background rounded-lg shadow-xl max-w-2xl w-full max-h-[90vh] flex flex-col">
+  return (
+    <Dialog open={isOpen} onOpenChange={onClose}>
+      <DialogContent className="max-h-[90vh] max-w-2xl">
         {/* Fixed Header */}
-        <div className="flex items-center justify-between p-6 border-b shrink-0">
-          <h2 className="text-xl font-semibold">Order Summary</h2>
-          <button
-            onClick={onClose}
-            className="text-gray-400 hover:text-muted-foreground transition-colors"
-          >
-            <X className="h-6 w-6" />
-          </button>
-        </div>
+        <DialogHeader className="border-b pb-6">
+          <DialogTitle className="text-xl font-semibold">
+            Order Details
+          </DialogTitle>
+          <DialogDescription>
+            Review your order details before submitting.
+          </DialogDescription>
+        </DialogHeader>
 
         {/* Scrollable Content */}
-        <div className="flex-1 overflow-y-auto p-6 space-y-6">
+        <div className="flex-1 overflow-y-auto space-y-6">
           {/* Product Details */}
           <div className="space-y-4">
             <h3 className="text-lg font-medium ">Product Details</h3>
@@ -236,7 +241,7 @@ export default function OrderSummaryDialog({
         </div>
 
         {/* Fixed Actions */}
-        <div className="flex gap-3 p-6 border-t bg-background shrink-0">
+        <DialogFooter>
           <Button
             variant="outline"
             onClick={onBack}
@@ -259,9 +264,8 @@ export default function OrderSummaryDialog({
               "Submit"
             )}
           </Button>
-        </div>
-      </div>
-    </div>,
-    document.body,
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
   );
 }
