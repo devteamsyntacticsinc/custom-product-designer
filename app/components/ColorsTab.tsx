@@ -391,13 +391,10 @@ function DeleteDialog({
 
     setIsLoading(true);
     try {
-      const res = await fetch(`/api/colors?id=${color.id}`, {
-        method: "DELETE",
-      });
+      const res = await axios.delete(`/api/colors?id=${color.id}`);
 
-      if (!res.ok) {
-        const errorData = await res.json();
-        throw new Error(errorData?.error || "Failed to delete color");
+      if (!res.data) {
+        throw new Error("Failed to delete color");
       }
       await fetchColors();
       addToast("success", "Color deleted successfully");
