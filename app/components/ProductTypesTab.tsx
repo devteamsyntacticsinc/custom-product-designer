@@ -140,7 +140,8 @@ export default function ProductTypesTab() {
       formData.append("id", payload.id.toString());
       formData.append("name", payload.name);
       formData.append("is_Active", (payload.is_Active ?? true).toString());
-      formData.append("is_onlyType", (payload.is_onlyType ?? false).toString());
+      formData.append("is_hasBrand", (payload.is_hasBrand ?? false).toString());
+      formData.append("is_hasColor", (payload.is_hasColor ?? false).toString());
 
       // Append images with their metadata
       payload.images.forEach((imageData, index) => {
@@ -242,7 +243,10 @@ export default function ProductTypesTab() {
                   Status
                 </TableHead>
                 <TableHead className="px-2 sm:px-4 text-xs sm:text-sm">
-                  Only Type
+                  Brand
+                </TableHead>
+                <TableHead className="px-2 sm:px-4 text-xs sm:text-sm">
+                  Color
                 </TableHead>
                 <TableHead className="text-right px-2 sm:px-4 text-xs sm:text-sm">
                   Actions
@@ -268,6 +272,9 @@ export default function ProductTypesTab() {
                     <TableCell className="px-2 sm:px-4">
                       <Skeleton className="h-5 w-12 sm:h-6 sm:w-16" />
                     </TableCell>
+                    <TableCell className="px-2 sm:px-4">
+                      <Skeleton className="h-5 w-12 sm:h-6 sm:w-16" />
+                    </TableCell>
                     <TableCell className="text-right px-2 sm:px-4">
                       <div className="flex items-center justify-end gap-1">
                         <Skeleton className="h-7 w-7 sm:h-8 sm:w-8" />
@@ -279,7 +286,7 @@ export default function ProductTypesTab() {
               ) : error ? (
                 <TableRow>
                   <TableCell
-                    colSpan={4}
+                    colSpan={6}
                     className="text-xs text-destructive p-4"
                   >
                     {error}
@@ -288,7 +295,7 @@ export default function ProductTypesTab() {
               ) : productTypes.length === 0 ? (
                 <TableRow>
                   <TableCell
-                    colSpan={4}
+                    colSpan={6}
                     className="text-center py-8 text-gray-400 text-xs sm:text-sm"
                   >
                     No product types found
@@ -316,11 +323,21 @@ export default function ProductTypesTab() {
                     <TableCell className="px-2 sm:px-4">
                       <Badge
                         variant={
-                          productType.is_onlyType ? "default" : "secondary"
+                          productType.is_hasBrand ? "default" : "secondary"
                         }
                         className="text-[9px] sm:text-[10px] px-1.5 sm:px-2 py-0"
                       >
-                        {productType.is_onlyType ? "True" : "False"}
+                        {productType.is_hasBrand ? "True" : "False"}
+                      </Badge>
+                    </TableCell>
+                    <TableCell className="px-2 sm:px-4">
+                      <Badge
+                        variant={
+                          productType.is_hasColor ? "default" : "secondary"
+                        }
+                        className="text-[9px] sm:text-[10px] px-1.5 sm:px-2 py-0"
+                      >
+                        {productType.is_hasColor ? "True" : "False"}
                       </Badge>
                     </TableCell>
                     <TableCell className="text-right px-2 sm:px-4">
@@ -397,7 +414,8 @@ function ProductTypeSheet({
   const [name, setName] = useState("");
   const [open, onOpenChange] = useState(false);
   const [active, setActive] = useState(true);
-  const [onlyType, setOnlyType] = useState(false);
+  const [hasBrand, setHasBrand] = useState(false);
+  const [hasColor, setHasColor] = useState(false);
   const [assigned, setAssigned] = useState("");
   const [imageValidationError, setImageValidationError] = useState("");
   const [assets, setAssets] = useState<ProductImage[]>([]);
@@ -437,7 +455,10 @@ function ProductTypeSheet({
       return;
     }
 
-    setAssets((prev) => [...prev, { filepath, is_hasBack, _isExisting: false }]);
+    setAssets((prev) => [
+      ...prev,
+      { filepath, is_hasBack, _isExisting: false },
+    ]);
   };
 
   const handleFileChange = async (slotId: string, file: File | null) => {
@@ -522,7 +543,8 @@ function ProductTypeSheet({
     if (nextOpen) {
       setName(initialData?.name ?? "");
       setActive(initialData?.is_Active ?? true);
-      setOnlyType(initialData?.is_onlyType ?? false);
+      setHasBrand(initialData?.is_hasBrand ?? false);
+      setHasColor(initialData?.is_hasColor ?? false);
       setImageValidationError(""); // Reset validation error when opening
 
       // Load existing images for edit mode
@@ -544,7 +566,8 @@ function ProductTypeSheet({
     } else {
       setName("");
       setActive(true);
-      setOnlyType(false);
+      setHasBrand(false);
+      setHasColor(false);
       setImageValidationError(""); // Reset validation error when closing
       setAssets([]);
       setImagesToDelete([]);
@@ -564,7 +587,8 @@ function ProductTypeSheet({
         id: initialData?.id ?? 0,
         name,
         is_Active: active,
-        is_onlyType: onlyType,
+        is_hasBrand: hasBrand,
+        is_hasColor: hasColor,
         images: newImages,
         imagesToDelete,
         existingImages: assets.filter((asset) => asset._isExisting),
@@ -795,16 +819,32 @@ function ProductTypeSheet({
 
           <div className="flex flex-col">
             <Label htmlFor="product-type-name" className="text-sm">
-              Is only Type
+              Has Brand
             </Label>
             <div className="flex content-center space-x-2 mt-2">
               <Switch
-                checked={onlyType}
-                onCheckedChange={setOnlyType}
-                id="product-type-onlyType"
+                checked={hasBrand}
+                onCheckedChange={setHasBrand}
+                id="product-type-hasBrand"
               />
-              <Label htmlFor="product-type-onlyType" className="text-sm">
-                {onlyType ? "True" : "False"}
+              <Label htmlFor="product-type-hasBrand" className="text-sm">
+                {hasBrand ? "True" : "False"}
+              </Label>
+            </div>
+          </div>
+
+          <div className="flex flex-col">
+            <Label htmlFor="product-type-name" className="text-sm">
+              Has Color
+            </Label>
+            <div className="flex content-center space-x-2 mt-2">
+              <Switch
+                checked={hasColor}
+                onCheckedChange={setHasColor}
+                id="product-type-hasColor"
+              />
+              <Label htmlFor="product-type-hasColor" className="text-sm">
+                {hasColor ? "True" : "False"}
               </Label>
             </div>
           </div>
@@ -918,13 +958,6 @@ function DeleteDialog({
           <DialogDescription>
             This action cannot be undone. This will permanently delete your
             product type &quot;{productType.name}&quot;.
-            {productType.is_onlyType && (
-              <>
-                {" "}
-                Since this is an &quot;Only Type&quot; product, the system will
-                also check for and remove any unused brand type associations.
-              </>
-            )}
           </DialogDescription>
         </DialogHeader>
         <DialogFooter>

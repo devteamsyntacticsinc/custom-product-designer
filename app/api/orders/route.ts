@@ -1,21 +1,26 @@
-import { NextRequest, NextResponse } from 'next/server';
-import { OrderService } from '@/lib/api/order';
-import { OrderData } from '@/types/product';
-import nodemailer from 'nodemailer';
+import { NextRequest, NextResponse } from "next/server";
+import { OrderService } from "@/lib/api/order";
+import { OrderData } from "@/types/product";
+import nodemailer from "nodemailer";
 
 export async function POST(request: NextRequest) {
   try {
     const formData = await request.formData();
 
     // Parse the order data from JSON string
-    const orderDataJson = formData.get('orderData') as string;
+    const orderDataJson = formData.get("orderData") as string;
     const orderData: OrderData = JSON.parse(orderDataJson);
 
     // Extract files from FormData
     const assets: Record<string, File | null> = {};
-    const assetKeys = ['front-top-left', 'front-center', 'back-top', 'back-bottom'];
+    const assetKeys = [
+      "front-top-left",
+      "front-center",
+      "back-top",
+      "back-bottom",
+    ];
 
-    assetKeys.forEach(key => {
+    assetKeys.forEach((key) => {
       const file = formData.get(key) as File;
       assets[key] = file && file.size > 0 ? file : null;
     });
@@ -24,26 +29,32 @@ export async function POST(request: NextRequest) {
     orderData.assets = assets;
 
     // Process order using OrderService
-    const { customerData, productOrderData, invoiceNo } = await OrderService.processOrder(orderData);
-    
-    console.log("Order processed successfully with invoice reference:", invoiceNo);
+    const { customerData, productOrderData, invoiceNo } =
+      await OrderService.processOrder(orderData);
+
+    console.log(
+      "Order processed successfully with invoice reference:",
+      invoiceNo,
+    );
 
     // Send email notifications
     await Promise.allSettled([
       sendOrderEmail(orderData, invoiceNo),
-      sendCustomerConfirmationEmail(orderData, invoiceNo)
+      sendCustomerConfirmationEmail(orderData, invoiceNo),
     ]);
 
     return NextResponse.json({
       success: true,
       orderId: productOrderData.id,
       customerId: customerData.id,
-      invoiceNo: invoiceNo
+      invoiceNo: invoiceNo,
     });
-
   } catch (error) {
-    console.error('Error processing order:', error);
-    return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
+    console.error("Error processing order:", error);
+    return NextResponse.json(
+      { error: "Internal server error" },
+      { status: 500 },
+    );
   }
 }
 
@@ -59,13 +70,16 @@ async function sendOrderEmail(orderData: OrderData, invoiceRefNo: string) {
       html: emailHTML,
     });
 
-    console.log('Owner notification email sent successfully');
+    console.log("Owner notification email sent successfully");
   } catch (error) {
-    console.error('Error sending order email to owner:', error);
+    console.error("Error sending order email to owner:", error);
   }
 }
 
-async function sendCustomerConfirmationEmail(orderData: OrderData, invoiceRefNo: string) {
+async function sendCustomerConfirmationEmail(
+  orderData: OrderData,
+  invoiceRefNo: string,
+) {
   try {
     const transporter = createEmailTransporter();
     const emailHTML = generateOrderEmailHTML(orderData, invoiceRefNo, true);
@@ -77,17 +91,17 @@ async function sendCustomerConfirmationEmail(orderData: OrderData, invoiceRefNo:
       html: emailHTML,
     });
 
-    console.log('Customer confirmation email sent successfully');
+    console.log("Customer confirmation email sent successfully");
   } catch (error) {
-    console.error('Error sending confirmation email to customer:', error);
+    console.error("Error sending confirmation email to customer:", error);
   }
 }
 
 function createEmailTransporter() {
   return nodemailer.createTransport({
     host: process.env.SMTP_HOST,
-    port: parseInt(process.env.SMTP_PORT || '465'),
-    secure: process.env.SMTP_SECURE === 'true',
+    port: parseInt(process.env.SMTP_PORT || "465"),
+    secure: process.env.SMTP_SECURE === "true",
     auth: {
       user: process.env.SMTP_USER,
       pass: process.env.SMTP_PASS,
@@ -95,18 +109,28 @@ function createEmailTransporter() {
   });
 }
 
-function generateOrderEmailHTML(orderData: OrderData, invoiceRefNo: string, isCustomer: boolean = false): string {
+function generateOrderEmailHTML(
+  orderData: OrderData,
+  invoiceRefNo: string,
+  isCustomer: boolean = false,
+): string {
   const title = isCustomer ? "Order Confirmation" : "New Order Received";
-  const totalItems = orderData.sizeSelection.reduce((total, item) => total + item.quantity, 0);
+  const totalItems = orderData.sizeSelection.reduce(
+    (total, item) => total + item.quantity,
+    0,
+  );
 
   const sizeRows = orderData.sizeSelection
-    .filter(item => item.quantity > 0)
-    .map(item => `
+    .filter((item) => item.quantity > 0)
+    .map(
+      (item) => `
       <tr>
         <td style="padding: 8px; border: 1px solid #ddd;">${item.sizeValue}</td>
         <td style="padding: 8px; border: 1px solid #ddd;">${item.quantity}</td>
       </tr>
-    `).join('');
+    `,
+    )
+    .join("");
 
   const assetRows = Object.entries(orderData.assets)
     .filter(([, file]) => file !== null)
@@ -115,16 +139,17 @@ function generateOrderEmailHTML(orderData: OrderData, invoiceRefNo: string, isCu
         "front-top-left": "Front - Top Left",
         "front-center": "Front - Center",
         "back-top": "Back - Top",
-        "back-bottom": "Back - Bottom"
+        "back-bottom": "Back - Bottom",
       };
 
       return `
         <tr>
-          <td style="padding: 8px; border: 1px solid #ddd;">${file?.name || 'Unknown file'}</td>
+          <td style="padding: 8px; border: 1px solid #ddd;">${file?.name || "Unknown file"}</td>
           <td style="padding: 8px; border: 1px solid #ddd;">${placementMap[key] || key}</td>
         </tr>
       `;
-    }).join('');
+    })
+    .join("");
 
   return `
     <!DOCTYPE html>
@@ -137,7 +162,7 @@ function generateOrderEmailHTML(orderData: OrderData, invoiceRefNo: string, isCu
       <div style="max-width: 600px; margin: 0 auto; background-color: white; padding: 20px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
         <h1 style="color: #333; border-bottom: 2px solid #333; padding-bottom: 10px;">${title}</h1>
         
-        ${isCustomer ? `<p style="color: #666; font-size: 16px;">Thank you for your order, ${orderData.contactInformation.fullName}! We have received your order and are processing it.</p>` : ''}
+        ${isCustomer ? `<p style="color: #666; font-size: 16px;">Thank you for your order, ${orderData.contactInformation.fullName}! We have received your order and are processing it.</p>` : ""}
         
         
         <div style="margin-bottom: 20px;">
@@ -157,10 +182,8 @@ function generateOrderEmailHTML(orderData: OrderData, invoiceRefNo: string, isCu
         <div style="margin-bottom: 20px;">
           <h2 style="color: #555; font-size: 18px;">Product Details</h2>
           <p><strong>Product Type:</strong> ${orderData.productType}</p>
-          ${!orderData.is_onlyType ? `
-          <p><strong>Brand:</strong> ${orderData.brand}</p>
-          <p><strong>Color:</strong> ${orderData.color}</p>
-          ` : ''}
+          ${!orderData.is_hasBrand ? `<p><strong>Brand:</strong> ${orderData.brand}</p>` : ""}
+          ${!orderData.is_hasColor ? `<p><strong>Color:</strong> ${orderData.color}</p>` : ""}
         </div>
 
         <div style="margin-bottom: 20px;">
@@ -179,7 +202,9 @@ function generateOrderEmailHTML(orderData: OrderData, invoiceRefNo: string, isCu
           <p style="margin-top: 10px;"><strong>Total Items:</strong> ${totalItems}</p>
         </div>
 
-        ${assetRows ? `
+        ${
+          assetRows
+            ? `
         <div style="margin-bottom: 20px;">
           <h2 style="color: #555; font-size: 18px;">Uploaded Assets</h2>
           <table style="width: 100%; border-collapse: collapse; margin-top: 10px;">
@@ -194,7 +219,9 @@ function generateOrderEmailHTML(orderData: OrderData, invoiceRefNo: string, isCu
             </tbody>
           </table>
         </div>
-        ` : ''}
+        `
+            : ""
+        }
 
         <div style="margin-top: 30px; padding-top: 20px; border-top: 1px solid #ddd; color: #666; font-size: 12px;">
           <p>This is an automated message from your order system.</p>

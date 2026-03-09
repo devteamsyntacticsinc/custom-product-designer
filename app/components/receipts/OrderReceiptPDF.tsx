@@ -148,7 +148,10 @@ export default function OrderReceiptPDF({ order }: OrderReceiptPDFProps) {
     order.products?.[0]?.product_type?.image_products || [];
   const frontImage = productTypeImages.find((img) => img.is_hasBack === false);
   const backImage = productTypeImages.find((img) => img.is_hasBack === true);
-  const isOnlyType = order.products?.[0]?.product_type?.is_onlyType || false;
+  const isOnlyType =
+    order.products?.[0]?.product_type?.is_hasBrand ||
+    order.products?.[0]?.product_type?.is_hasColor ||
+    false;
 
   // Create a record of images by placement using exact database values
   const imagesByPlacement: Record<string, string> = {};
