@@ -28,11 +28,16 @@ export default function AssetUpload({
   const { selectedProductType } = useAssets();
   const fileInputRefs = useRef<Record<string, HTMLInputElement | null>>({});
 
-  const isHasBack = selectedProductType
-    ? (selectedProductType.image_products?.find(() => true) ?? false)
-    : undefined;
+  const isHasBack =
+    selectedProductType === null
+      ? undefined
+      : Boolean(
+          selectedProductType?.image_products?.some((img) => img.is_hasBack),
+        );
 
-  const is_onlyType = selectedProductType?.is_onlyType;
+  const isHasBrand = Boolean(selectedProductType?.is_hasBrand);
+  const isHasColor = Boolean(selectedProductType?.is_hasColor);
+  const isSinglePlacementOnly = !isHasBrand && !isHasColor;
 
   const handleFileChange = (slotId: string, file: File | null) => {
     setAssets((prev) => ({ ...prev, [slotId]: file }));
@@ -47,7 +52,7 @@ export default function AssetUpload({
 
   const renderSlot = (slot: AssetSlot) => {
     const asset = assets[slot.id];
-    const isDisabled = is_onlyType && slot.id !== "front-center";
+    const isDisabled = isSinglePlacementOnly && slot.id !== "front-center";
 
     if (isDisabled) return null;
 

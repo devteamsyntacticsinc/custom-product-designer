@@ -136,9 +136,9 @@ export class CustomerService {
       return (data || []).map((customer: any) => {
         const matchingOrders = filterData
           ? filterData.filter(
-            (o) => String(o.customer_id) === String(customer.id),
-          )
-          : (customer.invoices || []);
+              (o) => String(o.customer_id) === String(customer.id),
+            )
+          : customer.invoices || [];
 
         return {
           ...customer,
@@ -215,7 +215,7 @@ export class CustomerService {
             brand_id,
             product_type_id,
             brands (id, name),
-            product_type (id, name, is_onlyType, image_products (filepath, is_hasBack))
+            product_type (id, name, is_hasBrand, is_hasColor, image_products (filepath, is_hasBack))
           `,
           )
           .in("id", brandTypeIds),
@@ -248,16 +248,16 @@ export class CustomerService {
           created_at: order.created_at,
           products: brandType
             ? [
-              {
-                id: brandType.id,
-                brands: Array.isArray(brandType.brands)
-                  ? brandType.brands[0]
-                  : (brandType.brands ?? undefined),
-                product_type: Array.isArray(brandType.product_type)
-                  ? brandType.product_type[0]
-                  : (brandType.product_type ?? undefined),
-              },
-            ]
+                {
+                  id: brandType.id,
+                  brands: Array.isArray(brandType.brands)
+                    ? brandType.brands[0]
+                    : (brandType.brands ?? undefined),
+                  product_type: Array.isArray(brandType.product_type)
+                    ? brandType.product_type[0]
+                    : (brandType.product_type ?? undefined),
+                },
+              ]
             : undefined,
           colors: color ? [color] : undefined,
           product_sizes: sizes,

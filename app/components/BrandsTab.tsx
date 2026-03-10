@@ -87,9 +87,9 @@ export default function BrandsTab() {
       if (!productTypes.data) {
         throw new Error("Failed to fetch product types");
       }
-      // Get only the is_onlyType that is false
+      // Get only the product types that has either color or brand as true
       const newProductType = productTypes.data.filter(
-        (item: ProductType) => item.is_onlyType === false,
+        (item: ProductType) => item.is_hasBrand || item.is_hasColor,
       );
       setProductTypes(newProductType);
     } catch (error) {
@@ -127,7 +127,8 @@ export default function BrandsTab() {
 
         if (name !== undefined) updateData.name = name;
         if (is_Active !== undefined) updateData.is_Active = is_Active;
-        if (product_type_ids !== undefined) updateData.product_type_ids = product_type_ids;
+        if (product_type_ids !== undefined)
+          updateData.product_type_ids = product_type_ids;
 
         const res = await axios.put(`/api/brands`, updateData);
 
@@ -182,169 +183,170 @@ export default function BrandsTab() {
 
   return (
     <>
-    <ProductTypesTab/>
-    <Card className="overflow-hidden mt-5">
-      <CardHeader className="flex flex-col sm:flex-row items-start sm:items-center justify-between space-y-4 sm:space-y-0 py-4 sm:py-6">
-        <div>
-          <CardTitle className="text-lg lg:text-2xl">Brands</CardTitle>
-          <CardDescription className="text-xs sm:text-sm">
-            Manage product brands available in your store
-          </CardDescription>
-        </div>
-        <BrandSheet
-          mode="create"
-          isLoading={isMutating}
-          onSubmit={handleSubmitBrand}
-          productTypes={productTypes}
-        >
-          <Button
-            size="sm"
-            className="w-full sm:w-auto text-xs sm:text-sm h-8 sm:h-10"
+      <ProductTypesTab />
+      <Card className="overflow-hidden mt-5">
+        <CardHeader className="flex flex-col sm:flex-row items-start sm:items-center justify-between space-y-4 sm:space-y-0 py-4 sm:py-6">
+          <div>
+            <CardTitle className="text-lg lg:text-2xl">Brands</CardTitle>
+            <CardDescription className="text-xs sm:text-sm">
+              Manage product brands available in your store
+            </CardDescription>
+          </div>
+          <BrandSheet
+            mode="create"
+            isLoading={isMutating}
+            onSubmit={handleSubmitBrand}
+            productTypes={productTypes}
           >
-            <Plus className="h-4 w-4 mr-2" />
-            Add Brand
-          </Button>
-        </BrandSheet>
-      </CardHeader>
-      <CardContent className="p-0 sm:p-6">
-        <div className="overflow-x-auto">
-          <Table>
-            <TableHeader>
-              <TableRow className="text-xs sm:text-sm">
-                <TableHead className="w-[60px]">ID</TableHead>
-                <TableHead>Name</TableHead>
-                <TableHead>Product Type</TableHead>
-                <TableHead>Status</TableHead>
-                <TableHead className="text-right">Actions</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {isFetchingBrands ? (
-                Array.from({ length: 5 }).map((_, index) => (
-                  <TableRow key={`brands-loading-${index}`}>
-                    <TableCell>
-                      <Skeleton className="h-4 w-6" />
-                    </TableCell>
-                    <TableCell>
-                      <Skeleton className="h-4 w-20" />
-                    </TableCell>
-                    <TableCell>
-                      <Skeleton className="h-6 w-16" />
-                    </TableCell>
-                    <TableCell className="text-right">
-                      <div className="flex items-center justify-end gap-1">
-                        <Skeleton className="h-8 w-8" />
-                        <Skeleton className="h-8 w-8" />
+            <Button
+              size="sm"
+              className="w-full sm:w-auto text-xs sm:text-sm h-8 sm:h-10"
+            >
+              <Plus className="h-4 w-4 mr-2" />
+              Add Brand
+            </Button>
+          </BrandSheet>
+        </CardHeader>
+        <CardContent className="p-0 sm:p-6">
+          <div className="overflow-x-auto">
+            <Table>
+              <TableHeader>
+                <TableRow className="text-xs sm:text-sm">
+                  <TableHead className="w-[60px]">ID</TableHead>
+                  <TableHead>Name</TableHead>
+                  <TableHead>Product Type</TableHead>
+                  <TableHead>Status</TableHead>
+                  <TableHead className="text-right">Actions</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {isFetchingBrands ? (
+                  Array.from({ length: 5 }).map((_, index) => (
+                    <TableRow key={`brands-loading-${index}`}>
+                      <TableCell>
+                        <Skeleton className="h-4 w-6" />
+                      </TableCell>
+                      <TableCell>
+                        <Skeleton className="h-4 w-20" />
+                      </TableCell>
+                      <TableCell>
+                        <Skeleton className="h-6 w-16" />
+                      </TableCell>
+                      <TableCell className="text-right">
+                        <div className="flex items-center justify-end gap-1">
+                          <Skeleton className="h-8 w-8" />
+                          <Skeleton className="h-8 w-8" />
+                        </div>
+                      </TableCell>
+                    </TableRow>
+                  ))
+                ) : error ? (
+                  <TableRow>
+                    <TableCell
+                      colSpan={5}
+                      className="text-sm text-destructive p-4"
+                    >
+                      <div className="flex flex-col items-center space-y-3">
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={fetchData}
+                          disabled={isFetchingBrands}
+                          className="flex items-center gap-2"
+                        >
+                          <RefreshCw
+                            className={`h-4 w-4 ${isFetchingBrands ? "animate-spin" : ""}`}
+                          />
+                          Refresh Data
+                        </Button>
                       </div>
                     </TableCell>
                   </TableRow>
-                ))
-              ) : error ? (
-                <TableRow>
-                  <TableCell
-                    colSpan={5}
-                    className="text-sm text-destructive p-4"
-                  >
-                    <div className="flex flex-col items-center space-y-3">
-                      
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={fetchData}
-                        disabled={isFetchingBrands}
-                        className="flex items-center gap-2"
-                      >
-                        <RefreshCw className={`h-4 w-4 ${isFetchingBrands ? 'animate-spin' : ''}`} />
-                        Refresh Data
-                      </Button>
-                    </div>
-                  </TableCell>
-                </TableRow>
-              ) : brands.length === 0 ? (
-                <TableRow>
-                  <TableCell
-                    colSpan={5}
-                    className="text-center py-8 text-gray-500"
-                  >
-                    No brands found
-                  </TableCell>
-                </TableRow>
-              ) : (
-                brands.map((brand) => (
-                  <TableRow key={brand.id}>
-                    <TableCell className="text-xs lg:text-sm text-gray-500">
-                      #{brand.id}
-                    </TableCell>
-                    <TableCell className="font-medium text-xs lg:text-sm">
-                      {brand.name}
-                    </TableCell>
-                    <TableCell>
-                      {brand.products && brand.products.length > 0 ? (
-                        brand.products.map(({ product_type_id }) => {
-                          const type = productTypes.find(
-                            (type) => type.id === product_type_id,
-                          );
-                          return (
-                            <Badge key={product_type_id} className="mr-2">
-                              {type?.name}
-                            </Badge>
-                          );
-                        })
-                      ) : (
-                        <Badge variant="outline">No type assigned</Badge>
-                      )}
-                    </TableCell>
-                    <TableCell>
-                      <Badge
-                        variant={brand.is_Active ? "default" : "secondary"}
-                        className="text-[10px] px-2 py-0"
-                      >
-                        {brand.is_Active ? "Active" : "Inactive"}
-                      </Badge>
-                    </TableCell>
-                    <TableCell className="text-right">
-                      <div className="flex items-center justify-end gap-1">
-                        <BrandSheet
-                          mode="edit"
-                          isLoading={isMutating}
-                          initialData={brand}
-                          onSubmit={handleSubmitBrand}
-                          productTypes={productTypes}
-                        >
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            className="h-8 w-8"
-                            disabled={isMutating}
-                          >
-                            <Edit className="h-3.5 w-3.5" />
-                          </Button>
-                        </BrandSheet>
-                        <DeleteDialog
-                          isLoading={isMutating}
-                          setIsLoading={setIsMutating}
-                          brand={brand}
-                          fetchBrands={fetchData}
-                        >
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            className="h-8 w-8 text-destructive"
-                            disabled={isMutating}
-                          >
-                            <Trash2 className="h-3.5 w-3.5" />
-                          </Button>
-                        </DeleteDialog>
-                      </div>
+                ) : brands.length === 0 ? (
+                  <TableRow>
+                    <TableCell
+                      colSpan={5}
+                      className="text-center py-8 text-gray-500"
+                    >
+                      No brands found
                     </TableCell>
                   </TableRow>
-                ))
-              )}
-            </TableBody>
-          </Table>
-        </div>
-      </CardContent>
-    </Card>
+                ) : (
+                  brands.map((brand) => (
+                    <TableRow key={brand.id}>
+                      <TableCell className="text-xs lg:text-sm text-gray-500">
+                        #{brand.id}
+                      </TableCell>
+                      <TableCell className="font-medium text-xs lg:text-sm">
+                        {brand.name}
+                      </TableCell>
+                      <TableCell>
+                        {brand.products && brand.products.length > 0 ? (
+                          brand.products.map(({ product_type_id }) => {
+                            const type = productTypes.find(
+                              (type) => type.id === product_type_id,
+                            );
+                            return (
+                              <Badge key={product_type_id} className="mr-2">
+                                {type?.name}
+                              </Badge>
+                            );
+                          })
+                        ) : (
+                          <Badge variant="outline">No type assigned</Badge>
+                        )}
+                      </TableCell>
+                      <TableCell>
+                        <Badge
+                          variant={brand.is_Active ? "default" : "secondary"}
+                          className="text-[10px] px-2 py-0"
+                        >
+                          {brand.is_Active ? "Active" : "Inactive"}
+                        </Badge>
+                      </TableCell>
+                      <TableCell className="text-right">
+                        <div className="flex items-center justify-end gap-1">
+                          <BrandSheet
+                            mode="edit"
+                            isLoading={isMutating}
+                            initialData={brand}
+                            onSubmit={handleSubmitBrand}
+                            productTypes={productTypes}
+                          >
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              className="h-8 w-8"
+                              disabled={isMutating}
+                            >
+                              <Edit className="h-3.5 w-3.5" />
+                            </Button>
+                          </BrandSheet>
+                          <DeleteDialog
+                            isLoading={isMutating}
+                            setIsLoading={setIsMutating}
+                            brand={brand}
+                            fetchBrands={fetchData}
+                          >
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              className="h-8 w-8 text-destructive"
+                              disabled={isMutating}
+                            >
+                              <Trash2 className="h-3.5 w-3.5" />
+                            </Button>
+                          </DeleteDialog>
+                        </div>
+                      </TableCell>
+                    </TableRow>
+                  ))
+                )}
+              </TableBody>
+            </Table>
+          </div>
+        </CardContent>
+      </Card>
     </>
   );
 }
