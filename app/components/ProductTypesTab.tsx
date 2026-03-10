@@ -30,6 +30,7 @@ import {
 } from "@/components/ui/sheet";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Checkbox } from "@/components/ui/checkbox";
 import { Switch } from "@/components/ui/switch";
 import { Edit, Trash2, Plus, Upload, X } from "lucide-react";
 import { ProductType, ProductImage } from "@/types/product";
@@ -321,24 +322,18 @@ export default function ProductTypesTab() {
                       </Badge>
                     </TableCell>
                     <TableCell className="px-2 sm:px-4">
-                      <Badge
-                        variant={
-                          productType.is_hasBrand ? "default" : "secondary"
-                        }
-                        className="text-[9px] sm:text-[10px] px-1.5 sm:px-2 py-0"
-                      >
-                        {productType.is_hasBrand ? "True" : "False"}
-                      </Badge>
+                      <Checkbox
+                        checked={productType.is_hasBrand}
+                        disabled
+                        className="disabled:opacity-100! size-6"
+                      />
                     </TableCell>
                     <TableCell className="px-2 sm:px-4">
-                      <Badge
-                        variant={
-                          productType.is_hasColor ? "default" : "secondary"
-                        }
-                        className="text-[9px] sm:text-[10px] px-1.5 sm:px-2 py-0"
-                      >
-                        {productType.is_hasColor ? "True" : "False"}
-                      </Badge>
+                      <Checkbox
+                        checked={productType.is_hasColor}
+                        disabled
+                        className="disabled:opacity-100! size-6"
+                      />
                     </TableCell>
                     <TableCell className="text-right px-2 sm:px-4">
                       <div className="flex items-center justify-end gap-1">
@@ -817,37 +812,34 @@ function ProductTypeSheet({
             </p>
           )}
 
-          <div className="flex flex-col">
-            <Label htmlFor="product-type-name" className="text-sm">
-              Has Brand
-            </Label>
-            <div className="flex content-center space-x-2 mt-2">
-              <Switch
-                checked={hasBrand}
-                onCheckedChange={setHasBrand}
-                id="product-type-hasBrand"
-              />
-              <Label htmlFor="product-type-hasBrand" className="text-sm">
-                {hasBrand ? "True" : "False"}
-              </Label>
-            </div>
-          </div>
-
-          <div className="flex flex-col">
-            <Label htmlFor="product-type-name" className="text-sm">
-              Has Color
-            </Label>
-            <div className="flex content-center space-x-2 mt-2">
-              <Switch
-                checked={hasColor}
-                onCheckedChange={setHasColor}
-                id="product-type-hasColor"
-              />
-              <Label htmlFor="product-type-hasColor" className="text-sm">
-                {hasColor ? "True" : "False"}
-              </Label>
-            </div>
-          </div>
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead className="text-sm border-r">Brand</TableHead>
+                <TableHead className="text-sm border-l">Color</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              <TableRow>
+                <TableCell className="border-r">
+                  <Checkbox
+                    checked={hasBrand}
+                    onCheckedChange={(checked) => setHasBrand(checked === true)}
+                    id="product-type-hasBrand"
+                    className="size-6 mx-auto"
+                  />
+                </TableCell>
+                <TableCell className="border-l">
+                  <Checkbox
+                    checked={hasColor}
+                    onCheckedChange={(checked) => setHasColor(checked === true)}
+                    id="product-type-hasColor"
+                    className="size-6 mx-auto"
+                  />
+                </TableCell>
+              </TableRow>
+            </TableBody>
+          </Table>
 
           <div className="flex items-center space-x-2">
             <Switch
