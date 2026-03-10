@@ -108,7 +108,8 @@ export default function OrderProductPreview({
   // Memoize expensive computations
   const {
     productImages,
-    isOnlyType,
+    isHasBrand,
+    isHasColor,
     imageIsFront,
     imageIsBack,
     imagesByPlacement,
@@ -119,7 +120,8 @@ export default function OrderProductPreview({
     const productImages = order.product_images || [];
     const productTypeImages =
       order.products?.[0]?.product_type?.image_products || [];
-    const isOnlyType = order.products?.[0]?.product_type?.is_onlyType || false;
+    const isHasBrand = Boolean(order.products?.[0]?.product_type?.is_hasBrand);
+    const isHasColor = Boolean(order.products?.[0]?.product_type?.is_hasColor);
     const imageIsFront = productTypeImages.find(
       (img) => img.is_hasBack === false,
     );
@@ -142,12 +144,13 @@ export default function OrderProductPreview({
       brandType?.product_type?.name || "Unknown Product Type";
 
     // Check if brand should be displayed
-    const shouldDisplayBrand = !isOnlyType && brandName !== "Unknown Brand";
+    const shouldDisplayBrand = isHasBrand && brandName !== "Unknown Brand";
 
     return {
       productImages,
       productTypeImages,
-      isOnlyType,
+      isHasBrand,
+      isHasColor,
       imageIsFront,
       imageIsBack,
       imagesByPlacement,
@@ -247,7 +250,7 @@ export default function OrderProductPreview({
 
       {/* T-shirt Mockup */}
       <div className="flex flex-col lg:flex-row w-full relative justify-center items-start">
-        {isOnlyType && imageIsFront?.filepath && (
+        {!isHasBrand && !isHasColor && imageIsFront?.filepath && (
           <div className="relative w-fit flex items-center justify-center rounded-lg max-w-lg">
             <Image
               src={imageIsFront.filepath}
@@ -276,7 +279,7 @@ export default function OrderProductPreview({
             />
           </div>
         )}
-        {!isOnlyType && imageIsFront?.filepath && (
+        {(isHasBrand || isHasColor) && imageIsFront?.filepath && (
           <div className="relative w-fit flex items-center justify-center rounded-lg">
             <Image
               src={imageIsFront.filepath}
@@ -314,7 +317,7 @@ export default function OrderProductPreview({
           </div>
         )}
 
-        {!isOnlyType && imageIsBack?.filepath && (
+        {(isHasBrand || isHasColor) && imageIsBack?.filepath && (
           <div className="relative w-fit flex items-center justify-center rounded-lg p-2">
             <Image
               src={imageIsBack.filepath}
