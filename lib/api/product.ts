@@ -1753,8 +1753,8 @@ export class ProductService {
         `,
         )
         .order("id")
-        .eq("products.product_type.is_hasBrand", false)
-        .eq("products.product_type.is_hasColor", false)
+        .eq("products.product_type.is_hasBrand", true)
+        .eq("products.product_type.is_hasColor", true)
         .overrideTypes<ColorBrandTypeWithDetails[]>();
 
       if (error) {

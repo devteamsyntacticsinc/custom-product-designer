@@ -375,7 +375,8 @@ export default function ProductCustomizer() {
             productType={productTypeName}
             brand={brandName}
             color={colorName}
-            is_onlyType={isOnlyType}
+            isHasBrand={isBrandEnabled}
+            isHasColor={isColorEnabled}
             sizeSelection={sizeSelection}
             assets={assets}
             contactData={contactData}
