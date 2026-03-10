@@ -182,8 +182,8 @@ function generateOrderEmailHTML(
         <div style="margin-bottom: 20px;">
           <h2 style="color: #555; font-size: 18px;">Product Details</h2>
           <p><strong>Product Type:</strong> ${orderData.productType}</p>
-          ${!orderData.is_hasBrand ? `<p><strong>Brand:</strong> ${orderData.brand}</p>` : ""}
-          ${!orderData.is_hasColor ? `<p><strong>Color:</strong> ${orderData.color}</p>` : ""}
+          ${orderData.is_hasBrand ? `<p><strong>Brand:</strong> ${orderData.brand}</p>` : ""}
+          ${orderData.is_hasColor ? `<p><strong>Color:</strong> ${orderData.color}</p>` : ""}
         </div>
 
         <div style="margin-bottom: 20px;">

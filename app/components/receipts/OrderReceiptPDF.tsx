@@ -148,10 +148,9 @@ export default function OrderReceiptPDF({ order }: OrderReceiptPDFProps) {
     order.products?.[0]?.product_type?.image_products || [];
   const frontImage = productTypeImages.find((img) => img.is_hasBack === false);
   const backImage = productTypeImages.find((img) => img.is_hasBack === true);
-  const isOnlyType =
-    order.products?.[0]?.product_type?.is_hasBrand ||
-    order.products?.[0]?.product_type?.is_hasColor ||
-    false;
+  const isHasBrand = Boolean(order.products?.[0]?.product_type?.is_hasBrand);
+  const isHasColor = Boolean(order.products?.[0]?.product_type?.is_hasColor);
+  const isSinglePlacementOnly = !isHasBrand && !isHasColor;
 
   // Create a record of images by placement using exact database values
   const imagesByPlacement: Record<string, string> = {};
@@ -245,7 +244,7 @@ export default function OrderReceiptPDF({ order }: OrderReceiptPDFProps) {
                 </Text>
 
                 {/* Design Areas Overlay */}
-                {isOnlyType ? (
+                {isSinglePlacementOnly ? (
                   // Only type - Center area (like Mug positioning)
                   <DesignAreaPDF
                     placement="Front - Center"
@@ -286,7 +285,7 @@ export default function OrderReceiptPDF({ order }: OrderReceiptPDFProps) {
             )}
 
             {/* Back View */}
-            {backImage && !isOnlyType && (
+            {backImage && !isSinglePlacementOnly && (
               <View style={styles.mockupContainer}>
                 <Image src={backImage.filepath} style={styles.productImage} />
                 <Text
@@ -342,14 +341,14 @@ export default function OrderReceiptPDF({ order }: OrderReceiptPDFProps) {
             </Text>
           </View>
 
-          {!isOnlyType && order.products?.[0]?.brands?.name && (
+          {isHasBrand && order.products?.[0]?.brands?.name && (
             <View style={styles.row}>
               <Text style={styles.label}>Brand:</Text>
               <Text style={styles.value}>{order.products[0].brands.name}</Text>
             </View>
           )}
 
-          {order.colors?.[0]?.value && (
+          {isHasColor && order.colors?.[0]?.value && (
             <View style={styles.row}>
               <Text style={styles.label}>Color:</Text>
               <Text style={styles.value}>{order.colors[0].value}</Text>

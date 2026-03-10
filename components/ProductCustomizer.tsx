@@ -20,7 +20,6 @@ export default function ProductCustomizer() {
 
   const isBrandEnabled = Boolean(selectedProductType?.is_hasBrand);
   const isColorEnabled = Boolean(selectedProductType?.is_hasColor);
-  const isOnlyType = !isBrandEnabled && !isColorEnabled;
 
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [currentStep, setCurrentStep] = useState<"customize" | "contact">(
@@ -96,11 +95,12 @@ export default function ProductCustomizer() {
         productTypeId: productType,
         brandId: isBrandEnabled ? brand : null,
         colorId: isColorEnabled ? color : null,
+        is_hasBrand: isBrandEnabled,
+        is_hasColor: isColorEnabled,
         // Display names for email
         productType: productTypeName,
         brand: brandName,
         color: colorName,
-        is_onlyType: isOnlyType,
         sizeSelection: sizeSelectionWithValues,
         contactInformation: contactData,
       };
