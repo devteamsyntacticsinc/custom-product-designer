@@ -18,6 +18,9 @@ export default function ProductCustomizer() {
   const { assets, setAssets, selectedProductType, setSelectedProductType } =
     useAssets();
 
+  const isBrandEnabled = Boolean(selectedProductType?.is_hasBrand);
+  const isColorEnabled = Boolean(selectedProductType?.is_hasColor);
+
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [currentStep, setCurrentStep] = useState<"customize" | "contact">(
     "customize",
@@ -90,13 +93,14 @@ export default function ProductCustomizer() {
       const orderData = {
         // IDs for database insertion
         productTypeId: productType,
-        brandId: selectedProductType?.is_onlyType ? null : brand,
-        colorId: selectedProductType?.is_onlyType ? null : color,
+        brandId: isBrandEnabled ? brand : null,
+        colorId: isColorEnabled ? color : null,
+        is_hasBrand: isBrandEnabled,
+        is_hasColor: isColorEnabled,
         // Display names for email
         productType: productTypeName,
         brand: brandName,
         color: colorName,
-        is_onlyType: selectedProductType?.is_onlyType,
         sizeSelection: sizeSelectionWithValues,
         contactInformation: contactData,
       };
@@ -244,8 +248,8 @@ export default function ProductCustomizer() {
   }, [productType]);
 
   useEffect(() => {
-    // Clear colors when no brand is selected or is_onlyType is true
-    if (!brand || selectedProductType?.is_onlyType) {
+    // Clear colors when no brand is selected or color selection is disabled
+    if (!brand || !isColorEnabled) {
       setColors([]);
       setColor("");
       return;
@@ -301,7 +305,20 @@ export default function ProductCustomizer() {
     };
 
     fetchBrandColors();
-  }, [brand, selectedProductType?.is_onlyType]);
+  }, [brand, isColorEnabled]);
+
+  useEffect(() => {
+    if (!selectedProductType) return;
+
+    if (!isBrandEnabled) {
+      setBrand("");
+    }
+
+    if (!isColorEnabled) {
+      setColors([]);
+      setColor("");
+    }
+  }, [selectedProductType, isBrandEnabled, isColorEnabled]);
 
   // Render Contact Information step
   if (currentStep === "contact") {
@@ -358,7 +375,8 @@ export default function ProductCustomizer() {
             productType={productTypeName}
             brand={brandName}
             color={colorName}
-            is_onlyType={selectedProductType?.is_onlyType}
+            isHasBrand={isBrandEnabled}
+            isHasColor={isColorEnabled}
             sizeSelection={sizeSelection}
             assets={assets}
             contactData={contactData}
@@ -471,13 +489,13 @@ export default function ProductCustomizer() {
 
         {/* Brand */}
         <div
-          className={`mb-6 ${selectedProductType?.is_onlyType ? "opacity-50 pointer-events-none" : ""}`}
+          className={`mb-6 ${!isBrandEnabled ? "opacity-50 pointer-events-none" : ""}`}
         >
           <Label
             htmlFor="brand"
             className="text-sm font-medium text-gray-700 mb-2 block"
           >
-            Brand {selectedProductType?.is_onlyType && "(Disabled)"}
+            Brand {!isBrandEnabled && "(Disabled)"}
           </Label>
           <Combobox
             placeholder={loadingBrands ? "Loading brands..." : "Select brand"}
@@ -492,11 +510,7 @@ export default function ProductCustomizer() {
               label: b.name,
             }))}
             className="w-full"
-            disabled={
-              loadingBrands ||
-              brands.length === 0 ||
-              selectedProductType?.is_onlyType
-            }
+            disabled={loadingBrands || brands.length === 0 || !isBrandEnabled}
             loading={loadingBrands}
             emptyText={
               brands.length === 0 ? "No brands available" : "No brand found."
@@ -506,13 +520,13 @@ export default function ProductCustomizer() {
 
         {/* Select Color */}
         <div
-          className={`mb-6 ${selectedProductType?.is_onlyType ? "opacity-50 pointer-events-none" : ""}`}
+          className={`mb-6 ${!isColorEnabled ? "opacity-50 pointer-events-none" : ""}`}
         >
           <Label
             htmlFor="color"
             className="text-sm font-medium text-gray-700 mb-2 block"
           >
-            Select color {selectedProductType?.is_onlyType && "(Disabled)"}
+            Select color {!isColorEnabled && "(Disabled)"}
           </Label>
           <Combobox
             placeholder={
@@ -528,7 +542,7 @@ export default function ProductCustomizer() {
             disabled={
               loadingBrandColors ||
               colors.length === 0 ||
-              selectedProductType?.is_onlyType ||
+              !isColorEnabled ||
               !brand
             }
             loading={loadingBrandColors}
@@ -582,8 +596,8 @@ export default function ProductCustomizer() {
               loadingBrands ||
               loadingBrandColors ||
               !productType ||
-              (!selectedProductType?.is_onlyType && !brand) ||
-              (!selectedProductType?.is_onlyType && !color) ||
+              (isBrandEnabled && !brand) ||
+              (isColorEnabled && !color) ||
               (!assets["front-top-left"] && !assets["front-center"]) ||
               !sizeSelection.some((item) => item.quantity > 0)
             }

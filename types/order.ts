@@ -24,7 +24,8 @@ export interface OrderWithCustomer {
     product_type?: {
       id: number;
       name: string;
-      is_onlyType: boolean;
+      is_hasBrand?: boolean;
+      is_hasColor?: boolean;
       image_products?: {
         filepath: string;
         is_hasBack: boolean;

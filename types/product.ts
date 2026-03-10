@@ -16,9 +16,11 @@ export interface Product {
   product_type?: {
     id: string;
     name: string;
-    is_onlyType?: boolean;
+    is_hasBrand?: boolean;
+    is_hasColor?: boolean;
   } | null;
-  is_onlyType?: boolean;
+  is_hasBrand?: boolean;
+  is_hasColor?: boolean;
 }
 
 export interface Brand {
@@ -38,7 +40,8 @@ export interface ProductType {
   id: number;
   name: string;
   is_Active?: boolean;
-  is_onlyType?: boolean;
+  is_hasBrand?: boolean;
+  is_hasColor?: boolean;
   image_products?: ImageProducts[];
 }
 
@@ -81,7 +84,8 @@ export interface OrderData {
   productType: string;
   brand: string;
   color: string;
-  is_onlyType?: boolean;
+  is_hasBrand?: boolean;
+  is_hasColor?: boolean;
   sizeSelection: { size: string; sizeValue: string; quantity: number }[];
   assets: Record<string, File | null>;
   contactInformation: {
@@ -160,7 +164,8 @@ export interface BrandTypeWithDetails {
   };
   product_type: {
     name: string;
-    is_onlyType: boolean;
+    is_hasBrand: boolean;
+    is_hasColor: boolean;
   };
 }
 

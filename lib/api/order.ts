@@ -456,7 +456,7 @@ export class OrderService {
 
       // Always get product ID for the product type
       // If brandId exists, use it to find the specific product
-      // If no brandId (is_onlyType), find any product for this product type
+      // If no brandId, find any product for this product type
       let productId: string;
 
       if (orderData.brandId) {
@@ -466,7 +466,7 @@ export class OrderService {
         );
         productId = productData.id;
       } else {
-        // For is_onlyType products, find any product for this product type
+        // Find any product for this product type
         const { data: defaultProduct } = await supabase
           .from("products")
           .select("id")
@@ -692,7 +692,7 @@ export class OrderService {
         brand_id,
         product_type_id,
         brands (id, name),
-        product_type (id, name, is_onlyType, image_products (filepath, is_hasBack))
+        product_type (id, name, is_hasBrand, is_hasColor, image_products (filepath, is_hasBack))
       `,
         )
         .in("id", productIds);
@@ -941,7 +941,7 @@ export class OrderService {
           brand_id,
           product_type_id,
           brands (id, name),
-          product_type (id, name, is_onlyType, image_products (filepath, is_hasBack))
+          product_type (id, name, is_hasBrand, is_hasColor, image_products (filepath, is_hasBack))
         `,
         )
         .in("id", productIds);
@@ -1119,7 +1119,7 @@ export class OrderService {
           brand_id,
           product_type_id,
           brands (id, name),
-          product_type (id, name, is_onlyType, image_products (filepath, is_hasBack))
+          product_type (id, name, is_hasBrand, is_hasColor, image_products (filepath, is_hasBack))
         `,
         )
         .eq("id", invoice.product_id);

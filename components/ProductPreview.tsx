@@ -28,6 +28,9 @@ export default function ProductPreview() {
   const { assets, selectedProductType } = useAssets();
   const [previews, setPreviews] = useState<Record<string, string>>({});
 
+  const isHasBrand = Boolean(selectedProductType?.is_hasBrand);
+  const isHasColor = Boolean(selectedProductType?.is_hasColor);
+
   useEffect(() => {
     const newPreviews: Record<string, string> = {};
     const objectUrls: string[] = [];
@@ -75,7 +78,7 @@ export default function ProductPreview() {
               />
               {/* Front Design Area - Top Left */}
               <div
-                className={`absolute top-[25%] left-[65%] w-[10%] h-[10%] border-2 border-dashed border-gray-400 rounded flex items-center justify-center transform -translate-x-1/2 -translate-y-1/2 overflow-hidden bg-background/50 z-10 ${selectedProductType?.is_onlyType ? "hidden" : ""}`}
+                className={`absolute top-[25%] left-[65%] w-[10%] h-[10%] border-2 border-dashed border-gray-400 rounded flex items-center justify-center transform -translate-x-1/2 -translate-y-1/2 overflow-hidden bg-background/50 z-10 ${!isHasBrand && !isHasColor ? "hidden" : ""}`}
               >
                 {previews["front-top-left"] ? (
                   <BlobImage
@@ -91,7 +94,7 @@ export default function ProductPreview() {
               </div>
               {/* Front Design Area - Center Large */}
               <div
-                className={`absolute border-2 border-dashed border-gray-400 rounded flex items-center justify-center transform -translate-x-1/2 -translate-y-1/2 overflow-hidden bg-background/50 z-10 ${selectedProductType?.is_onlyType ? "top-[53%] left-[45%] w-[30%] h-[40%] " : "top-[58%] left-[50%] w-[30%] h-[40%]"}`}
+                className={`absolute border-2 border-dashed border-gray-400 rounded flex items-center justify-center transform -translate-x-1/2 -translate-y-1/2 overflow-hidden bg-background/50 z-10 ${!isHasBrand && !isHasColor ? "top-[53%] left-[45%] w-[30%] h-[40%] " : "top-[58%] left-[50%] w-[30%] h-[40%]"}`}
               >
                 {previews["front-center"] ? (
                   <BlobImage
