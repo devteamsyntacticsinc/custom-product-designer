@@ -34,7 +34,8 @@ export class ProductService {
                 id,
                 name,
                 is_Active,
-                is_onlyType
+                is_hasBrand,
+                is_hasColor
               )
             )
           ),
@@ -47,7 +48,8 @@ export class ProductService {
             product_type (
               id,
               name,
-              is_onlyType
+              is_hasBrand,
+              is_hasColor
             )
           )
         `);
@@ -68,7 +70,8 @@ export class ProductService {
           brand: item.products?.[0]?.brands?.[0],
           color: null,
           product_type: item.products?.[0]?.product_type?.[0],
-          is_onlyType: item.products?.[0]?.product_type?.[0]?.is_onlyType,
+          is_hasBrand: item.products?.[0]?.product_type?.[0]?.is_hasBrand,
+          is_hasColor: item.products?.[0]?.product_type?.[0]?.is_hasColor,
         })) as unknown as Product[]) || []
       );
     } catch (error) {
@@ -103,7 +106,8 @@ export class ProductService {
                 id,
                 name,
                 is_Active,
-                is_onlyType
+                is_hasBrand,
+                is_hasColor
               )
             )
           ),
@@ -116,7 +120,8 @@ export class ProductService {
             product_type (
               id,
               name,
-              is_onlyType
+              is_hasBrand,
+              is_hasColor
             )
           )
         `,
@@ -140,7 +145,8 @@ export class ProductService {
           brand: data.products?.[0]?.brands?.[0],
           color: null,
           product_type: data.products?.[0]?.product_type?.[0],
-          is_onlyType: data.products?.[0]?.product_type?.[0]?.is_onlyType,
+          is_hasBrand: data.products?.[0]?.product_type?.[0]?.is_hasBrand,
+          is_hasColor: data.products?.[0]?.product_type?.[0]?.is_hasColor,
         } as unknown as Product;
       }
 
@@ -170,7 +176,8 @@ export class ProductService {
               id,
               name,
               is_Active,
-              is_onlyType
+              is_hasBrand,
+                is_hasColor
             )
           `,
           )
@@ -647,7 +654,7 @@ export class ProductService {
       const { data, error } = await supabase
         .from("product_type")
         .select(
-          "id, name, is_onlyType, is_Active, image_products(filepath, is_hasBack, id)",
+          "id, name, is_Active, is_hasColor, is_hasBrand, image_products(filepath, is_hasBack, id)",
         )
         .order("name");
 
@@ -676,7 +683,8 @@ export class ProductService {
   static async createProductType(
     name: string,
     is_Active: boolean = true,
-    is_onlyType: boolean = false,
+    is_hasBrand: boolean = false,
+    is_hasColor: boolean = false,
     images: { file?: File; filepath?: string; is_hasBack: boolean }[],
   ): Promise<ProductType> {
     try {
@@ -697,7 +705,7 @@ export class ProductService {
 
       const { data: productType, error } = await supabase
         .from("product_type")
-        .insert([{ name, is_Active, is_onlyType }])
+        .insert([{ name, is_Active, is_hasBrand, is_hasColor }])
         .select()
         .single();
 
@@ -709,7 +717,7 @@ export class ProductService {
         throw new Error("Failed to create product type");
       }
 
-      if (productType.is_onlyType) {
+      if (productType.is_hasBrand || productType.is_hasColor) {
         const { error: brandError } = await supabase.from("products").insert([
           {
             brand_id: null,
@@ -738,7 +746,8 @@ export class ProductService {
     id: string,
     name?: string,
     is_Active?: boolean,
-    is_onlyType?: boolean,
+    is_hasBrand?: boolean,
+    is_hasColor?: boolean,
     images?: { file?: File; filepath?: string; is_hasBack: boolean }[],
     imagesToDelete?: number[],
   ): Promise<ProductType> {
@@ -746,7 +755,8 @@ export class ProductService {
       const updateData: {
         name?: string;
         is_Active?: boolean;
-        is_onlyType?: boolean;
+        is_hasBrand?: boolean;
+        is_hasColor?: boolean;
       } = {};
       if (name !== undefined) {
         // Check if product type name already exists (excluding current product type, case-insensitive)
@@ -768,7 +778,8 @@ export class ProductService {
         updateData.name = name;
       }
       if (is_Active !== undefined) updateData.is_Active = is_Active;
-      if (is_onlyType !== undefined) updateData.is_onlyType = is_onlyType;
+      if (is_hasBrand !== undefined) updateData.is_hasBrand = is_hasBrand;
+      if (is_hasColor !== undefined) updateData.is_hasColor = is_hasColor;
 
       // Update product type
       const { data: productType, error } = await supabase
@@ -786,7 +797,7 @@ export class ProductService {
         throw new Error("Product type not found");
       }
 
-      if (productType.is_onlyType) {
+      if (productType.is_hasBrand || productType.is_hasColor) {
         // Check if already exists
         const { data: existing } = await supabase
           .from("products")
@@ -830,10 +841,10 @@ export class ProductService {
     imagesToDelete: number[],
   ): Promise<void> {
     try {
-      // First, get the product type details to check if it's is_onlyType
+      // First, get the product type details to check if it has brand or color
       const { data: productType, error: fetchError } = await supabase
         .from("product_type")
-        .select("id, name, is_onlyType")
+        .select("id, name, is_hasBrand, is_hasColor")
         .eq("id", id)
         .single();
 
@@ -850,7 +861,7 @@ export class ProductService {
         await this.deleteProductTypeImages(imagesToDelete);
       }
 
-      if (productType.is_onlyType) {
+      if (productType.is_hasBrand || productType.is_hasColor) {
         const { data: nullProduct, error: productError } = await supabase
           .from("products")
           .select("id")
@@ -1523,7 +1534,8 @@ export class ProductService {
           ),
           product_type!inner (
             name,
-            is_onlyType
+            is_hasBrand,
+            is_hasColor
           )
         `,
         )
@@ -1741,7 +1753,8 @@ export class ProductService {
         `,
         )
         .order("id")
-        .eq("products.product_type.is_onlyType", false)
+        .eq("products.product_type.is_hasBrand", true)
+        .eq("products.product_type.is_hasColor", true)
         .overrideTypes<ColorBrandTypeWithDetails[]>();
 
       if (error) {

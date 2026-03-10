@@ -24,7 +24,8 @@ export async function POST(request: Request) {
 
     let name: string;
     let is_Active: boolean;
-    let is_onlyType: boolean;
+    let is_hasBrand: boolean;
+    let is_hasColor: boolean;
     let images: { file?: File; filepath?: string; is_hasBack: boolean }[] = [];
 
     if (contentType.includes("multipart/form-data")) {
@@ -33,7 +34,8 @@ export async function POST(request: Request) {
 
       name = formData.get("name") as string;
       is_Active = formData.get("is_Active") === "true";
-      is_onlyType = formData.get("is_onlyType") === "true";
+      is_hasBrand = formData.get("is_hasBrand") === "true";
+      is_hasColor = formData.get("is_hasColor") === "true";
 
       // Extract images from FormData
       const imageKeys = Array.from(formData.keys()).filter((key) =>
@@ -66,7 +68,8 @@ export async function POST(request: Request) {
       const body = await request.json();
       name = body.name;
       is_Active = body.is_Active;
-      is_onlyType = body.is_onlyType;
+      is_hasBrand = body.is_hasBrand;
+      is_hasColor = body.is_hasColor;
       images = body.images || [];
     }
 
@@ -96,7 +99,8 @@ export async function POST(request: Request) {
     const productType = await ProductService.createProductType(
       name.trim(),
       is_Active !== undefined ? is_Active : true,
-      is_onlyType !== undefined ? is_onlyType : false,
+      is_hasBrand !== undefined ? is_hasBrand : false,
+      is_hasColor !== undefined ? is_hasColor : false,
       images,
     );
     return NextResponse.json(productType, { status: 201 });
@@ -125,7 +129,8 @@ export async function PUT(request: Request) {
     let id: string;
     let name: string | undefined;
     let is_Active: boolean | undefined;
-    let is_onlyType: boolean | undefined;
+    let is_hasBrand: boolean | undefined;
+    let is_hasColor: boolean | undefined;
     let images: { file?: File; filepath?: string; is_hasBack: boolean }[] = [];
     let imagesToDelete: number[] = [];
 
@@ -136,7 +141,8 @@ export async function PUT(request: Request) {
       id = formData.get("id") as string;
       name = formData.get("name") as string;
       is_Active = formData.get("is_Active") === "true";
-      is_onlyType = formData.get("is_onlyType") === "true";
+      is_hasBrand = formData.get("is_hasBrand") === "true";
+      is_hasColor = formData.get("is_hasColor") === "true";
 
       // Extract images from FormData
       const imageKeys = Array.from(formData.keys()).filter((key) =>
@@ -182,7 +188,8 @@ export async function PUT(request: Request) {
       id = body.id;
       name = body.name;
       is_Active = body.is_Active;
-      is_onlyType = body.is_onlyType;
+      is_hasBrand = body.is_hasBrand;
+      is_hasColor = body.is_hasColor;
       images = body.images || [];
       imagesToDelete = body.imagesToDelete || [];
     }
@@ -207,13 +214,14 @@ export async function PUT(request: Request) {
     if (
       !name &&
       is_Active === undefined &&
-      is_onlyType === undefined &&
+      is_hasBrand === undefined &&
+      is_hasColor === undefined &&
       images.length === 0
     ) {
       return NextResponse.json(
         {
           error:
-            "At least one field (name, is_Active, is_onlyType, or images) must be provided for update",
+            "At least one field (name, is_Active, is_hasBrand, is_hasColor, or images) must be provided for update",
         },
         { status: 400 },
       );
@@ -223,7 +231,8 @@ export async function PUT(request: Request) {
       id.trim(),
       name ? name.trim() : undefined,
       is_Active,
-      is_onlyType,
+      is_hasBrand,
+      is_hasColor,
       images,
       imagesToDelete,
     );
